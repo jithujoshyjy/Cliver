@@ -152,7 +152,7 @@ var :: BigFloat
 bFlt2 = 1234.543!n
 ```
 
-#### Infinity and -Infinity for infinity, NaN is used for "not a number" and Nil expressions the absence of a Number
+**Infinity** and **-Infinity** for infinity, **NaN** is used for "not a number" and **Nil** expressions the absence of a Number
 
 ##### Elementary mathematical functions and operations
 
@@ -176,7 +176,7 @@ a = b = c = d = 1
 
 a = 1; b = 2; c = 3; d = 4
 
-a, b = b, a # now a is 4 and b is
+a, b = b, a # now a is 2 and b is 1
 ```
 
 #### Boolean operators
@@ -185,8 +185,8 @@ a, b = b, a # now a is 4 and b is
 var t = true
 var f = false
 
-t & t # true
-t | f # true
+t && t # true
+t || f # true
 !t # false
 ```
 
@@ -196,7 +196,7 @@ t | f # true
 
 ```
 3_i5
-0_i -2
+0_i-2
 -1_i0
 ```
 
