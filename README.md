@@ -16,9 +16,9 @@ val :: Array
 z = [ 4, 5, 6, 7 ]
 
 
-
+```
 #### Comments ####
-
+```
 \\singleWordComment
 
 # single line comment
@@ -28,9 +28,9 @@ z = [ 4, 5, 6, 7 ]
 	comments
 =#
 
-
+```
 #### Types ####
-
+```
 #=
 	* Null
 	* Boolean
