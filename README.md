@@ -32,7 +32,6 @@ z = [ 4, 5, 6, 7 ]
 
 #### Types
 
-```
 * Null
 * Boolean
 * Number:
