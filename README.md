@@ -33,56 +33,55 @@ z = [ 4, 5, 6, 7 ]
 #### Types
 
 ```
-#=
-	* Null
-	* Boolean
-	* Number:
-		NaN,
-		Nil,
-		Infinity,
-		Bin, Oct, Hex, Exp
-		Int:
-			Int8, Int16, Int32, Int64, Int128,
-		Uint:
-			Uint8, Uint16, Uint32, Uint64, Uint128,
-		Float:
-			Float16, Float32, Float64, Float128,
-		Ufloat:
-			Ufloat16, Ufloat32, Ufloat64, Ufloat128,
-		Complex,
-		BigInt,
-		BigFloat
-	* Char:
-		GenericChar,
-		ASCIIChar,
-		UnicodeChar,
-	* String:
-		GenericString,
-		ASCIIString,
-		UnicodeString,
-		Byte,
-		Symbol,
-		URef,
-		RegExp,
-		GramExp
-	* Range
-	* Collection:
-		Array,
-		Map,
-		Set, 
-		Trait,
-		Matrix,
-		Tuple, NamedTuple,
-	* Function:
-		Constructor,
-		Generator,
-		AsyncFunction,
-		GenericFunction,
-		UnitFunction,
-		AnonFunction,
-	* Object
-=#
+* Null
+* Boolean
+* Number:
+    * NaN,
+    * Nil,
+    * Infinity,
+    * Bin, Oct, Hex, Exp
+* Int:
+    * Int8, Int16, Int32, Int64, Int128,
+* Uint:
+    * Uint8, Uint16, Uint32, Uint64, Uint128,
+* Float:
+    * Float16, Float32, Float64, Float128,
+* Ufloat:
+    * Ufloat16, Ufloat32, Ufloat64, Ufloat128,
+    * Complex,
+    * BigInt,
+    * BigFloat
+* Char:
+    * GenericChar,
+    * ASCIIChar,
+    * UnicodeChar,
+* String:
+    * GenericString,
+    * ASCIIString,
+    * UnicodeString,
+    * Byte,
+    * Symbol,
+    * URef,
+    * RegExp,
+    * GramExp
+* Range
+* Collection:
+    * Array,
+    * Map,
+    * Set, 
+    * Trait,
+    * Matrix,
+    * Tuple, NamedTuple,
+* Function:
+    * Constructor,
+    * Generator,
+    * AsyncFunction,
+    * GenericFunction,
+    * UnitFunction,
+    * AnonFunction,
+* Object
 
+```
 var q = "hello"
 var r = 0
 var s = true
@@ -255,7 +254,6 @@ type(\a) # type :: Char
 '''
 	multiline single quote string
 '''
-```
 
 Literal strings are always ASCII (if they only contain ASCII letters) or UTF8 (if they contain characters that cannot be represented in ASCII)
 
