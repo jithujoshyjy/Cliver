@@ -240,18 +240,11 @@ type(\a) # type :: Char
 
 #### Strings
 
-Immutable
 ```
 "Hi"
 'Hello'
 \greet
 ```
-
-Mutable
-```
-"Hi"!
-'Hello'!
-\greet!
 
 \\labelString
 
@@ -262,13 +255,11 @@ Mutable
 '''
 	multiline single quote string
 '''
+```
 
-#=
-	Literal strings are always ASCII (if they only contain ASCII letters) or UTF8 (if they
+Literal strings are always ASCII (if they only contain ASCII letters) or UTF8 (if they contain characters that cannot be represented in ASCII)
 
-	contain characters that cannot be represented in ASCII)
-=#
-
+```
 type("hello")
 # type :: ASCIIString
 
@@ -623,11 +614,11 @@ end
 
 ```
 pipeline = 5
-	,, square
-	,, double
-	,, root
-	,, x -> power(x, 4)
-	,, sin
+	`` square
+	`` double
+	`` root
+	`` x -> power(x, 4)
+	`` sin
 
 ```
 
