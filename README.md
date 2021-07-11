@@ -1,6 +1,7 @@
 ##############################
 ### Variables, Types, and Operations ###
 ##############################
+```
 
 var x :: Int
 x = 5
@@ -87,10 +88,10 @@ var s = true
 type(2 + 3) # type :: Int64
 
 type.is(type :: String, "abc") # true
-
+```
 
 #### Integers - type :: Int ####
-
+```
 # ranges from Int8 to Int128
 # also
 # ranges from Uint8 to Uint128
@@ -117,9 +118,10 @@ bInt1 = BigInt(1234)
 
 var :: BigInt
 bInt2 = 1234!n
-
+```
 
 #### Floats - type :: Float ####
+```
 
 # Floating point numbers follow the IEEE 754 standard
 
@@ -132,18 +134,19 @@ f16 = -123.456
 
 var :: Ufloat16
 uf16 = 123.456
-
+```
 # Arbitrary Precision Floats
-
+```
 var :: BigFloat
 bFlt1 = BigFloat(1234.543)
 
 var :: BigFloat
 bFlt2 = 1234.543!n
+```
 
 # Infinity and -Infinity for infinity, NaN is used for "not a number" and Nil expressions the absence of a Number
 
-
+```
 #### Elementary mathematical functions and operations ####
 
 Math.round(123.7568) # 124
@@ -172,10 +175,10 @@ var f = false
 t & t # true
 t | f # true
 !t # false
-
+```
 
 #### Rational and complex numbers ####
-
+```
 # Complex numbers
 3_i5
 0_i -2
@@ -202,17 +205,17 @@ ra = Rational(1, 2) # 1//2
 
 ra.numer # 1
 ra.denom # 2
-
+```
 #### Characters ####
-
+```
 \a == \ 'a'
 \b == \ 'b'
 \c == \ 'c'
 type(\a) # type :: Char
 # ranges from \0x0 to \0xffffffff	
-
+```
 #### Strings ####
-
+```
 # immutable
 "Hi"
 'Hello'
@@ -264,9 +267,9 @@ greet + " " + world # hello world
 U\hello
 U\hi
 
-
+```
 #### Formatting numbers and strings ####
-
+```
 name = "Pascal"
 
 @printf("Hello, %s \n", name)
@@ -295,16 +298,16 @@ str = @printf("%0.3f", 7.35679) # 7.357
 # right justify
 @printf("%50s\n", "text right justified!")
 
-
+```
 #### Regular expressions ####
-
+```
 regexp = re\gims"(h | y) ellow?"
 regexp("hello").isMatch # true
 regexp("yellow").isMatch # true
 
-
+```
 #### Gramatic Expressions ####
-
+```
 x = 124
 gramexp = gr\ims"""
 	-- this is a comment
@@ -319,9 +322,9 @@ gramexp = gr\ims"""
 gramexp(expr :: (1 + 2)).isMatch # true
 gramexp("1 + 2").isMatch # true
 
-
+```
 #### Ranges and arrays ####
-
+```
 var :: Range
 ra = (1, 2) to 20
 
@@ -337,9 +340,9 @@ ra = 1 to 10 # same as (1, 1) to 10
 
 ra = 1 to Infinity # same as (1, 1) to Infinity
 
-
+```
 #### Array ####
-
+```
 var :: Array(val :: 4, Int)
 arr = [1, 2, 3, 4]
 
@@ -363,10 +366,10 @@ There is also:
 	Array.first(item) # adds at first index
 	Array.last(item) # adds at last index
 =#
-
+```
 #### Map, filter, and array comprehensions
 ####
-
+```
 var :: Array(Int)
 primes = [2, 3, 5, 7, 11]
 
@@ -378,9 +381,9 @@ primes.filter(x -> x %2 == 0) # [2]
 
 [ for x in 1 to 10: x ]
 # [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
-
+```
 #### Other Collection Types ####
-
+```
 # Set
 
 var :: Set(Int)
@@ -453,9 +456,9 @@ tuple2 = var(a, b, c)
 
 var tuple3 = tuple2(1, 2, 3)
 
-
+```
 #### Dates and times ####
-
+```
 var initial = Time.elapsed()
 # --------------------------
 # long computation
@@ -483,9 +486,9 @@ Time.setTimeout(2000) <- fun() end
 ##############################
 ########### Functions ############
 ##############################
-
+```
 #### Defining functions ####
-
+```
 fun :: String -> Infer
 greet(name)
 	print("hello " + name)
@@ -502,9 +505,9 @@ end
 fun(age)
 	age + 1
 end
-
+```
 ### Optional and keyword arguments ####
-
+```
 fun :: Int, Int -> Int
 add(a, b: 10): a + b
 
@@ -515,9 +518,9 @@ add(a, b: 10; c, d: 2):
 fun :: String+ ; String+ -> IO
 add(...args; ...opt_args): print(args, opt_args)
 
-
+```
 #### Anonymous functions ####
-
+```
 fun(x): print(x)
 
 # same as
@@ -526,9 +529,9 @@ fun(x, y)
 	print(y)
 end
 
-
+```
 #### UnitFunctions
-
+```
 () -> print("hello")
 
 x -> print(x)
@@ -538,9 +541,9 @@ x -> do
 	print(x * 3)
 end
 
-
+```
 #### IIFE ####
-
+```
 (x -> print(x))("hello") # hello
 # same as
 
@@ -559,9 +562,9 @@ fun greet()
 	print("greetings")
 end
 
-
+```
 #### Pipeline Operator ####
-
+```
 pipeline = 5
 	,, square
 	,, double
@@ -569,9 +572,9 @@ pipeline = 5
 	,, x -> power(x, 4)
 	,, sin
 
-
+```
 #### Error Dejection Operator ####
-
+```
 fun err(e): type(e)
 
 var file = await FileSystem.File("file-name.txt") |< err
@@ -588,9 +591,9 @@ fileContent = try:
 	catch e: err(e)
 print(await fileContent)
 
-
+```
 #### Generic functions and multiple dispatch ####
-
+```
 fun greet(): print("hello")
 
 fun greet(name): print("hi ", name)
@@ -605,9 +608,9 @@ fun :: Number, String -> Number
 add(num1, str1):
 	num1 + parse(type :: Int, str1)
 
-
+```
 #### Generators ####
-
+```
 fun :: Generator((String, Int -> Infer))
 generate()
 	yield 10
@@ -630,9 +633,9 @@ for n in generate():	print(n)
 
 ################################## Object Oriented Programming ####
 ##############################
-
+```
 #### Constructor Functions ####
-
+```
 fun :: Constructor((String, String, String) -> Object(Human, Mammal, Student))
 
 Person self, var(name, _age, _address)
@@ -697,9 +700,9 @@ fun Person static, var()
 	end
 
 end
-
+```
 #### AsyncFunction ####
-
+```
 fun :: AsyncFunction(String -> String)
 @async sayHello(word)
 	var name = FileSystem.File("/file.txt").read()
@@ -707,9 +710,9 @@ fun :: AsyncFunction(String -> String)
 	return await greet
 end
 
-
+```
 #### Object ####
-
+```
 var :: Object(Person)
 person = Person("John", 100, ["a", "bb", "ccc"])
 
@@ -744,9 +747,9 @@ type(obj) # type :: Object
 
 ####################################### Control Flow ###########
 ##############################
-
+```
 #### Conditional evaluation ####
-
+```
 var num = 7
 
 if num > 10
@@ -787,9 +790,9 @@ var y = x of @Trait {
 
 print(y) # "saturday"
 
-
+```
 #### The for loop ####
-
+```
 x = 1
 for x < 100
 	print(x)
@@ -818,9 +821,9 @@ end
 
 for v in 1 to 10: print(v)
 
-
+```
 #### The break, continue and reiterate statements ####
-
+```
 for x <= 100
 	if x % 5 == 0
 		continue
@@ -839,9 +842,9 @@ for k, v in arr
 		arr[k] = arr[k] ^ 2
 end
 
-
+```
 #### Exception handling ####
-
+```
 codes = ["AO", "ZD", "SG", "EZ"]
 if _, code in codes
 	print("This is an acceptable code")
@@ -865,9 +868,9 @@ end
 
 ################################ More on Types, Methods & Modules ##
 ##############################
-
+```
 #### Type signatures and conversions ####
-
+```
 var :: Int16
 a = 16
 
@@ -880,9 +883,9 @@ var c :: String = "125"
 "125" to type :: Int # 125
 
 
-
+```
 #### Type conversions and promotions ####
-
+```
 type.parse(type :: Int16, 12) # 12
 type.parse(type :: Int32, "121") # 121
 
@@ -915,25 +918,25 @@ type.subs(type :: Signed)
 type.subs(type :: Int64)
 # DataType(Null)
 
-
+```
 #### Concrete and abstract types ####
-
+```
 # Concrete types have no subtypes and might only have abstract types as their supertypes.
 
 # An abstract type (such as Number and Real) is only a name that groups multiple subtypes together, but it can be used as a type annotation or used as a type in array literals.
 
-
+```
 #### User-defined and composite types ####
-
+```
 type Point = NamedTuple(Float64, Float64, Float64)
 
 var :: Point
 p = var(f1, f2, f3)
 
-
+```
 #### When are two values or objects equal or identical?
 ####
-
+```
 var i16 = 125 to type :: Int16
 var i64 = 125 to type :: Int64 # default
 var d = { a: 100, b: 200, c: 300 }
@@ -959,9 +962,9 @@ Pair(\a, 100) in! d # false
 
 ###################################### Metaprogramming ########
 ##############################
-
+```
 #### Expressions and symbols ####
-
+```
 expr :: (1 + 2)
 expr :: do
 	var a = 5
@@ -969,9 +972,9 @@ expr :: do
 	a + b
 end
 
-
+```
 #### Eval and interpolation ####
-
+```
 var e1 = Expr(\call, (*), 3, 4)
  # expr :: ((*)(3, 4))
 
@@ -981,9 +984,9 @@ expr :: do
 	var e5 = expr :: $a + b
 end # expr :: 4 + b
 
-
+```
 #### Defining macros ####
-
+```
 # Macro takes the input expressions and returns the modified expressions at parse time
 
 @Macro
@@ -1006,11 +1009,11 @@ after
 ##############################
 #I/O, Networking, and Parallel Computing#
 ##############################
-
+```
 #### Basic input and output ####
 
 #### Channels ####
-
+```
 var :: Channel(String)
 chan1 = Channel(type :: String, \server; default: "", capacity: 4)
 # a channel can be a
@@ -1080,9 +1083,9 @@ for line in file.lines:
 done
 	file.close()
 end
-
+```
 #### TCP sockets and servers ####
-
+```
 var server = HTTP.serve({ \port: 8080 })
 
 @async
@@ -1090,9 +1093,9 @@ for req in server
 	req.respond({ \body: 'Hello World\n' })
 end
 
-
+```
 #### Parallel operations and computing ####
-
+```
 for pid in workers()
 	# do something with each process (pid = process id)
 
@@ -1106,9 +1109,9 @@ end
 
 ################################### Running External Programs #####
 ##############################
-
+```
 #### Running shell commands ####
-
+```
 Shell.pwd() # "c://test"
 Shell.cd("c://test//week1")
 Shell.ls()
@@ -1123,9 +1126,9 @@ cmd = "cat file1.txt"
 
 Shell.run(cmd)
 # prints the contents of file1.txt
-
+```
 #### Calling C and FORTRAN ####
-
+```
 var lang = FFI.C(val(\getenv, "libc"), type :: Ptr(Uint8), val(type :: Ptr(Uint8)), "LANGUAGE")
 
 #=
@@ -1139,15 +1142,16 @@ In general, C function takes the following arguments:
 
 	The actual arguments if there are any (here, "LANGUAGE")
 =#
-
+```
 #### Calling Python ####
-
+```
 FFI.Python.eval("10*10") # 100
 
 @FFI.pyimport math
 math.sin(math.pi / 2) # 1.0
-
+```
 #### Calling JavaScript ####
-
+```
 FFI.JavaScript.eval("10*10") # 100
 FFI.JavaScript.eval("Math.PI * 2") # 6.2857
+```
