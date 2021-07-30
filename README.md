@@ -293,8 +293,7 @@ name = "Pascal"
 # returns Hello, Pascal
 
 # d for integers
-@printf("%d\n") 1e5 # 100000
-
+@printf("%d\n") 1 * 5!e # 100000
 	
 # f = float format, rounded if needed
 @printf("x = %0.3f\n") 7.35679 # 7.357
