@@ -19,8 +19,6 @@ z = [ 4, 5, 6, 7 ]
 #### Comments
 
 ```
-\\singleWordComment
-
 # single line comment
 
 #=
@@ -233,7 +231,7 @@ ra.denom # 2
 \b == \'b'
 \c == \'c'
 type(\a) # type :: Char
-# ranges from \0x0 to \0xffffffff	
+# ranges from 0!x to ffffffff!x	
 ```
 
 #### Strings
@@ -243,8 +241,6 @@ type(\a) # type :: Char
 'Hello'
 \greet
 ```
-
-\\labelString
 
 """
 	multiline double quote string
