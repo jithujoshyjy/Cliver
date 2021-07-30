@@ -240,7 +240,6 @@ type(\a) # type :: Char
 "Hi"
 'Hello'
 \greet
-```
 
 """
 	multiline double quote string
@@ -249,6 +248,7 @@ type(\a) # type :: Char
 '''
 	multiline single quote string
 '''
+```
 
 Literal strings are always ASCII (if they only contain ASCII letters) or UTF8 (if they contain characters that cannot be represented in ASCII)
 
