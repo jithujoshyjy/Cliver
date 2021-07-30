@@ -193,19 +193,19 @@ t || f # true
 ##### Complex numbers
 
 ```
-3_i5
-0_i-2
--1_i0
+3 + 5!im
+0 - 2!im
+-1 + 0!im
 ```
 
 It is a parametric type
 ```
-type(3_i5) # type :: Complex(Int64, Int64)
+type(3 + 5!im) # type :: Complex(Int64, Int64)
 ```
 
 also
 ```
-cp = Complex(3, 5) # 3_i5
+cp = Complex(3, 5) # 3 + 5!im
 cp.real # 3
 cp.imag # 5
 ```
