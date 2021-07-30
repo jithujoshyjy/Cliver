@@ -379,7 +379,7 @@ arr[1 to 3] # [1, 2, 3]
 
 arr[5] = 5 # 5
 ```
-#=
+
 **There is also:**<br/>
 Array.drop(index) # drop any index
 Array.first() # drops first index
