@@ -856,7 +856,7 @@ end
 
 for x < 100
 	print(x)
-done
+done m
 	print(x ^ 2)
 end
 
@@ -910,7 +910,7 @@ catch ex :: IndexError | RangeError
 	print(type(ex))
 catch ex
 	print(type(ex))
-done
+done m
 	print("finished")
 end
 ```
