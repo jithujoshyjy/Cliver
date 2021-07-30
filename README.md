@@ -231,7 +231,7 @@ ra.denom # 2
 \b == \'b'
 \c == \'c'
 type(\a) # type :: Char
-# ranges from 0!x to ffffffff!x	
+# ranges from 0!cx to ffffffff!cx	
 ```
 
 #### Strings
