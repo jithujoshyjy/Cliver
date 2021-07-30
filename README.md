@@ -289,38 +289,38 @@ U\hi
 ```
 name = "Pascal"
 
-@printf("Hello, %s \n", name)
+@printf("Hello, %s \n") name
 # returns Hello, Pascal
 
 # d for integers
-@printf("%d\n", 1e5) # 100000
+@printf("%d\n") 1e5 # 100000
 
 	
 # f = float format, rounded if needed
-@printf("x = %0.3f\n", 7.35679) # 7.357
+@printf("x = %0.3f\n") 7.35679 # 7.357
 
 # or to create another string
-str = @printf("%0.3f", 7.35679) # 7.357
+str = @printf("%0.3f") 7.35679 # 7.357
 
 
 # e = scientific format with e
-@printf("%0.6e\n", 7.35679) # 7.356790e+00
+@printf("%0.6e\n") 7.35679 # 7.356790e+00
 
 # c = for characters
-@printf("output: %c\n", \ 'α') # output α
+@printf("output: %c\n") \'α' # output α
 
 # s for strings
-@printf("%s\n", "I like Cliver")
+@printf("%s\n") "I like Cliver"
 
 # right justify
-@printf("%50s\n", "text right justified!")
+@printf("%50s\n") "text right justified!"
 
 ```
 
 #### Regular Expressions
 
 ```
-regexp = re\gims"(h | y) ellow?"
+regexp = re"(h | y) ellow?".flags("gimsx")
 regexp("hello").isMatch # true
 regexp("yellow").isMatch # true
 ```
@@ -329,7 +329,7 @@ regexp("yellow").isMatch # true
 
 ```
 x = 124
-gramexp = gr\ims"""
+gramexp = gr"""
 	-- this is a comment
 	$ignore _space
 	$import "x"
@@ -338,7 +338,7 @@ gramexp = gr\ims"""
 	PLUS ::= "+"
 	NUMBER ::= \-? \d+ (\.\d+)? | (\-? \d+)? \.\d+
 	$return addition
-"""
+""".flags("ims")
 gramexp(expr :: (1 + 2)).isMatch # true
 gramexp("1 + 2").isMatch # true
 ```
@@ -397,7 +397,7 @@ primes = [2, 3, 5, 7, 11]
 
 primes.map(x -> x * 2) # [4, 6, 10, 14, 22]
 # same as
-primes.map() <- fun(x): x * 2
+primes.map() <| fun(x): x * 2
 
 primes.filter(x -> x %2 == 0) # [2]
 
@@ -438,14 +438,14 @@ map["hello"] # "hai"
 var :: Trait({
 	fun :: val :: 0 -> Error
 	fun :: Int -> Int
-	fun :: Int, Int -> Int
+	fun :: (Int, Int) -> Int
 	fun :: Int+ -> Int
 })
 
 trait = @Trait {
-	0 -> throw Error("Invalid")
-	a -> a
-	(b, c) -> a * b
+	0 -> throw Error("Invalid"),
+	a -> a,
+	(b, c) -> a * b,
 	(...d) -> (+)(...d)
 }
 
@@ -526,7 +526,7 @@ greet(name)
 	print("hello " + name)
 end
 
-fun greet name: print("hello " + name)
+fun greet(name): print("hello " + name)
 
 @call
 fun greet()
@@ -542,14 +542,14 @@ end
 #### Optional and Keyword Arguments
 
 ```
-fun :: Int, Int -> Int
+fun :: (Int, Int) -> Int
 add(a, b: 10): a + b
 
-fun :: Int, Int ; Int, Int -> Int
+fun :: (Int, Int ; Int, Int) -> Int
 add(a, b: 10; c, d: 2):
 	(a + b) - (c * d)
 
-fun :: String+ ; String+ -> IO
+fun :: (String+ ; String+) -> IO
 add(...args; ...opt_args): print(args, opt_args)
 ```
 
@@ -590,7 +590,7 @@ end
 x -> print(x) # hello
 
 
-(fun x: print(x))("hello")
+(fun(x): print(x))("hello")
 # same as
 
 @call("hello")
@@ -646,10 +646,10 @@ fun greet(name): print("hi ", name)
 fun greet(name, age):
 	print("hi ", age, " year old ", name)
 
-fun :: Number, Number -> Number
+fun :: (Number, Number) -> Number
 add(num1, num2): num1 + num2
 
-fun :: Number, String -> Number
+fun :: (Number, String) -> Number
 add(num1, str1):
 	num1 + parse(type :: Int, str1)
 
@@ -658,7 +658,7 @@ add(num1, str1):
 #### Generators
 
 ```
-fun :: Generator((String, Int -> Infer))
+fun :: Generator((String, Int) -> Infer)
 generate()
 	yield 10
 	yield 20
@@ -727,7 +727,6 @@ Person self, var(name, _age, _address)
 		# event handler logic
 	end
 	
-	@Macro
 	fun _macc meta, var()
 		# macro definition
 	end
@@ -880,7 +879,7 @@ end
 for v in 1 to 10: print(v)
 ```
 
-#### The break, continue and reiterate statements
+#### The break and continue statements
 
 ```
 for x <= 100
@@ -891,16 +890,6 @@ for x <= 100
 	else:
 		print(x ^ 2)
 end
-
-arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, -1]
-for k, v in arr
-	if v == -1
-		arr.drop!()
-		reiterate
-	else:
-		arr[k] = arr[k] ^ 2
-end
-
 ```
 
 #### Exception Handling
@@ -916,9 +905,9 @@ end
 var a = []
 try
 	a.drop!()
-catch ex of type :: DomainError
+catch ex :: DomainError
 	print(type(ex))
-catch ex of type :: (IndexError | RangeError)
+catch ex :: IndexError | RangeError
 	print(type(ex))
 catch ex
 	print(type(ex))
@@ -1053,11 +1042,10 @@ end # expr :: 4 + b
 Macro takes the input expressions and returns the modified expressions at parse time
 
 ```
-@Macro
 fun macint meta as ex, var()
 	expr :: do
 		print("start")
-		$ex
+		ex
 		print("after")
 	end
 end
