@@ -380,6 +380,7 @@ arr[5] = 5 # 5
 ```
 
 **There is also:**<br/>
+``` 
 Array.drop(index) # drop any index
 Array.first() # drops first index
 Array.last() # drops last index
@@ -387,6 +388,7 @@ Array.last() # drops last index
 Array.add(index, item) # add at any index
 Array.first(item) # adds at first index
 Array.last(item) # adds at last index
+```
 
 #### Map, Filter and Array Comprehensions
 
