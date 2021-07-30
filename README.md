@@ -388,6 +388,11 @@ Array.last() # drops last index
 Array.add(index, item) # add at any index
 Array.first(item) # adds at first index
 Array.last(item) # adds at last index
+
+The above are all immutable methods and
+they return a new array. Their equivalent
+mutating method are also available postfixed
+with "!"
 ```
 
 #### Map, Filter and Array Comprehensions
