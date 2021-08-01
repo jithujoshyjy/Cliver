@@ -600,7 +600,7 @@ x -> print(x) # hello
 # same as
 
 @call("hello")
-fun x: print(x) # hello
+fun(x): print(x) # hello
 
 @call
 fun greet()
