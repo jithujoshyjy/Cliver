@@ -946,7 +946,7 @@ type.parse(type :: Int16, 12) # 12
 type.parse(type :: Int32, "121") # 121
 
 type.promote(1, 2.5, 3//4) # 1.0, 2.5, 0.75
-type.promote(1.5, 0_i1) # 1.5_i0.0, 0.0_i1.0
+type.promote(1.5, 0 + 1!im) # 1.5 + 0.0!im, 0.0 + 1.0!im
 
 type.promote(true, \c, 1.0) # 1.0, 99.0, 1.0
 ```
