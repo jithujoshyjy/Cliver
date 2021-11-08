@@ -167,7 +167,7 @@ var :: BigFloat
 bFlt2 = 1234.543!n
 ```
 
-**Infinity** and **-Infinity** for infinity, **NaN** is used for "not a number" and **Nil** expressions the absence of a Number
+**Infinity** and **-Infinity** for infinity, **NaN** is used for "not a number" and **Infinites** is used to denote an infinitesimal.
 
 ##### Elementary mathematical functions and operations
 
