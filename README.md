@@ -1,3 +1,22 @@
+#### Import/Export
+
+```julia
+# native package
+import pkg :: (Collection, Crypto, FileSys)
+import stdin, stdout, fmt from pkg :: IO
+
+# registered package
+import pkg :: \UserFiles
+import pkg :: \Commands\Configs
+import ... from pkg :: WebSocket
+
+# file structure
+import "./dir/src/userfiles1.cli"
+import "./dir/src/userfiles2.cli" as Abc
+import ... from "./dir/src/userfiles4.cli", "./dir/src/userfiles5.cli"
+```
+
+
 #### Variables, Types, and Operations
 
 ```julia
@@ -29,7 +48,9 @@ z = [ 4, 5, 6, 7 ]
 ```
 
 #### Types
+
 * Maybe<br/>
+* * Mustbe<br/>
 * Boolean<br/>
 * Number:<br/>
 	Real:<br/>
@@ -87,24 +108,50 @@ z = [ 4, 5, 6, 7 ]
 	Generator,<br/>
 	Macro<br/>
 * Object<br/>
+> there exists mutable versions of many of these types suffixed with !
 
 ```julia
 var q = "hello"
 var r = 0
 var s = true
+
+type.of(2 + 3) # type :: Int64
+
+type.is(type :: String, "abc") # True
 ```
 #### Maybe - type :: Maybe
 ```julia
-val m :: Maybe(Int) = ['a', 'b', 'c'].indexOf('b')
-print(m)
-# NullException: failed to resolve Maybe value
-print(m || NaN) # 2
+val may1 :: Number? = [1, 2, 3].indexOf(2)
+# same as may1 :: Maybe(Number)
+print(may1)
+# ValueError: encountered an unattended Maybe value
+print(may1 || NaN) # 2
 # same as
-print(m ?? x -> NaN) # 2
+print(alt@(NaN) may1) # 2
+# same as
+print(may1 ?? x -> NaN) # 2
 
-type(2 + 3) # type :: Int64
+var :: Int?
+may2 = 1
+may2 = None
+```
 
-type.is(type :: String, "abc") # true
+#### Mustbe
+
+```julia
+# the values associated with Mustbe type must be known at the compile time
+
+var must1 :: Mustbe(String)
+must1 = @literal "Hello"
+type.of(must1) # Mustbe(String)
+
+var must2 :: Mustbe(Async(String))
+must2 = @apparent await read("say something", stdin)
+# Error
+
+var must3 :: Mustbe(Maybe(Int))
+must3 = @literal 5
+# Error
 ```
 
 #### Integers - type :: Int
@@ -196,24 +243,31 @@ a = 1; b = 2; c = 3; d = 4
 c = [ 0, 1, 2, 3, 4 ]
 [ a, b ] = c
 
-c = { 0, 1, 2, 3, 4 }
-{ a, b } = c
-
-c = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4 }
-{ a, b } = c
-# { a: 'a', b: 'b' } = c
+c = { \v: 0, \w: 1, 'x': 2, 'y': 3, 'z': 4 }
+{ v, w } = c
+# but can't { x, y, z } = c
 ```
 
 #### Boolean operators
 
 ```julia
-var t = true
-var f = false
+var t = True
+var f = False
 
-t && t # true
-t || f # true
-!t # false
+t && t # True
+t || f # True
+!t # False
 ```
+
+#### Bitwise operators
+
+a -& b # bitwise AND
+a -| b # bitwise OR
+-!c # bitwise NOT
+a -^ b # bitwise XOR
+a ->> b # bitwise right shift
+a -<< b # bitwise left shift
+
 
 #### Rational and complex numbers
 
@@ -344,16 +398,23 @@ fmt@("text right justified!") "%50s\n"
 #### Regular Expressions
 
 ```julia
-regexp = re"(h | y) ellow?".flags("gimsx")
-regexp("hello").isMatch # true
-regexp("yellow").isMatch # true
+var :: RegExp
+regexp = re"(h | y) ellow?""gims"
+# same as re"(h | y) ellow?".flags("gims")
+# re@("gims") "(h | y) ellow?"
+
+var :: Maybe(RegExpMatch)
+test1 = regexp.match("hello"),
+test2 = regexp.match("yellow")
+
+print(test1 || test2 || "no match found")
 ```
 
 #### Gramatic Expressions
 
 ```julia
 x = 124
-gramexp = gr"""
+var gramexp = gr"""
 	-- this is a comment
 	$ignore _space
 	$import "x"
@@ -362,9 +423,9 @@ gramexp = gr"""
 	PLUS ::= "+"
 	NUMBER ::= \-? \d+ (\.\d+)? | (\-? \d+)? \.\d+
 	$return addition
-""".flags("ims")
-gramexp(expr :: (1 + 2)).isMatch # true
-gramexp("1 + 2").isMatch # true
+""".flags("gims")
+gramexp(expr :: (1 + 2)).match
+gramexp("1 + 2").match
 ```
 
 #### Ranges and Arrays
@@ -390,38 +451,41 @@ ra = 1 to Infinity # same as (1, 2) to Infinity
 
 #### Array
 
+* Cliver arrays start indexing from 1
+* Arrays are immutable by default. There exists a mutable counterpart Array!
+
 ```julia
-var :: Array(Int ;; length: 4)
+var :: Array(Int).{ length: 4 }
 arr = [1, 2, 3, 4]
 
 arr[1] # 1
 # arr.1
 
-# i.e, in Cliver arrays start indexing from 1
-
 arr.length # 4
 
 arr[1 to 3] # [1, 2, 3]
 
-arr[5] = 5 # 5
+arr[5] = 5 # Error
 
+var :: Array!(Int).{ length: 4 }
+arr! = [1, 2, 3, 4]!
+
+arr![5] = 5 # 5
 ```
 
 **There is also:**<br/>
 ```julia 
-Array.drop(index) # drop any index
-Array.first() # drops first index
-Array.last() # drops last index
+	Array.drop(index) # gets any index
+	Array.first() # gets first index
+	Array.last() # gets last index
 	
-Array.add(index, item) # add at any index
-Array.first(item) # adds at first index
-Array.last(item) # adds at last index
+	Array.add(index, item) # sets at any index
+	Array.first(item) # sets at first index
+	Array.last(item) # sets at last index
 ```
 
-The above are all immutable methods and
-they return a new array. Their equivalent
-mutating method are also available postfixed
-with "!"
+* the above are all immutable methods, meaning they don't modify their parent array
+* mutable methods by the same name also exist for mutable arrays - drop!, add!, first!, last!, etc.
 
 #### Map, Filter and Array Comprehensions
 
@@ -446,8 +510,9 @@ primes.filter(x -> x %2 == 0) # [2]
 
 #### Set
 
+> sets are immutable and there're no mutable counterparts for them.
+
 ```julia
-# Set
 
 var :: Set(Int)
 set = { 1, 2, 3, 4 }
@@ -455,41 +520,40 @@ set = { 1, 2, 3, 4 }
 set[1] # 1
 # set.1
 
-2 in set # true
+2 in set # True
 
 ```
 
 #### Map
+> maps are immutable by default. However there exists a mutable counterpart Map!
 
 ```julia
 var :: Map(Int | String: String)
+# same as Map(Pair(Int | String, String))
 map = {
 	\wow: "how",
 	"hello": "hai",
 	5: "bye",
-	Pair(3, "lie")
+	(3: "lie")
 }
 
-5 in map # false
-# means Pair(5, 5) which isn't present
-Pair(5, _) in map # true
-Pair(5, "bye") in map # true
-
-# key: value is syntactic sugar for Pair(key, value)
+5 in map # False
+# means (5: 5) which isn't present
+(5: _) in map # True
+(5: "bye") in map # True
 
 map["hello"] # "hai"
-
-
 ```
 
 #### Trait
+> traits are immutable by default. However there exists a mutable counterpart Trait!
 
 ```julia
-var :: Trait({
+var :: Trait.{
 	fun :: Int -> Int
 	fun :: (Int, Int) -> Int
 	fun :: ...Int -> Int
-})
+}
 
 trait = @Trait {
 	a -> a,
@@ -501,18 +565,23 @@ trait(1) # 1
 trait(1, 2) # 2
 trait(1, 2, 3) # 6
 
-trait.add({
-	"c" -> print("closed")
-})
+(type :: Infer -> Infer) in trait # True
 
-(type :: Infer -> Infer) in trait # true
+var trait! = @Trait {
+	a :: Int -> a,
+	(b, c) -> a * b,
+	(...d) -> (+)(...d),
+}!
 
+trait!.add(
+	c  -> print("closed"), type :: Char -> Infer)
 ```
 
 #### Matrix
+> matrix is immutable and there's no mutable counterpart for it.
 
 ```julia
-var :: Matrix(val :: 3//3, Int)
+var :: Matrix(Int).{ shape: 3//3 }
 matrix = [
 	1, 2, 3;
 	4, 5, 6;
@@ -523,49 +592,57 @@ matrix[1//2] # 2
 ```
 
 #### Tuple
+> tuple is immutable and there's no mutable counterpart for it.
 
 ```julia
 var :: Tuple(Int, String, Boolean, Float)
-tuple1 = val(1, "hi", true, 4.5)
+tuple1 = (1, "hi", True, 4.5)
+# same as
+# tuple1 = val(1, "hi", True, 4.5)
 
 tuple1[1] # 1
 # tuple1.1
 ```
 
 #### NamedTuple
+> it is immutable and there's no mutable counterpart for it.
 
 ```julia
-var :: NamedTuple(Int, String, Boolean)
-tuple2 = var(a, b, c)
+var :: NamedTuple(Int, String, Boolean; Int, Char)
+ntuple1 = var(_, _, _; a, b)
+# _ specifies a default value
 
-var tuple3 = tuple2(1, "hi", true)
+var tuple2 = ntuple1(1, "hi", True; a: 7, b: 'b')
+
+print(tuple2.1, tuple2.b) # 1, 'b'
 ```
 
 #### Dates and Times
 
 ```julia
-var initial = Time.elapsed()
+var initial = DateTime.elapsed()
 # --------------------------
 # long computation
 # ---------------------------
-var final = Time.elapsed()
+var final = DateTime.elapsed()
 var time_elapsed = final - initial
 print(f"Time elapsed: $time_elapsed")
 
-Time.now() # "10:30:67 22/08/2014"
-Time.getFullTime() # 10:30:67
-Time.hour # 10
-Time.minute # 30
-Time.second # 67
-Time.getFullDate() # 22/08/2014
-Time.day # 22
-Time.month # 08
-Time.year # 2014
+DateTime.now() # "10:30:67 22/08/2014"
+DateTime.now(\time) # 10:30:67
+DateTime.now(\hour) # 10
+DateTime.now(\minute) # 30
+DateTime.now(\second) # 67
 
-Time.sleep(500)
-Time.setImmediate(fun) do  smt() end
-Time.setInterval(1000, fun) do  smt() end
-Time.setTimeout(2000, fun) do  smt() end
+DateTime.now(\date) # 22/08/2014
+DateTime.now(\day) # 22
+DateTime.now(\month) # 08
+DateTime.now(\year) # 2014
+
+DateTime.sleep(500)
+DateTime.setImmediate(fun) do  smt() end
+DateTime.setInterval(1000, fun) do  smt() end
+DateTime.setTimeout(2000, fun) do  smt() end
 ```
 
 #### Functions
@@ -594,15 +671,28 @@ end
 #### Optional and Keyword Arguments
 
 ```julia
+
 fun :: (Int, Int) -> Int
-add(a, b: 10): a + b
+add(a, b = 10): a + b
 
 fun :: (Int, Int ; Int, Int) -> Int
-add(a, b: 10; c, d: 2):
+add(a, b = 10; c, d = 2):
 	(a + b) - (c * d)
 
-fun :: (String+ ; String+) -> IO
-add(...args; ...opt_args): print(args, opt_args)
+fun :: (...String ; ...String) -> IO
+add(...pos_args; ...named_args):
+	print(pos_args, named_args)
+```
+
+#### Pure Functions
+> pure functions must not produce a side effect
+
+```julia
+fun greet<pure>(x)
+	print(x) # error
+end
+
+fun greet<pure>(x): "hi" + x
 ```
 
 #### Anonymous Functions
@@ -681,12 +771,12 @@ pipeline = 5 as arg
 #### Error Dejection Operator
 
 ```julia
-fun err(e): type(e)
+fun err(e): type.of(e)
 
 var file = await FileSys.File("file-name.txt") ?? err
 
 var fileContent = await file.read() ?? err
-print(await fileContent)
+print(fileContent)
 
 # same as
 
@@ -698,7 +788,7 @@ fileContent = try:
 		await file.read()
 	catch e: err(e)
 
-print(await fileContent)
+print(fileContent)
 
 ```
 
@@ -725,20 +815,20 @@ add(num1, str1):
 
 ```julia
 fun :: Generator(() -> String, Char -> Int)
-generate<yield>()
-	print(fun.sent) # 'a'
+generate<yield, payload>()
+	print(payload) # 'a'
 	yield 10
 	
-	print(fun.sent) # 'b'
+	print(payload) # 'b'
 	yield 20
 	
-	print(fun.sent) # 'c'
+	print(payload) # 'c'
 	yield 30
 	
-	print(fun.sent) # 'd'
+	print(payload) # 'd'
 	yield 40
 	
-	print(fun.sent) # 'e'
+	print(payload) # 'e'
 	return "string value"
 end
 
@@ -759,31 +849,50 @@ for n in generate():	print(n)
 #### Constructor Functions
 
 ```julia
-fun :: Constructor((String, String, String) -> Object(Human, Mammal, Student))
+type Human = Object({
+	intelligence :: String,
+	consciousness :: Boolean,
+	defineTraits :: ...Options -> Trait
+})
 
-Person<self>(var name, _age, _address)
+type Mammal = Object({
+	isNocturnal :: Boolean,
+	height :: Int,
+	weight :: Int,
+	speed :: Float
+})
+
+type Student = Object({
+	IQ :: Float,
+	skills :: Array(String),
+	favSubject :: String
+})
+
+type Person'' = Object(Human, Mammal, Student, {
+	date :: DateTime,
+	id :: Hex(Int),
+	job :: String,
+	lives_in :: String,
+	var greet, farewell :: String -> Void,
+	_salary :: Int,
+	fun<getter> salary :: Int,
+	fun<setter> salary :: Int -> Void,
+	_handleDeletion :: EventData -> Void,
+	fun<macro> _macc :: MetaData -> Void,
+})
+
+fun :: Constructor((String, String, String) -> Person'')
+
+Person<self>(var name, var age, var address)
 	
-	# var name / val name
-	# same as
-	# self.name = name
-	# and
-	# _age
-	# same as
-	# self._age = _age
+	var self.date = DateTime.now()
+	var self.id = 123ffce!x
 	
-	self.date = Time.now()
 	Person.mindset = "neutral"
 	
-	self.id = 123ffce!x
-	
-	self
-		..include(Human, (125, "hi"); pick: {\goodBehaviours, \humour_sense})
-		..include(Mammal, (215, "bye"); omit: {\laziness})
-		# args - Ctor, CtorArgs; only, leave
-
-	var S = self.include(Student, (512, "yay"))
-	
 	@@where
+	
+	import ... from Mammal(215, "bye"), Human(125, "hi"), Student(512, "yay")
 	
 	var job = "programmer"
 	
@@ -797,18 +906,15 @@ Person<self>(var name, _age, _address)
 		print(f"$word from {self.name}")
 	end
 	
-	fun salary<accessor>(default: 3000)
-		@@where
-		fun get(value)
-			value -= 5
-		end
-		fun set(value)
-			if value < 50 ^ 10
-				value
-			else
-				throw BoundError("")
-			end
-		end
+	var _salary = 3000
+	
+	fun salary<getter>(): _salary
+	
+	fun salary<setter>(value)
+		if value < 50 ^ 10
+				self._salary = value
+		else
+			throw BoundError("")
 	end
 	
 	onevent@(\delete)
@@ -822,7 +928,7 @@ Person<self>(var name, _age, _address)
 end
 
 fun Person<static>()
-	# destructor logic
+	# static constructor logic
 	@@where
 	var mindset = "positive"
 
@@ -844,9 +950,9 @@ end
 ```julia
 fun :: AsyncFunction(String -> String)
 @async sayHello(word)
-	var name = FileSystem.File("/file.txt").read()
-	var greet = await name + word
-	return await greet
+	var name = await FileSys.File("/file.txt").read()
+	var greet = name + word
+	return greet
 end
 ```
 
@@ -919,17 +1025,16 @@ end
 var sign = if num >= 0: 1 else: -1
 
 var x = 7
-var y = case x
-	1: "sunday"
-	2: "monday"
-	3: "tuesday"
-	4: "wednesday"
-	5: "thursday"
-	6: "friday"
-	7: "saturday"
-	8 | 9 | 10: "hello Martian!"
-	_: "invalid"
-end
+var y = if case x:
+	case 1: "sunday"
+	case 2: "monday"
+	case 3: "tuesday"
+	case 4: "wednesday"
+	case 5: "thursday"
+	case 6: "friday"
+	case 7: "saturday"
+	case 8 | 9 | 10: "hello Martian!"
+else: "invalid"
 
 
 print(y) # "saturday"
@@ -955,7 +1060,7 @@ for(x = 1; x < 10; x += 1)
 end
 
 arr = [1, 2, 3, 4, 5, 6, 7]
-for [k, v] in arr.pairs
+for (k: v) in arr.pairs
 	print(v)
 end
 
@@ -995,11 +1100,11 @@ var a = []
 try
 	a.drop!()
 catch ex :: DomainError
-	print(type(ex))
+	print(type.of(ex))
 catch ex :: IndexError | RangeError
-	print(type(ex))
+	print(type.of(ex))
 catch ex
-	print(type(ex))
+	print(type.of(ex))
 done s
 	print("finished")
 end
@@ -1019,8 +1124,6 @@ b = "hello"
 
 # same as
 var c :: String = "125"
-
-"125" :: Int # 125
 ```
 
 #### Type Conversions and Promotions
@@ -1032,23 +1135,23 @@ type.parse(type :: Int32, "121") # 121
 type.promote(1, 2.5, 3//4) # 1.0, 2.5, 0.75
 type.promote(1.5, 1!im) # 1.5 + 0.0!im, 0.0 + 1.0!im
 
-type.promote(true, \c, 1.0) # 1.0, 99.0, 1.0
+type.promote(True, \c, 1.0) # 1.0, 99.0, 1.0
 ```
 
 #### The type hierarchy – subtypes and supertypes
 
 ```julia
-type(type :: Int64) # type :: Signed
+type.of(type :: Int64) # type :: Signed
 
-type(type :: Signed) # type :: Integer
+type.of(type :: Signed) # type :: Integer
 
-type(type :: Integer) # type :: Real
+type.of(type :: Integer) # type :: Real
 
-type(type :: Real) # type :: Number
+type.of(type :: Real) # type :: Number
 
-type(type :: Number) # type :: Any
+type.of(type :: Number) # type :: Primitive
 
-type(type :: Any) # type :: DataType
+type.of(type :: Primitive) # type :: DataType
 
 type.subs(type :: Integer)
 # type :: Any(BigInt, Bool, Char, Signed, Unsigned)
@@ -1057,31 +1160,55 @@ type.subs(type :: Signed)
 # type :: Any(Int128, Int16, Int32, Int64, Int8)
 
 type.subs(type :: Int64)
-# type :: Null
+# type :: Any()
 ```
 
 #### Concrete and Abstract Types
 
 Concrete types have no subtypes and might only have abstract types as their supertypes.
+```julia
+type ImConcreteType(a) :: ImAbstractType = {
+	fun(Int, a)
+}
+
+data { ImConcreteType } = ImConcreteType(Type)
+```
 
 An abstract type (such as Number and Real) is only a name that groups multiple subtypes together, but it can be used as a type annotation or used as a type in array literals.
+```julia
+	type Cardinal :: DataType
+```
 
 #### User Defined and Composite Types
 
 ```julia
-type Cardinal :: DataType
-type Point :: Cardinal
-type Point(Float64, Float64, Float64)
 
-var p(f1, f2, f3) :: Point
+type Point :: Cardinal = {
+	fun(Float64, Float64, Float64) |
+	fun(x: Float64, y: Float64, z: Float64)
+}
 
-var b = p(1, 2, 3)
-# same as
-# val b(1, 2, 3) :: Point
+data { Point } = Point
 
-b.f1 # 1
-b.f2 # 2
-b.f3 # 3
+var p1 = Point(1, 2, 3)
+# (p1.1, p1.2, p1.3) == (1, 2, 3)
+
+var p2 = Point(x: 1, y: 2, z: 3)
+# (p2.x, p2.y, p2.z) == (1, 2, 3)
+```
+
+#### Constrained Types ####
+
+* a type constrain must evaluate to a boolean
+* compile time constrains - must be immutable and pure
+
+```julia
+val :: String & x -> x in ["hello", "hi", "howdy"]
+consT1 = "hi"
+
+# runtime constrains - may be mutable and impure
+val :: Array(Int) .{x -> x.every(x -> isPrime(x))}!
+consT2 = [1, 2, 3, 4]
 ```
 
 #### When are two values or objects equal or identical?
@@ -1091,23 +1218,19 @@ var i16 = 125 :: Int16
 var i64 = 125 :: Int64 # default
 var d = { 'a': 100, 'b': 200, 'c': 300 }
 
-i16 == i64 # true
-i16 is i64 # false
-i16 is! i64 # true
+i16 == i64 # True
+i16 is i64 # False
+i16 is! i64 # True
 
 var a = 50
 
-Pair(\a) in d # false
-# same as Pair(\a, a) in d
-Pair(_, 100) in d # true
-Pair(\a, _) in d # true
-Pair(\a, 100) in d # true
+(_: 100) in d # True
+(\a: _) in d # True
+(\a: 100) in d # True
 
-Pair(\a) in! d # true
-# same as Pair(\a, a) in! d
-Pair(_, 100) in! d # false
-Pair(\a, _) in! d # false
-Pair(\a, 100) in! d # false
+(_: 100) in! d # False
+(\a: _) in! d # False
+(\a: 100) in! d # False
 ```
 
 #### Metaprogramming
@@ -1116,7 +1239,7 @@ Pair(\a, 100) in! d # false
 
 ```julia
 expr :: (1 + 2)
-expr :: do
+expr :: $do
 	var a = 5
 	var b = 2
 	a + b
@@ -1133,7 +1256,7 @@ var e1 = Expr(\call, ((*), 3, 4))
 var a = 4
 expr :: do
 	var b = 1
-	var e5 = expr :: a + b
+	var e5 = expr :: ${a} + b
 end # expr :: 4 + b
 ```
 
@@ -1143,7 +1266,7 @@ Macro takes the input expressions and returns the modified expressions at parse 
 
 ```julia
 fun macint<meta>()
-	expr :: do
+	expr :: $do
 		print("start")
 		${ meta.eval() }
 		print("after")
@@ -1229,7 +1352,7 @@ var stream = IO.stdin
 for line in stream.lines:
 	print(f"Found $line")
 
-var file = FileSys.File("example.dat")
+var file = File("example.dat")
 
 for line in file.lines
 	print(line)
