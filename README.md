@@ -41,8 +41,8 @@ z = [ 4, 5, 6, 7 ]
 # single line comment
 
 #=
-	multi-line
-	comments
+    multi-line
+    comments
 =#
 
 ```
@@ -50,63 +50,63 @@ z = [ 4, 5, 6, 7 ]
 #### Types
 
 * Maybe<br/>
-* * Mustbe<br/>
+* Mustbe<br/>
 * Boolean<br/>
 * Number:<br/>
-	Real:<br/>
-		Rational:<br/>
-			Bin, Oct, Hex, Exp<br/>
-			Int:<br/>
-				Int8, Int16, Int32, Int64, Int128,<br/>
-			Uint:<br/>
-				Uint8, Uint16, Uint32, Uint64, Uint128,<br/>
-			Float:<br/>
-				Float16, Float32, Float64, Float128,<br/>
-			Ufloat:<br/>
-				Ufloat16, Ufloat32, Ufloat64, Ufloat128,<br/>
-			BigInt,<br/>
-			BigFloat<br/>
-		Irrational:<br/>
-			NaN,<br/>
-			Infinites,<br/>
-			Infinity,<br/>
-	AbstractComplex<br/>
-		Complex,<br/>
-		Imaginary,<br/>
+    Real:<br/>
+    Rational:<br/>
+        Bin, Oct, Hex, Exp<br/>
+	Int:<br/>
+            Int8, Int16, Int32, Int64, Int128,<br/>
+	    Uint:<br/>
+	        Uint8, Uint16, Uint32, Uint64, Uint128,<br/>
+	    Float:<br/>
+	        Float16, Float32, Float64, Float128,<br/>
+	    Ufloat:<br/>
+	        Ufloat16, Ufloat32, Ufloat64, Ufloat128,<br/>
+	    BigInt,<br/>
+	    BigFloat<br/>
+    Irrational:<br/>
+        NaN,<br/>
+	Infinites,<br/>
+	Infinity,<br/>
+    AbstractComplex<br/>
+	Complex,<br/>
+	Imaginary,<br/>
 * AbstractChar:<br/>
-	Char,<br/>
-	ASCIIChar,<br/>
-	UnicodeChar,<br/>
+    Char,<br/>
+    ASCIIChar,<br/>
+    UnicodeChar,<br/>
 * AbstractString:<br/>
-	String,<br/>
-	ASCIIString,<br/>
-	UnicodeString,<br/>
-	Byte,<br/>
-	Symbol,<br/>
+    String,<br/>
+    ASCIIString,<br/>
+    UnicodeString,<br/>
+    Byte,<br/>
+    Symbol,<br/>
 * URef<br/>
 * AbstractExpression:<br/>
-	RegExp,<br/>
-	GramExp,<br/>
-	BinarySyntaxTree,<br/>
+    RegExp,<br/>
+    GramExp,<br/>
+    BinarySyntaxTree,<br/>
 * AbstractRange:<br/>
-	Range,<br/>
-	NumericRange,<br/>
-	UnicodeRange,<br/>
+    Range,<br/>
+    NumericRange,<br/>
+    UnicodeRange,<br/>
 * AbstractCollection:<br/>
-	Array,<br/>
-	Map,<br/>
-	Set,<br/>
-	Trait,<br/>
-	Matrix,<br/>
-	Tuple, NamedTuple,<br/>
+    Array,<br/>
+    Map,<br/>
+    Set,<br/>
+    Trait,<br/>
+    Matrix,<br/>
+    Tuple, NamedTuple,<br/>
 * AbstractFunction:<br/>
-	Function:<br/>
-		GenericFunction,<br/>
-		UnitFunction,<br/>
-		AnonFunction,<br/>
-	Constructor,<br/>
-	Generator,<br/>
-	Macro<br/>
+    Function:<br/>
+	GenericFunction,<br/>
+	UnitFunction,<br/>
+	AnonFunction,<br/>
+    Constructor,<br/>
+    Generator,<br/>
+    Macro<br/>
 * Object<br/>
 > there exists mutable versions of many of these types suffixed with !
 
@@ -261,12 +261,14 @@ t || f # True
 
 #### Bitwise operators
 
+```julia
 a -& b # bitwise AND
 a -| b # bitwise OR
 -!c # bitwise NOT
 a -^ b # bitwise XOR
 a ->> b # bitwise right shift
 a -<< b # bitwise left shift
+```
 
 
 #### Rational and complex numbers
@@ -324,7 +326,7 @@ type(\a) # type :: Char
 \greet
 
 """
-	multiline double quote string
+    multiline double quote string
 """
 ```
 
@@ -415,14 +417,14 @@ print(test1 || test2 || "no match found")
 ```julia
 x = 124
 var gramexp = gr"""
-	-- this is a comment
-	$ignore _space
-	$import "x"
-	$consider _case -- case sensitive
-	addition ::= NUMBER PLUS NUMBER
-	PLUS ::= "+"
-	NUMBER ::= \-? \d+ (\.\d+)? | (\-? \d+)? \.\d+
-	$return addition
+    -- this is a comment
+    $ignore _space
+    $import "x"
+    $consider _case -- case sensitive
+    addition ::= NUMBER PLUS NUMBER
+    PLUS ::= "+"
+    NUMBER ::= \-? \d+ (\.\d+)? | (\-? \d+)? \.\d+
+    $return addition
 """.flags("gims")
 gramexp(expr :: (1 + 2)).match
 gramexp("1 + 2").match
@@ -475,13 +477,13 @@ arr![5] = 5 # 5
 
 **There is also:**<br/>
 ```julia 
-	Array.drop(index) # gets any index
-	Array.first() # gets first index
-	Array.last() # gets last index
+    Array.drop(index) # gets any index
+    Array.first() # gets first index
+    Array.last() # gets last index
 	
-	Array.add(index, item) # sets at any index
-	Array.first(item) # sets at first index
-	Array.last(item) # sets at last index
+    Array.add(index, item) # sets at any index
+    Array.first(item) # sets at first index
+    Array.last(item) # sets at last index
 ```
 
 * the above are all immutable methods, meaning they don't modify their parent array
@@ -497,7 +499,7 @@ primes.map(x -> x * 2) # [4, 6, 10, 14, 22]
 # same as
 
 primes.map(fun(x)) do
-	x * 2
+    x * 2
 end
 
 primes.filter(x -> x %2 == 0) # [2]
@@ -531,10 +533,10 @@ set[1] # 1
 var :: Map(Int | String: String)
 # same as Map(Pair(Int | String, String))
 map = {
-	\wow: "how",
-	"hello": "hai",
-	5: "bye",
-	(3: "lie")
+    \wow: "how",
+    "hello": "hai",
+    5: "bye",
+    (3: "lie")
 }
 
 5 in map # False
@@ -550,15 +552,15 @@ map["hello"] # "hai"
 
 ```julia
 var :: Trait.{
-	fun :: Int -> Int
-	fun :: (Int, Int) -> Int
-	fun :: ...Int -> Int
+    fun :: Int -> Int
+    fun :: (Int, Int) -> Int
+    fun :: ...Int -> Int
 }
 
 trait = @Trait {
-	a -> a,
-	(b, c) -> a * b,
-	(...d) -> (+)(...d),
+    a -> a,
+    (b, c) -> a * b,
+    (...d) -> (+)(...d),
 }
 
 trait(1) # 1
@@ -568,13 +570,13 @@ trait(1, 2, 3) # 6
 (type :: Infer -> Infer) in trait # True
 
 var trait! = @Trait {
-	a :: Int -> a,
-	(b, c) -> a * b,
-	(...d) -> (+)(...d),
+    a :: Int -> a,
+    (b, c) -> a * b,
+    (...d) -> (+)(...d),
 }!
 
 trait!.add(
-	c  -> print("closed"), type :: Char -> Infer)
+    c  -> print("closed"), type :: Char -> Infer)
 ```
 
 #### Matrix
@@ -652,19 +654,19 @@ DateTime.setTimeout(2000, fun) do  smt() end
 ```julia
 fun :: String -> Infer
 greet(name)
-	print("hello " + name)
+    print("hello " + name)
 end
 
 fun greet(name): print("hello " + name)
 
 @call
 fun greet()
-	print("greetings!")
+    print("greetings!")
 end
 
 call@(99)
 fun(age)
-	age + 1
+    age + 1
 end
 ```
 
@@ -677,11 +679,11 @@ add(a, b = 10): a + b
 
 fun :: (Int, Int ; Int, Int) -> Int
 add(a, b = 10; c, d = 2):
-	(a + b) - (c * d)
+    (a + b) - (c * d)
 
 fun :: (...String ; ...String) -> IO
 add(...pos_args; ...named_args):
-	print(pos_args, named_args)
+    print(pos_args, named_args)
 ```
 
 #### Pure Functions
@@ -689,7 +691,7 @@ add(...pos_args; ...named_args):
 
 ```julia
 fun greet<pure>(x)
-	print(x) # error
+    print(x) # error
 end
 
 fun greet<pure>(x): "hi" + x
@@ -702,8 +704,8 @@ fun(x): print(x)
 
 # same as
 fun(x, y)
-	print(x)
-	print(y)
+    print(x)
+    print(y)
 end
 
 ```
@@ -716,8 +718,8 @@ end
 x -> print(x)
 
 x -> do
-	print(x * 2)
-	print(x * 3)
+    print(x * 2)
+    print(x * 3)
 end
 
 ```
@@ -740,7 +742,7 @@ fun(x): print(x) # hello
 
 @call
 fun greet()
-	print("greetings")
+    print("greetings")
 end
 
 ```
@@ -749,22 +751,22 @@ end
 
 ```julia
 var pipeline = 5
-	`` square
-	`` root
-	`` power(val, ?)
-	`` x -> sin(x)
-	`` x -> (1 + x)
-	?? e -> print(e)
+    `` square
+    `` root
+    `` power(val, ?)
+    `` x -> sin(x)
+    `` x -> (1 + x)
+    ?? e -> print(e)
 
 # same as
 
 pipeline = 5 as arg
-	`` square(arg)
-	`` root(arg)
-	`` power(val, arg)
-	`` sin(arg)
-	`` 1 + arg
-	?? e -> print(e)
+    `` square(arg)
+    `` root(arg)
+    `` power(val, arg)
+    `` sin(arg)
+    `` 1 + arg
+    ?? e -> print(e)
 
 ```
 
@@ -781,12 +783,12 @@ print(fileContent)
 # same as
 
 file = try:
-		await FileSys.File("file-name.txt")
-	catch e: err(e)
+        await FileSys.File("file-name.txt")
+    catch e: err(e)
 
 fileContent = try:
-		await file.read()
-	catch e: err(e)
+        await file.read()
+    catch e: err(e)
 
 print(fileContent)
 
@@ -800,14 +802,14 @@ fun greet(): print("hello")
 fun greet(name): print("hi ", name)
 
 fun greet(name, age):
-	print("hi ", age, " year old ", name)
+    print("hi ", age, " year old ", name)
 
 fun :: (Number, Number) -> Number
 add(num1, num2): num1 + num2
 
 fun :: (Number, String) -> Number
 add(num1, str1):
-	num1 + parse(type :: Int, str1)
+    num1 + parse(type :: Int, str1)
 
 ```
 
@@ -816,32 +818,32 @@ add(num1, str1):
 ```julia
 fun :: Generator(() -> String, Char -> Int)
 generate<yield, payload>()
-	print(payload) # 'a'
-	yield 10
+    print(payload) # 'a'
+    yield 10
 	
-	print(payload) # 'b'
-	yield 20
+    print(payload) # 'b'
+    yield 20
 	
-	print(payload) # 'c'
-	yield 30
+    print(payload) # 'c'
+    yield 30
 	
-	print(payload) # 'd'
-	yield 40
+    print(payload) # 'd'
+    yield 40
 	
-	print(payload) # 'e'
-	return "string value"
+    print(payload) # 'e'
+    return "string value"
 end
 
 generate()
-	..next('a') # 10
-	..next('b') # 20
-	..next('c') # 30
-	..next('d') # 40
-	..next('e') # "string value"
-	..next('f') # (end)
+    ..next('a') # 10
+    ..next('b') # 20
+    ..next('c') # 30
+    ..next('d') # 40
+    ..next('e') # "string value"
+    ..next('f') # (end)
 # when done, it returns the (end) operator
 
-for n in generate():	print(n)
+for n in generate():    print(n)
 ```
 
 #### Object Oriented Programming
@@ -849,98 +851,98 @@ for n in generate():	print(n)
 #### Constructor Functions
 
 ```julia
-type Human = Object({
-	intelligence :: String,
-	consciousness :: Boolean,
-	defineTraits :: ...Options -> Trait
-})
+type Human = Object.{
+    intelligence :: String,
+    consciousness :: Boolean,
+    defineTraits :: ...Options -> Trait
+}
 
-type Mammal = Object({
-	isNocturnal :: Boolean,
-	height :: Int,
-	weight :: Int,
-	speed :: Float
-})
+type Mammal = Object.{
+    isNocturnal :: Boolean,
+    height :: Int,
+    weight :: Int,
+    speed :: Float
+}
 
-type Student = Object({
-	IQ :: Float,
-	skills :: Array(String),
-	favSubject :: String
-})
+type Student = Object.{
+    IQ :: Float,
+    skills :: Array(String),
+    favSubject :: String
+}
 
-type Person'' = Object(Human, Mammal, Student, {
-	date :: DateTime,
-	id :: Hex(Int),
-	job :: String,
-	lives_in :: String,
-	var greet, farewell :: String -> Void,
-	_salary :: Int,
-	fun<getter> salary :: Int,
-	fun<setter> salary :: Int -> Void,
-	_handleDeletion :: EventData -> Void,
-	fun<macro> _macc :: MetaData -> Void,
-})
+type Person'' = Object(Human, Mammal, Student).{
+    date :: DateTime,
+    id :: Hex(Int),
+    job :: String,
+    lives_in :: String,
+    var greet, farewell :: String -> Void,
+    _salary :: Int,
+    fun<getter> salary :: Int,
+    fun<setter> salary :: Int -> Void,
+    _handleDeletion :: EventData -> Void,
+    fun<macro> _macc :: MetaData -> Void,
+}
 
 fun :: Constructor((String, String, String) -> Person'')
 
 Person<self>(var name, var age, var address)
 	
-	var self.date = DateTime.now()
-	var self.id = 123ffce!x
+    var self.date = DateTime.now()
+    var self.id = 123ffce!x
 	
-	Person.mindset = "neutral"
+    Person.mindset = "neutral"
 	
-	@@where
+    @@where
 	
-	import ... from Mammal(215, "bye"), Human(125, "hi"), Student(512, "yay")
+    import ... from Mammal(215, "bye"), Human(125, "hi"), Student(512, "yay")
 	
-	var job = "programmer"
+    var job = "programmer"
 	
-	var lives_in = "India"
+    var lives_in = "India"
 	
-	fun greet(word)
-		print(f"$word from {self.name}")
-	end
+    fun greet(word)
+	print(f"$word from {self.name}")
+    end
 	
-	fun farewell(word)
-		print(f"$word from {self.name}")
-	end
+    fun farewell(word)
+	print(f"$word from {self.name}")
+    end
 	
-	var _salary = 3000
+    var _salary = 3000
 	
-	fun salary<getter>(): _salary
+    fun salary<getter>(): _salary
 	
-	fun salary<setter>(value)
-		if value < 50 ^ 10
-				self._salary = value
-		else
-			throw BoundError("")
-	end
+    fun salary<setter>(value)
+	if value < 50 ^ 10
+	    self._salary = value
+	else
+	    throw BoundError("")
+    end
 	
-	onevent@(\delete)
-	fun _handleDeletion(evt)
-		# event handler logic
-	end
+    onevent@(\delete)
+    fun _handleDeletion(evt)
+	# event handler logic
+    end
 	
-	fun _macc<meta>()
-		# macro definition
-	end
+    fun _macc<meta>()
+	# macro definition
+    end
 end
 
 fun Person<static>()
-	# static constructor logic
-	@@where
-	var mindset = "positive"
+    # static constructor logic
+    @@where
+    var mindset = "positive"
 
-	fun getMood()
-		if mindset == "positive"
-			print("happy")
-		elseif mindset == "neutral"
-			print("pleasant")
-		else
-			print("sad")
-		end
+    fun getMood()
+        if mindset == "positive"
+	    print("happy")
+	elseif mindset == "neutral"
+	    print("pleasant")
+	else
+	    print("sad")
 	end
+    end
 
 end
 ```
@@ -950,9 +952,9 @@ end
 ```julia
 fun :: AsyncFunction(String -> String)
 @async sayHello(word)
-	var name = await FileSys.File("/file.txt").read()
-	var greet = name + word
-	return greet
+    var name = await FileSys.File("/file.txt").read()
+    var greet = name + word
+    return greet
 end
 ```
 
@@ -975,22 +977,22 @@ print(person.salary) # 40000
 
 ```julia
 person
-	..name = "Jack" # Jack
-	..greet("hello") # hello from Jack
-	..getMood() # pleasant
+    ..name = "Jack" # Jack
+    ..greet("hello") # hello from Jack
+    ..getMood() # pleasant
 ```
 
 #### Object Literal
 
 ```julia
 var obj = @Object {
-	var color = "red"
-	fun fill()
-		# implementation logic
-	end
-	fun stroke()
-		# implementation logic
-	end
+    var color = "red"
+    fun fill()
+	# implementation logic
+    end
+    fun stroke()
+	# implementation logic
+    end
 }
 
 type(obj) # type :: Object
@@ -1004,36 +1006,36 @@ type(obj) # type :: Object
 var num = 7
 
 if num > 10
-	print("greater")
+    print("greater")
 elseif num < 10
-	print("lesser")
+    print("lesser")
 else
-	print("equals")
+    print("equals")
 end
 
 # same as
 
 num = 7
 if num > 10
-	print("greater")
+    print("greater")
 elseif num < 10
-	print("lesser")
+    print("lesser")
 else
-	print("equals")
+    print("equals")
 end
 	
 var sign = if num >= 0: 1 else: -1
 
 var x = 7
 var y = if case x:
-	case 1: "sunday"
-	case 2: "monday"
-	case 3: "tuesday"
-	case 4: "wednesday"
-	case 5: "thursday"
-	case 6: "friday"
-	case 7: "saturday"
-	case 8 | 9 | 10: "hello Martian!"
+    case 1: "sunday"
+    case 2: "monday"
+    case 3: "tuesday"
+    case 4: "wednesday"
+    case 5: "thursday"
+    case 6: "friday"
+    case 7: "saturday"
+    case 8 | 9 | 10: "hello Martian!"
 else: "invalid"
 
 
@@ -1046,26 +1048,26 @@ print(y) # "saturday"
 ```julia
 x = 1
 for x < 100
-	print(x)
+    print(x)
 end
 
 for x < 100
-	print(x)
+    print(x)
 done s
-	print(x ^ 2)
+    print(x ^ 2)
 end
 
 for(x = 1; x < 10; x += 1)
-	print(x)
+    print(x)
 end
 
 arr = [1, 2, 3, 4, 5, 6, 7]
 for (k: v) in arr.pairs
-	print(v)
+    print(v)
 end
 
 for v in 1 to 10
-	print(v)
+    print(v)
 end
 
 # same as
@@ -1077,12 +1079,12 @@ for v in 1 to 10: print(v)
 
 ```julia
 for x <= 100
-	if x % 5 == 0
-		continue
-	elseif x == 77
-		break
-	else:
-		print(x ^ 2)
+    if x % 5 == 0
+        continue
+    elseif x == 77
+	break
+    else:
+	print(x ^ 2)
 end
 ```
 
@@ -1091,22 +1093,22 @@ end
 ```julia
 var codes = ["AO", "ZD", "SG", "EZ"]
 if code in codes
-	print(f"This is an acceptable $code")
+    print(f"This is an acceptable $code")
 else
-	throw DomainError()
+    throw DomainError()
 end
 
 var a = []
 try
-	a.drop!()
+    a.drop!()
 catch ex :: DomainError
-	print(type.of(ex))
+    print(type.of(ex))
 catch ex :: IndexError | RangeError
-	print(type.of(ex))
+    print(type.of(ex))
 catch ex
-	print(type.of(ex))
+    print(type.of(ex))
 done s
-	print("finished")
+    print("finished")
 end
 
 ```
@@ -1160,7 +1162,7 @@ type.subs(type :: Signed)
 # type :: Any(Int128, Int16, Int32, Int64, Int8)
 
 type.subs(type :: Int64)
-# type :: Any()
+# type :: Any
 ```
 
 #### Concrete and Abstract Types
@@ -1168,7 +1170,7 @@ type.subs(type :: Int64)
 Concrete types have no subtypes and might only have abstract types as their supertypes.
 ```julia
 type ImConcreteType(a) :: ImAbstractType = {
-	fun(Int, a)
+    fun(Int, a)
 }
 
 data { ImConcreteType } = ImConcreteType(Type)
@@ -1176,7 +1178,7 @@ data { ImConcreteType } = ImConcreteType(Type)
 
 An abstract type (such as Number and Real) is only a name that groups multiple subtypes together, but it can be used as a type annotation or used as a type in array literals.
 ```julia
-	type Cardinal :: DataType
+    type Cardinal :: DataType
 ```
 
 #### User Defined and Composite Types
@@ -1184,8 +1186,8 @@ An abstract type (such as Number and Real) is only a name that groups multiple s
 ```julia
 
 type Point :: Cardinal = {
-	fun(Float64, Float64, Float64) |
-	fun(x: Float64, y: Float64, z: Float64)
+    fun(Float64, Float64, Float64) |
+    fun(x: Float64, y: Float64, z: Float64)
 }
 
 data { Point } = Point
@@ -1203,7 +1205,7 @@ var p2 = Point(x: 1, y: 2, z: 3)
 * compile time constrains - must be immutable and pure
 
 ```julia
-val :: String & x -> x in ["hello", "hi", "howdy"]
+val :: String .{x -> x in ["hello", "hi", "howdy"]}
 consT1 = "hi"
 
 # runtime constrains - may be mutable and impure
@@ -1240,9 +1242,9 @@ var a = 50
 ```julia
 expr :: (1 + 2)
 expr :: $do
-	var a = 5
-	var b = 2
-	a + b
+    var a = 5
+    var b = 2
+    a + b
 end
 ```
 
@@ -1250,13 +1252,13 @@ end
 
 ```julia
 var e1 = Expr(\call, ((*), 3, 4))
- # expr :: ((*)(3, 4))
+# expr :: ((*)(3, 4))
 
 
 var a = 4
 expr :: do
-	var b = 1
-	var e5 = expr :: ${a} + b
+    var b = 1
+    var e5 = expr :: ${a} + b
 end # expr :: 4 + b
 ```
 
@@ -1266,11 +1268,11 @@ Macro takes the input expressions and returns the modified expressions at parse 
 
 ```julia
 fun macint<meta>()
-	expr :: $do
-		print("start")
-		${ meta.eval() }
-		print("after")
-	end
+    expr :: $do
+        print("start")
+	${ meta.eval() }
+	print("after")
+    end
 end
 
 @macint print("Where am I?")
@@ -1299,7 +1301,7 @@ chan1.queued # 0
 
 @async
 fun channeler1(ch)
-	print(~ch)
+    print(~ch)
 end
 
 await channeler1(chan1)
@@ -1310,10 +1312,10 @@ chan1.close()
 
 @async
 fun channeler2(ch)
-	for(v = 1; v <= 4; v +=1)
-		ch <~ "hello world!"
-	end
-	ch.close()
+    for(v = 1; v <= 4; v +=1)
+	ch <~ "hello world!"
+    end
+    ch.close()
 end
 
 var chan2 = Channel()
@@ -1322,9 +1324,9 @@ await channeler2(chan2)
 
 for true
     var res = ~chan1
-	if res is (end)
-		print("Channel Closed")
-		break
+        if res is (end)
+	    print("Channel Closed")
+	    break
 	end
     print("Channel Open: ", res)
 end
@@ -1332,14 +1334,14 @@ end
 var chan3 = Channel(capacity: 4)
 
 @async do
-	chan3 <~ "first"
-	chan3 <~ "second"
-	chan3 <~ "third"
-	chan3 <~ "fourth"
-	chan3.close()
+    chan3 <~ "first"
+    chan3 <~ "second"
+    chan3 <~ "third"
+    chan3 <~ "fourth"
+    chan3.close()
 end
 
-for res in chan3:	print(res)
+for res in chan3:    print(res)
 
 ```
 
@@ -1350,14 +1352,14 @@ for res in chan3:	print(res)
 ```julia
 var stream = IO.stdin
 for line in stream.lines:
-	print(f"Found $line")
+    print(f"Found $line")
 
 var file = File("example.dat")
 
 for line in file.lines
-	print(line)
+    print(line)
 done m
-	file.close()
+    file.close()
 end
 ```
 
@@ -1368,7 +1370,7 @@ var server = HTTP.serve({ \port: 8080 })
 
 @async
 for req in server
-	req.respond({ \body: 'Hello World\n' })
+    req.respond({ \body: 'Hello World\n' })
 end
 ```
 
@@ -1376,13 +1378,13 @@ end
 
 ```julia
 for pid in workers()
-	# do something with each process (pid = process id)
+    # do something with each process (pid = process id)
 
 end
 
 @parallel
 for i in 1 to 100000
-	arr[i] = i
+    arr[i] = i
 end
 ```
 
