@@ -53,60 +53,60 @@ z = [ 4, 5, 6, 7 ]
 * Mustbe<br/>
 * Boolean<br/>
 * Number:<br/>
-    Real:<br/>
-    Rational:<br/>
-        Bin, Oct, Hex, Exp<br/>
-	Int:<br/>
-            Int8, Int16, Int32, Int64, Int128,<br/>
-	    Uint:<br/>
-	        Uint8, Uint16, Uint32, Uint64, Uint128,<br/>
-	    Float:<br/>
-	        Float16, Float32, Float64, Float128,<br/>
-	    Ufloat:<br/>
-	        Ufloat16, Ufloat32, Ufloat64, Ufloat128,<br/>
-	    BigInt,<br/>
-	    BigFloat<br/>
-    Irrational:<br/>
-        NaN,<br/>
-	Infinites,<br/>
-	Infinity,<br/>
-    AbstractComplex<br/>
-	Complex,<br/>
-	Imaginary,<br/>
+    * Real:<br/>
+    * Rational:<br/>
+        * Bin, Oct, Hex, Exp<br/>
+	* Int:<br/>
+            * Int8, Int16, Int32, Int64, Int128,<br/>
+	* Uint:<br/>
+	    * Uint8, Uint16, Uint32, Uint64, Uint128,<br/>
+	* Float:<br/>
+	     * Float16, Float32, Float64, Float128,<br/>
+	* Ufloat:<br/>
+	     * Ufloat16, Ufloat32, Ufloat64, Ufloat128,<br/>
+	* BigInt,<br/>
+	* BigFloat<br/>
+    * Irrational:<br/>
+        * NaN,<br/>
+	* Infinites,<br/>
+	* Infinity,<br/>
+    * AbstractComplex<br/>
+	* Complex,<br/>
+	* Imaginary,<br/>
 * AbstractChar:<br/>
-    Char,<br/>
-    ASCIIChar,<br/>
-    UnicodeChar,<br/>
+    * Char,<br/>
+    * ASCIIChar,<br/>
+    * UnicodeChar,<br/>
 * AbstractString:<br/>
-    String,<br/>
-    ASCIIString,<br/>
-    UnicodeString,<br/>
-    Byte,<br/>
-    Symbol,<br/>
+    * String,<br/>
+    * ASCIIString,<br/>
+    * UnicodeString,<br/>
+    * Byte,<br/>
+    * Symbol,<br/>
 * URef<br/>
 * AbstractExpression:<br/>
-    RegExp,<br/>
-    GramExp,<br/>
-    BinarySyntaxTree,<br/>
+    * RegExp,<br/>
+    * GramExp,<br/>
+    * BinarySyntaxTree,<br/>
 * AbstractRange:<br/>
-    Range,<br/>
-    NumericRange,<br/>
-    UnicodeRange,<br/>
+    * Range,<br/>
+    * NumericRange,<br/>
+    * UnicodeRange,<br/>
 * AbstractCollection:<br/>
-    Array,<br/>
-    Map,<br/>
-    Set,<br/>
-    Trait,<br/>
-    Matrix,<br/>
-    Tuple, NamedTuple,<br/>
+    * Array,<br/>
+    * Map,<br/>
+    * Set,<br/>
+    * Trait,<br/>
+    * Matrix,<br/>
+    * Tuple, NamedTuple,<br/>
 * AbstractFunction:<br/>
-    Function:<br/>
-	GenericFunction,<br/>
-	UnitFunction,<br/>
-	AnonFunction,<br/>
-    Constructor,<br/>
-    Generator,<br/>
-    Macro<br/>
+    * Function:<br/>
+	* GenericFunction,<br/>
+	* UnitFunction,<br/>
+	* AnonFunction,<br/>
+    * Constructor,<br/>
+    * Generator,<br/>
+    * Macro<br/>
 * Object<br/>
 > there exists mutable versions of many of these types suffixed with !
 
