@@ -101,9 +101,9 @@ z = [ 4, 5, 6, 7 ]
     * Tuple, NamedTuple,<br/>
 * AbstractFunction:<br/>
     * Function:<br/>
-	* GenericFunction,<br/>
-	* UnitFunction,<br/>
-	* AnonFunction,<br/>
+		* GenericFunction,<br/>
+		* UnitFunction,<br/>
+		* AnonFunction,<br/>
     * Constructor,<br/>
     * Generator,<br/>
     * Macro<br/>
