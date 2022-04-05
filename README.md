@@ -54,25 +54,25 @@ z = [ 4, 5, 6, 7 ]
 * Boolean<br/>
 * Number:<br/>
     * Real:<br/>
-    * Rational:<br/>
-        * Bin, Oct, Hex, Exp<br/>
-	* Int:<br/>
-            * Int8, Int16, Int32, Int64, Int128,<br/>
-	* Uint:<br/>
-	    * Uint8, Uint16, Uint32, Uint64, Uint128,<br/>
-	* Float:<br/>
-	     * Float16, Float32, Float64, Float128,<br/>
-	* Ufloat:<br/>
-	     * Ufloat16, Ufloat32, Ufloat64, Ufloat128,<br/>
-	* BigInt,<br/>
-	* BigFloat<br/>
-    * Irrational:<br/>
-        * NaN,<br/>
-	* Infinites,<br/>
-	* Infinity,<br/>
+    	* Rational:<br/>
+			* Bin, Oct, Hex, Exp<br/>
+			* Int:<br/>
+				* Int8, Int16, Int32, Int64, Int128,<br/>
+			* Uint:<br/>
+			    * Uint8, Uint16, Uint32, Uint64, Uint128,<br/>
+			* Float:<br/>
+			     * Float16, Float32, Float64, Float128,<br/>
+			* Ufloat:<br/>
+			     * Ufloat16, Ufloat32, Ufloat64, Ufloat128,<br/>
+			* BigInt,<br/>
+			* BigFloat<br/>
+    	* Irrational:<br/>
+			* NaN,<br/>
+			* Infinites,<br/>
+			* Infinity,<br/>
     * AbstractComplex<br/>
-	* Complex,<br/>
-	* Imaginary,<br/>
+		* Complex,<br/>
+		* Imaginary,<br/>
 * AbstractChar:<br/>
     * Char,<br/>
     * ASCIIChar,<br/>
