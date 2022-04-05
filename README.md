@@ -870,7 +870,7 @@ type Student = Object.{
     favSubject :: String
 }
 
-type Person'' = Object(Human, Mammal, Student).{
+type Person' = Object(Human, Mammal, Student).{
     date :: DateTime,
     id :: Hex(Int),
     job :: String,
@@ -883,7 +883,7 @@ type Person'' = Object(Human, Mammal, Student).{
     fun<macro> _macc :: MetaData -> Void,
 }
 
-fun :: Constructor((String, String, String) -> Person'')
+fun :: Constructor((String, String, String) -> Person')
 
 Person<self>(var name, var age, var address)
 	
