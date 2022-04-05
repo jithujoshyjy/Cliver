@@ -875,12 +875,12 @@ type Person' = Object(Human, Mammal, Student).{
     id :: Hex(Int),
     job :: String,
     lives_in :: String,
-    var greet, farewell :: String -> Void,
+    fun greet, farewell :: ...(String -> Void),
     _salary :: Int,
-    fun<getter> salary :: Int,
-    fun<setter> salary :: Int -> Void,
+    fun salary :: Getter(Int),
+    fun salary :: Setter(Int -> Void),
     _handleDeletion :: EventData -> Void,
-    fun<macro> _macc :: MetaData -> Void,
+    macro :: Macro(MetaData -> Void),
 }
 
 fun :: Constructor((String, String, String) -> Person')
