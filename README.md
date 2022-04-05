@@ -303,10 +303,10 @@ cp.imag # 5
 type.is(type :: Fractional(Int64, Int64), 1//2) # True
  
 # also
-ra = Fractional(1, 2) # 1//2
+fr = Fractional(1, 2) # 1//2
 
-ra.numer # 1
-ra.denom # 2
+fr.numer # 1
+fr.denom # 2
 ```
 
 #### Characters
@@ -315,7 +315,7 @@ ra.denom # 2
 \a == 'a'
 \b == 'b'
 \c == 'c'
-type(\a) # type :: Char
+type.of(\a) # type :: Char
 # ranges from 0!cx to ffffffff!cx
 ```
 
@@ -333,10 +333,10 @@ type(\a) # type :: Char
 Literal strings are always ASCII (if they only contain ASCII letters) or UTF8 (if they contain characters that cannot be represented in ASCII)
 
 ```julia
-type("hello")
+type.of("hello")
 # type :: ASCIIString
 
-type("Güdrun")
+type.of("Güdrun")
 # type :: UTF8String
 
 str = "Cliver"
@@ -369,31 +369,31 @@ U\hi
 ```julia
 name = "Pascal"
 
-fmt@(name) "Hello, %s \n"
+fmt("Hello, %s \n", name)
 # returns Hello, Pascal
 
 # d for integers
-fmt@(1!e ^ 5) "%d\n" # 100000
+fmt("%d\n", 1!e ^ 5) # 100000
 
 	
 # f = float format, rounded if needed
-fmt@(7.35679) "x = %0.3f\n" # 7.357
+fmt("x = %0.3f\n", 7.35679) # x = 7.357
 
 # or to create another string
-str = fmt@(7.35679) "%0.3f" # 7.357
+str = fmt("%0.3f", 7.35679) # 7.357
 
 
 # e = scientific format with e
-fmt@(7.35679) "%0.6e\n" # 7.356790e+00
+fmt("%0.6e\n", 7.35679) # 7.356790e+00
 
 # c = for characters
-fmt@('α') "output: %c\n" # output α
+fmt("output: %c\n", 'α') # output α
 
 # s for strings
-fmt@("I like Cliver") "%s\n"
+fmt("%s\n", "I like Cliver")
 
 # right justify
-fmt@("text right justified!") "%50s\n"
+fmt("%50s\n", "text right justified!")
 
 ```
 
