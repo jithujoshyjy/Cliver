@@ -271,7 +271,7 @@ a -<< b # bitwise left shift
 ```
 
 
-#### Rational and complex numbers
+#### Fractional and complex numbers
 
 ##### Complex numbers
 
@@ -283,7 +283,7 @@ a -<< b # bitwise left shift
 
 It is a parametric type
 ```julia
-type(3 + 5!im) # type :: Complex(Int64, Int64)
+type.of(3 + 5!im) # type :: Complex(Int64, Int64)
 ```
 
 also
@@ -293,17 +293,17 @@ cp.real # 3
 cp.imag # 5
 ```
 
-#### Rational numbers
+#### Fractional numbers
 
 ```julia
 3//4
 1//2
 1//4
  
-type(1//2) # type :: Rational(Int64, Int64)
+type.is(type :: Fractional(Int64, Int64), 1//2) # True
  
 # also
-ra = Rational(1, 2) # 1//2
+ra = Fractional(1, 2) # 1//2
 
 ra.numer # 1
 ra.denom # 2
