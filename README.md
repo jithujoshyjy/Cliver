@@ -457,7 +457,7 @@ ra = 1 to Infinity # same as (1, 2) to Infinity
 * Arrays are immutable by default. There exists a mutable counterpart Array!
 
 ```julia
-var :: Array(Int).{ length: 4 }
+var :: Array(Int).{ length = 4 }
 arr = [1, 2, 3, 4]
 
 arr[1] # 1
@@ -469,7 +469,7 @@ arr[1 to 3] # [1, 2, 3]
 
 arr[5] = 5 # Error
 
-var :: Array!(Int).{ length: 4 }
+var :: Array!(Int).{ length = 4 }
 arr! = [1, 2, 3, 4]!
 
 arr![5] = 5 # 5
@@ -583,7 +583,7 @@ trait!.add(
 > matrix is immutable and there's no mutable counterpart for it.
 
 ```julia
-var :: Matrix(Int).{ shape: 3//3 }
+var :: Matrix(Int).{ shape = 3//3 }
 matrix = [
 	1, 2, 3;
 	4, 5, 6;
@@ -875,10 +875,10 @@ type Person' = Object(Human, Mammal, Student).{
     id :: Hex(Int),
     job :: String,
     lives_in :: String,
-    fun greet, farewell :: ...(String -> Void),
+    greet, farewell :: ...(String -> Void),
     _salary :: Int,
-    fun salary :: Getter(Int),
-    fun salary :: Setter(Int -> Void),
+    salary :: Getter(Int),
+    salary :: Setter(Int -> Void),
     _handleDeletion :: EventData -> Void,
     macro :: Macro(MetaData -> Void),
 }
@@ -995,7 +995,7 @@ var obj = @Object {
     end
 }
 
-type(obj) # type :: Object
+type.of(obj) # type :: Object
 ```
 
 #### Control Flow
@@ -1169,11 +1169,7 @@ type.subs(type :: Int64)
 
 Concrete types have no subtypes and might only have abstract types as their supertypes.
 ```julia
-type ImConcreteType(a) :: ImAbstractType = {
-    fun(Int, a)
-}
-
-data { ImConcreteType } = ImConcreteType(Type)
+type ImConcreteType(a) :: ImAbstractType = ImConcreteType(Int, a)
 ```
 
 An abstract type (such as Number and Real) is only a name that groups multiple subtypes together, but it can be used as a type annotation or used as a type in array literals.
@@ -1185,12 +1181,7 @@ An abstract type (such as Number and Real) is only a name that groups multiple s
 
 ```julia
 
-type Point :: Cardinal = {
-    fun(Float64, Float64, Float64) |
-    fun(x: Float64, y: Float64, z: Float64)
-}
-
-data { Point } = Point
+type Point :: Cardinal = Point(Float64, Float64, Float64) | Point(x: Float64, y: Float64, z: Float64)
 
 var p1 = Point(1, 2, 3)
 # (p1.1, p1.2, p1.3) == (1, 2, 3)
@@ -1256,10 +1247,10 @@ var e1 = Expr(\call, ((*), 3, 4))
 
 
 var a = 4
-expr :: do
+stmt :: $do
     var b = 1
-    var e5 = expr :: ${a} + b
-end # expr :: 4 + b
+    var e5 = ${a} + b
+end # stmt :: var e5 = 4 + b
 ```
 
 #### Defining Macros
@@ -1412,7 +1403,7 @@ Shell.run(cmd)
 #### Calling C and FORTRAN
 
 ```julia
-var lang = FFI.C(val(\getenv, "libc"), type :: Ptr(Uint8), val(type :: Ptr(Uint8)), "LANGUAGE")
+var lang = FFI.C(val(\getenv, "libc"), type :: Ptr(Uint8), type :: Ptr(Uint8), "LANGUAGE")
 ```
 
 FFI - Foreign Function Interface
