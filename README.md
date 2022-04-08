@@ -961,7 +961,7 @@ end
 #### Object
 
 ```julia
-var :: Object(Person)
+var :: Person
 person = Person("John", 100, ["a", "bb", "ccc"])
 
 person.greet("hello") # hello from John
