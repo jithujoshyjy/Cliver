@@ -569,11 +569,11 @@ trait(1, 2, 3) # 6
 
 (type :: Infer -> Infer) in trait # True
 
-var trait! = @Trait {
+var trait! = @Trait! {
     a :: Int -> a,
     (b, c) -> a * b,
     (...d) -> (+)(...d),
-}!
+}
 
 trait!.add(
     c  -> print("closed"), type :: Char -> Infer)
@@ -753,7 +753,7 @@ end
 var pipeline = 5
     `` square
     `` root
-    `` power(val, ?)
+    `` power(y, ?)
     `` x -> sin(x)
     `` x -> (1 + x)
     ?? e -> print(e)
@@ -763,7 +763,7 @@ var pipeline = 5
 pipeline = 5 as arg
     `` square(arg)
     `` root(arg)
-    `` power(val, arg)
+    `` power(y, arg)
     `` sin(arg)
     `` 1 + arg
     ?? e -> print(e)
