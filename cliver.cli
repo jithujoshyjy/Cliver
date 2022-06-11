@@ -1,0 +1,1310 @@
+##############################
+######### Import/Export ##########
+##############################
+
+# native package
+import pkg :: (Collection, Crypto, FileSys)
+import stdin, stdout, fmt from pkg :: IO
+
+# registered package
+import pkg :: \UserFiles
+import pkg :: \Commands\Configs
+import ... from pkg :: WebSocket
+
+# file structure
+import "./dir/src/userfiles1.cli"
+import "./dir/src/userfiles2.cli" as Abc
+import ... from "./dir/src/userfiles4.cli", "./dir/src/userfiles5.cli"
+
+##############################
+### Variables, Types, and Operations ###
+##############################
+
+var x :: Int
+x = 5
+
+var :: String
+y = "hi"
+
+
+# values
+
+val :: Array
+z = [ 4, 5, 6, 7 ]
+
+
+#### Comments ####
+
+# single line comment
+
+#=
+	multi-line
+	comments
+=#
+
+
+#### Types ####
+
+#=
+	* Maybe
+	* Mustbe
+	* Boolean
+	* Number:
+		Real:
+			Rational:
+				Bin, Oct, Hex, Exp
+				Int:
+					Int8, Int16, Int32, Int64, Int128,
+				Uint:
+					Uint8, Uint16, Uint32, Uint64, Uint128,
+				Float:
+					Float16, Float32, Float64, Float128,
+				Ufloat:
+					Ufloat16, Ufloat32, Ufloat64, Ufloat128,
+				BigInt,
+				BigFloat
+			Irrational:
+				NaN,
+				Infinites,
+				Infinity,
+		AbstractComplex
+			Complex,
+			Imaginary,
+	* AbstractChar:
+		Char,
+		ASCIIChar,
+		UnicodeChar,
+	* AbstractString:
+		String,
+		ASCIIString,
+		UnicodeString,
+		Byte,
+		Symbol,
+	* URef
+	* AbstractExpression:
+		RegExp,
+		GramExp,
+		BinarySyntaxTree,
+	* AbstractRange:
+		Range,
+		NumericRange,
+		UnicodeRange,
+	* AbstractCollection:
+		Array,
+		Map,
+		Set, 
+		Trait,
+		Matrix,
+		Tuple, NamedTuple,
+	* AbstractFunction:
+		Function:
+			GenericFunction,
+			UnitFunction,
+			AnonFunction,
+		Constructor,
+		Generator,
+		Macro
+	* Object
+=#
+# there exists mutable versions of many of these types suffixed with !
+
+var q = "hello"
+var r = 0
+var s = True
+
+type.of(2 + 3) # type :: Int64
+
+type.is(type :: String, "abc") # True
+
+
+#### Maybe ####
+
+val may1 :: Number? = [1, 2, 3].indexOf(2)
+# same as may1 :: Maybe(Number)
+print(may1)
+# ValueError: encountered an unattended Maybe value
+print(may1 || NaN) # 2
+# same as
+print(alt@(NaN) may1) # 2
+# same as
+print(may1 ?? x -> NaN) # 2
+
+var :: Int?
+may2 = Just(1)
+may2 = None
+
+
+#### Mustbe ####
+
+# the values associated with Mustbe type must be known at the compile time
+
+var must1 :: Mustbe(String)
+must1 = @literal "Hello"
+type.of(must1) # Mustbe(String)
+
+var must2 :: Mustbe(Async(String))
+must2 = @apparent await read("say something", stdin)
+# Error
+
+var must3 :: Mustbe(Maybe(Int))
+must3 = @literal Just(5)
+# Error
+
+
+#### Integers - type :: Int ####
+
+# ranges from Int8 to Int128
+# also
+# ranges from Uint8 to Uint128
+
+var :: Int16
+i16 = -123
+
+var :: Uint16
+ui16 = 123
+
+type.max(type :: Int)
+# 9223372036854775807
+
+type.min(type :: Int)
+# -9223372036854775807
+
+# formats
+# 5cffa!x	127!o	10011!b
+
+# Arbitrary Precision Integers
+
+var :: BigInt
+bInt1 = BigInt(1234)
+
+var :: BigInt
+bInt2 = 1234!n
+
+
+#### Floats - type :: Float ####
+
+# Floating point numbers follow the IEEE 754 standard
+
+# ranges from Float16 to Float128
+# also
+# ranges from Ufloat16 to Ufloat128
+
+var :: Float16
+f16 = -123.456
+
+var :: Ufloat16
+uf16 = 123.456
+
+# Arbitrary Precision Floats
+
+var :: BigFloat
+bFlt1 = BigFloat(1234.543)
+
+var :: BigFloat
+bFlt2 = 1234.543!n
+
+# Infinity and -Infinity for infinity, NaN is used for "not a number", Infinites and -Infinites for infinitesimals
+
+
+#### Elementary mathematical functions and operations ####
+
+Math.round(123.7568) # 124
+Math.sqrt(4) # 2
+Math.cbrt(9) # 3
+Math.exp(1) # 1
+Math.log(10) # 1
+Math.sin(60) # 0.567
+Math.cos(30) # 0.345
+Math.tan(0) # 1
+# and many more...
+
+# Chained assignments
+
+var a, b, c, d
+a = b = c = d = 1
+
+a = 1; b = 2; c = 3; d = 4
+
+(a, b) = (b, a) # now a is 2 and b is 1
+
+c = [ 0, 1, 2, 3, 4 ]
+[ a, b ] = c
+
+c = { \v: 0, \w: 1, 'x': 2, 'y': 3, 'z': 4 }
+{ v, w } = c
+# but can't { x, y, z } = c
+
+
+# Boolean operators
+
+var t = True
+var f = False
+
+t && t # True
+t || f # True
+!t # False
+
+# Bitwise operators
+
+a -& b # bitwise AND
+a -| b # bitwise OR
+-!c # bitwise NOT
+a -^ b # bitwise XOR
+a ->> b # bitwise right shift
+a -<< b # bitwise left shift
+
+
+#### Rational and Complex numbers ####
+
+# Complex numbers
+3 + 5!im
+0 + -2!im
+-1 + 0!im
+
+# It is a parametric type
+type.of(3 + 5!im) # type :: Complex(Int64, Int64)
+
+# also
+cp = Complex(3, 5) # 3 + 5!im
+cp.real # 3
+cp.imag # 5
+
+# Rational numbers
+ 
+ 3//4
+ 1//2
+ 1//4
+ 
+ type.of(1//2) # type :: Rational(Int64, Int64)
+ 
+ # also
+ra = Rational(1, 2) # 1//2
+
+ra.numer # 1
+ra.denom # 2
+
+#### Characters ####
+
+\a == 'a'
+\b == 'b'
+\c == 'c'
+type.of(\a) # type :: Char
+# ranges from 0!cx to ffffffff!cx
+
+#### Strings ####
+
+"Hi"
+\greet
+
+''
+double single quote string
+''
+
+"""
+	multiline double quote string
+"""
+
+#=
+	Literal strings are always ASCII (if they only contain ASCII letters) or UTF8 (if they contain characters that cannot be represented in ASCII)
+=#
+
+type.of("hello")
+# type :: ASCIIString
+
+type.of("Güdrun")
+# type :: UTF8String
+
+str = "Cliver"
+str[3 to 5] # ive
+
+greet = "hello"
+world = "earth"
+strIntrop = f"$greet {world + "!"}"
+
+greet + " " + world # hello world
+"hello" " " "world" # hello world
+
+# Symbols
+\hello
+\hi
+
+# URef
+
+U\hello
+U\hi
+
+
+#### Formatting numbers and strings ####
+
+name = "Pascal"
+
+fmt@(name) "Hello, %s \n"
+# returns Hello, Pascal
+
+# d for integers
+fmt@(1!e ^ 5) "%d\n" # 100000
+
+	
+# f = float format, rounded if needed
+fmt@(7.35679) "x = %0.3f\n" # 7.357
+
+# or to create another string
+str = fmt@(7.35679) "%0.3f" # 7.357
+
+
+# e = scientific format with e
+fmt@(7.35679) "%0.6e\n" # 7.356790e+00
+
+# c = for characters
+fmt@('α') "output: %c\n" # output α
+
+# s for strings
+fmt@("I like Cliver") "%s\n"
+
+# right justify
+fmt@("text right justified!") "%50s\n"
+
+
+#### Regular expressions ####
+
+var :: RegExp
+regexp = re"(h | y) ellow?""gims"
+# same as re"(h | y) ellow?".flags("gims")
+# re@("gims") "(h | y) ellow?"
+
+var :: Maybe(RegExpMatch)
+test1 = regexp.match("hello"),
+test2 = regexp.match("yellow")
+
+print(test1 || test2 || "no match found")
+
+
+#### Gramatic Expressions ####
+
+x = 124
+var gramexp = gr"""
+	-- this is a comment
+	$ignore _space
+	$import "x"
+	$consider _case -- case sensitive
+	addition ::= NUMBER PLUS NUMBER
+	PLUS ::= "+"
+	NUMBER ::= \-? \d+ (\.\d+)? | (\-? \d+)? \.\d+
+	$return addition
+""".flags("gims")
+gramexp(expr :: (1 + 2)).match
+gramexp("1 + 2").match 
+
+
+#### Ranges and arrays ####
+
+var :: Range
+ra = (1, 2) to 20
+
+var :: Range(Number)
+nra = 2 to 20
+
+var :: Range(Char)
+cra = \a to \z
+
+ra = (1, 2) to 10
+
+ra = 1 to 10 # same as (1, 2) to 10
+
+ra = 1 to Infinity # same as (1, 2) to Infinity
+# same as (1 ; step := 1) to Infinity
+
+
+#### Array ####
+# Cliver arrays start indexing from 1
+# Arrays are immutable by default. There exists a mutable counterpart Array!
+
+var :: Array(Int).{ length = 4 }
+arr = [1, 2, 3, 4]
+
+arr[1] # 1
+# arr.1
+
+arr.length # 4
+
+arr[1 to 3] # [1, 2, 3]
+
+arr[5] = 5 # Error
+
+var :: Array!(Int) .{length = 4 }
+arr! = [1, 2, 3, 4]!
+
+arr![5] = 5 # 5
+
+#=
+There is also:
+	Array.drop(index) # gets any index
+	Array.first() # gets first index
+	Array.last() # gets last index
+	
+	Array.add(index, item) # sets at any index
+	Array.first(item) # sets at first index
+	Array.last(item) # sets at last index
+	
+	# the above are all immutable methods, meaning they don't modify their parent array
+	# mutable methods by the same name also exist for mutable arrays - drop!, add!, first!, last!, etc.
+=#
+
+#### Map, filter, and array comprehensions
+####
+
+var :: Array(Int)
+primes = [2, 3, 5, 7, 11]
+
+primes.map(x -> x * 2) # [4, 6, 10, 14, 22]
+# same as
+
+primes.map(fun(x)) do
+	x * 2
+end
+
+
+
+primes.filter(x -> x % 2 == 0) # [2]
+
+[ for x in 1 to 10: x ]
+# [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+
+#### Other Collection Types ####
+
+# Set
+# sets are immutable and there're no mutable counterparts for them.
+
+var :: Set(Int)
+set = { 1, 2, 3, 4 }
+
+set[1] # 1
+# set.1
+
+2 in set # True
+
+
+# Map
+# maps are immutable by default. However there exists a mutable counterpart Map!
+
+
+var :: Map(Int | String: String)
+# same as Map(Pair(Int | String, String))
+map = {
+	\wow: "how",
+	"hello": "hai",
+	5: "bye",
+	(3: "lie")
+}
+
+5 in map # False
+# means (5: 5) which isn't present
+(5: _) in map # True
+(5: "bye") in map # True
+
+map["hello"] # "hai"
+
+
+# Trait
+# traits are immutable by default. However there exists a mutable counterpart Trait!
+
+var :: Trait.{
+	fun :: Int -> Int,
+	fun :: (Int, Int) -> Int,
+	fun :: ...Int -> Int
+}
+
+trait = @Trait {
+	a -> a,
+	(b, c) -> a * b,
+	(...d) -> (+)(...d),
+}
+
+trait(1) # 1
+trait(1, 2) # 2
+trait(1, 2, 3) # 6
+
+(type :: Infer -> Infer) in trait # True
+
+var trait! = @Trait {
+	a -> a,
+	(b, c) -> a * b,
+	(...d) -> (+)(...d),
+}!
+
+trait!.add({
+	"c" -> print("closed")
+})
+
+
+# Matrix
+# matrix is immutable and there's no mutable counterpart for it.
+
+var :: Matrix(Int) .{ shape = 3//3 }
+matrix = [
+	1, 2, 3;
+	4, 5, 6;
+	7, 8, 9;
+]
+
+matrix[1//2] # 2
+
+
+# Tuple
+# tuple is immutable and there's no mutable counterpart for it.
+
+var :: Tuple(Int, String, Boolean, Float)
+tuple1 = (1, "hi", True, 4.5)
+# same as
+# tuple1 = val(1, "hi", True, 4.5)
+
+tuple1[1] # 1
+# tuple1.1
+
+
+# NamedTuple
+# it is immutable and there's no mutable counterpart for it.
+
+var :: NamedTuple(Int, String, Boolean; Int, Char)
+ntuple1 = var(_, _, _; a, b)
+# _ specifies a default value
+
+var tuple2 = ntuple1(1, "hi", True; a := 7, b := 'b')
+
+print(tuple2.1, tuple2.b) # 1, 'b'
+
+
+#### Dates and times ####
+
+var initial = Time.elapsed()
+# --------------------------
+# long computation
+# ---------------------------
+var final = Time.elapsed()
+var time_elapsed = final - initial
+print(f"Time elapsed: $time_elapsed")
+
+Time.now() # "10:30:67 22/08/2014"
+Time.now(\clockAt) # 10:30:67
+Time.now(\hour) # 10
+Time.now(\minute) # 30
+Time.now(\second) # 67
+
+Time.now(\date) # 22/08/2014
+Time.now(\day) # 22
+Time.now(\month) # 08
+Time.now(\year) # 2014
+
+Time.sleep(500)
+Time.setImmediate(fun) do  smt() end
+Time.setInterval(1000, fun) do  smt() end
+Time.setTimeout(2000, fun) do  smt() end
+
+
+##############################
+########### Functions ############
+##############################
+
+#### Defining functions ####
+
+fun :: String -> Infer
+greet(name)
+	print("hello " + name)
+end
+
+fun greet(name): print("hello " + name)
+
+@call
+fun greet()
+	print("greetings!")
+end
+
+call@(99)
+fun(age)
+	age + 1
+end
+
+### Optional and keyword arguments ####
+
+fun :: (Int, Int) -> Int
+add(a, b := 10): a + b
+
+fun :: (Int, Int ; Int, Int) -> Int
+add(a, b := 10; c, d := 2):
+	(a + b) - (c * d)
+
+fun :: (...String ; ...String) -> IO
+add(...pos_args; ...named_args):
+	print(pos_args, named_args)
+
+
+#### Anonymous functions ####
+
+fun(x): print(x)
+
+# same as
+fun(x, y)
+	print(x)
+	print(y)
+end
+
+
+#### UnitFunctions
+
+() -> print("hello")
+
+x -> print(x)
+
+x -> do
+	print(x * 2)
+	print(x * 3)
+end
+
+
+#### IIFE ####
+
+(x -> print(x))("hello") # hello
+# same as
+
+call@("hello")
+x -> print(x) # hello
+
+
+(fun(x): print(x))("hello")
+# same as
+
+call@("hello")
+fun(x): print(x) # hello
+
+@call
+fun greet()
+	print("greetings")
+end
+
+
+#### Pipeline Operator ####
+
+var pipeline = 5
+	`` square
+	`` root
+	`` power(val, ?)
+	`` x -> sin(x)
+	`` x -> (1 + x)
+	?? e -> print(e)
+
+# same as
+
+pipeline = 5 as arg
+	`` square(arg)
+	`` root(arg)
+	`` power(val, arg)
+	`` sin(arg)
+	`` 1 + arg
+	?? e -> print(e)
+
+
+#### Error Dejection Operator ####
+
+fun err(e): type.of(e)
+
+var file = await FileSys.File("file-name.txt") ?? err
+
+var fileContent = await file.read() ?? err
+print(await fileContent)
+
+# same as
+
+file = try:
+		await FileSys.File("file-name.txt")
+	catch e: err(e)
+
+fileContent = try:
+		await file.read()
+	catch e: err(e)
+
+print(await fileContent)
+
+
+#### Generic functions and multiple dispatch ####
+
+fun greet(): print("hello")
+
+fun greet(name): print("hi ", name)
+
+fun greet(name, age):
+	print("hi ", age, " year old ", name)
+
+fun :: (Number, Number) -> Number
+add(num1, num2): num1 + num2
+
+fun :: (Number, String) -> Number
+add(num1, str1):
+	num1 + parse(type :: Int, str1)
+
+
+#### Generators ####
+
+fun :: Generator(() -> String, Char -> Int)
+generate<yield>()
+	print(fun.sent) # 'a'
+	yield 10
+	
+	print(fun.sent) # 'b'
+	yield 20
+	
+	print(fun.sent) # 'c'
+	yield 30
+	
+	print(fun.sent) # 'd'
+	yield 40
+	
+	print(fun.sent) # 'e'
+	return "string value"
+end
+
+generate()
+	..next('a') # 10
+	..next('b') # 20
+	..next('c') # 30
+	..next('d') # 40
+	..next('e') # "string value"
+	..next('f') # (end)
+# when done, it returns the (end) operator
+
+for n in generate():	print(n)
+
+################################## Object Oriented Programming ####
+##############################
+
+#### Constructor Functions ####
+
+type Person = Object(Human, Mammal, Student)
+
+fun :: Constructor((String, String, String) -> Person)
+
+Person<self>(var name, var age, var address)
+
+	import ... from Mammal(215, "bye"), Human(125, "hi"), Student(512, "yay")
+	
+	var date := Time.now()
+	var id := 123ffce!x
+	# same as
+	# self.date = Time.now()
+	# self.id = 123ffce!x
+	
+	Person.mindset = "neutral"
+	
+	@@where
+	
+	# var date, id
+	
+	var job = "programmer"
+	
+	var lives_in = "India"
+	
+	fun greet(word)
+		print(f"$word from {self.name}")
+	end
+	
+	fun farewell(word)
+		print(f"$word from {self.name}")
+	end
+	
+	fun salary<accessor>(default := 3000)
+		@@where
+		fun get(value)
+			value -= 5
+		end
+		fun set(value)
+			if value < 50 ^ 10
+				value
+			else
+				throw BoundError("")
+			end
+		end
+	end
+	
+	onevent@(\delete)
+	fun _handleDeletion(evt)
+		# event handler logic
+	end
+	
+	fun _macc<meta>()
+		# macro definition
+	end
+end
+
+fun Person<static>()
+	# destructor logic
+	@@where
+	var mindset = "positive"
+
+	fun getMood()
+		if mindset == "positive"
+			print("happy")
+		elseif mindset == "neutral"
+			print("pleasant")
+		else
+			print("sad")
+		end
+	end
+
+end
+
+#### AsyncFunction ####
+
+fun :: AsyncFunction(String -> String)
+@async sayHello(word)
+	var name = FileSys.File("/file.txt").read()
+	var greet = await name + word
+	return await greet
+end
+
+
+#### Object ####
+
+var :: Object(Person)
+person = Person("John", 100, ["a", "bb", "ccc"])
+
+person.greet("hello") # hello from John
+person.getMood() # pleasant
+Person.getMood() # happy
+
+print(person.salary) # 30000
+person.salary = 40000
+print(person.salary) # 40000
+
+# Cascade Notation
+
+person
+	..name = "Jack" # Jack
+	..greet("hello") # hello from Jack
+	..getMood() # pleasant	
+
+# object literal
+var obj = @Object {
+	var color = "red"
+	fun fill()
+		# implementation logic
+	end
+	fun stroke()
+		# implementation logic
+	end
+}
+
+type.of(obj) # type :: Object
+
+
+####################################### Control Flow ###########
+##############################
+
+#### Conditional evaluation ####
+
+var num = 7
+
+if num > 10
+	print("greater")
+elseif num < 10
+	print("lesser")
+else
+	print("equals")
+end
+
+# same as
+
+num = 7
+if num > 10
+	print("greater")
+elseif num < 10
+	print("lesser")
+else
+	print("equals")
+end
+	
+var sign = if num >= 0: 1 else: -1
+
+var x = 7
+var y = if case x:
+	1 := "sunday"
+	2 := "monday"
+	3 := "tuesday"
+	4 := "wednesday"
+	5 := "thursday"
+	6 := "friday"
+	7 := "saturday"
+	8 | 9 | 10 := "hello Martian!"
+else: "invalid"
+
+
+print(y) # "saturday"
+
+
+#### The for loop ####
+
+x = 1
+for x < 100
+	print(x)
+end
+
+for x < 100
+	print(x)
+done s
+	print(x ^ 2)
+end
+
+for(x := 1; x < 10; x += 1)
+	print(x)
+end
+
+arr = [1, 2, 3, 4, 5, 6, 7]
+for (k: v) in arr.pairs
+	print(v)
+end
+
+for v in 1 to 10
+	print(v)
+end
+
+# same as
+
+for v in 1 to 10: print(v)
+
+
+#### The break and continue statements ####
+
+for x <= 100
+	if x % 5 == 0
+		continue
+	elseif x == 77
+		break
+	else
+		print(x ^ 2)
+	end
+end
+
+#### Exception handling ####
+
+var codes = ["AO", "ZD", "SG", "EZ"]
+if code in codes
+	print(f"This is an acceptable $code")
+else
+	throw DomainError()
+end
+
+var a = []
+try
+	a.drop!()
+catch ex :: DomainError
+	print(type.of(ex))
+catch ex :: IndexError | RangeError
+	print(type.of(ex))
+catch ex
+	print(type.of(ex))
+done s
+	print("finished")
+end
+
+
+################################ More on Types, Methods & Modules ##
+##############################
+
+#### Type signatures and conversions ####
+
+var :: Int16
+a = 16
+
+var :: String
+b = "hello"
+
+# same as
+var c :: String = "125"
+
+
+#### Type conversions and promotions ####
+
+type.parse(type :: Int16, 12) # 12
+type.parse(type :: Int32, "121") # 121
+
+type.promote(1, 2.5, 3//4) # 1.0, 2.5, 0.75
+type.promote(1.5, 1!im) # 1.5 + 0.0!im, 0.0 + 1.0!im
+
+type.promote(True, \c, 1.0) # 1.0, 99.0, 1.0
+
+
+#### The type hierarchy – subtypes and supertypes ####
+
+type.of(type :: Int64) # type :: Signed
+
+type.of(type :: Signed) # type :: Integer
+
+type.of(type :: Integer) # type :: Real
+
+type.of(type :: Real) # type :: Number
+
+type.of(type :: Number) # type :: Any
+
+type.of(type :: Any) # type :: DataType
+
+type.subs(type :: Integer)
+# type :: Any(BigInt, Bool, Char, Signed, Unsigned)
+
+type.subs(type :: Signed)
+# type :: Any(Int128, Int16, Int32, Int64, Int8)
+
+type.subs(type :: Int64)
+# type :: Null
+
+
+#### Concrete and abstract types ####
+
+# An abstract type (such as Number and Real) is only a name that groups multiple subtypes together, but it can be used as a type annotation or used as a type in array literals.
+
+type ImAbstractType :: DataType
+
+# Concrete types have no subtypes and might only have abstract types as their supertypes.
+type ImConcreteType(a) :: ImAbstractType =>
+	ImConcreteType(Int, a)
+
+
+#### User-defined and composite types ####
+
+type Cardinal :: DataType
+type Point :: Cardinal =>
+	Point(Float64, Float64, Float64),
+	Point(x := Float64, y := Float64, z := Float64)
+
+var p1 = Point(1, 2, 3)
+# (p1.1, p1.2, p1.3) == (1, 2, 3)
+
+var p2 = Point(x := 1, y := 2, z := 3)
+# (p2.x, p2.y, p2.z) == (1, 2, 3)
+
+#### Constrained Types ####
+
+# a type constrain must evaluate to a boolean
+
+# compile time constrains - must be immutable and pure
+val :: String .x -> x in ["hello", "hi", "howdy"]
+consT1 = "hi"
+
+# runtime constrains - may be mutable and impure
+val :: Array(Int) .{ x -> x.every(e -> isPrime(e)) }!
+consT2 = [1, 2, 3, 4]
+
+#### When are two values or objects equal or identical?
+####
+
+var i16 = 125 :: Int16
+var i64 = 125 :: Int64 # default
+var d = { 'a': 100, 'b': 200, 'c': 300 }
+
+i16 == i64 # True
+i16 is i64 # False
+i16 is! i64 # True
+
+var a = 50
+
+(_: 100) in d # True
+(\a: _) in d # True
+(\a: 100) in d # True
+
+(_: 100) in! d # False
+(\a: _) in! d # False
+(\a: 100) in! d # False
+
+
+###################################### Metaprogramming ########
+##############################
+
+#### Expressions and symbols ####
+
+expr :: (1 + 2)
+expr :: do
+	var a = 5
+	var b = 2
+	a + b
+end
+
+
+#### Eval and interpolation ####
+
+var e1 = Expr(\call, ((*), 3, 4))
+ # expr :: ((*)(3, 4))
+
+
+var a = 4
+expr :: do
+	var b = 1
+	var e5 = expr :: a + b
+end # expr :: 4 + b
+
+
+#### Defining macros ####
+
+# Macro takes the input expressions and returns the modified expressions at parse time
+
+fun macint<meta>()
+	expr :: do
+		print("start")
+		${ meta.eval() }
+		print("after")
+	end
+end
+
+@macint print("Where am I?")
+#=
+start
+Where am I?
+after
+=#
+
+
+##############################
+#I/O, Networking, and Parallel Computing#
+##############################
+
+#### Basic input and output ####
+
+#### Channels ####
+
+var :: Channel(String)
+chan1 = Channel(\server; default := "", capacity := 4)
+# a channel can be a
+# \sender, \receiver or \server
+# \server is the default
+
+chan1.capacity # 4
+chan1.queued # 0
+
+@async
+fun channeler1(ch)
+	print(~ch)
+end
+
+await channeler1(chan1)
+chan1 <~ "hello world!"
+# prints "hello world!"
+
+chan1.close()
+
+@async
+fun channeler2(ch)
+	for(v := 1; v <= 4; v +=1)
+		ch <~ "hello world!"
+	end
+	ch.close()
+end
+
+var chan2 = Channel()
+
+await channeler2(chan2)
+
+for True
+    var res = ~chan1
+	if res is (end)
+		print("Channel Closed")
+		break
+	end
+    print("Channel Open: ", res)
+end
+
+var chan3 = Channel(capacity := 4)
+
+@async do
+	chan3 <~ "first"
+	chan3 <~ "second"
+	chan3 <~ "third"
+	chan3 <~ "fourth"
+	chan3.close()
+end
+
+for res in chan3:	print(res)
+
+
+# Cliver IO is stream-oriented
+# Stream is the Fundamental Stream Type
+# IO is its subtype
+
+var stream = IO.stdin
+for line in stream.lines:
+	print(f"Found $line")
+
+var file = File("example.dat", "r")
+
+for line in file.lines
+	print(line)
+done m
+	file.close()
+end
+
+#### TCP sockets and servers ####
+
+var server = HTTP.serve({ \port: 8080 })
+
+@async
+for req in server
+	req.respond({ \body: "Hello World\n" })
+end
+
+
+#### Parallel operations and computing ####
+
+for pid in workers()
+	# do something with each process (pid = process id)
+
+end
+
+@parallel
+for i in 1 to 100000
+	arr[i] = i
+end
+
+
+################################### Running External Programs #####
+##############################
+
+#### Running shell commands ####
+
+Shell.pwd() # "c://test"
+Shell.cd("c://test//week1")
+Shell.ls()
+
+var cmd = "echo Cliver is clever"
+Shell.run(cmd) # returns Cliver is clever
+
+Shell.run("date")
+# Sun Oct 12 09:44:50 GMT 2014
+
+cmd = r"cat file1.txt" # raw string
+
+Shell.run(cmd)
+# prints the contents of file1.txt
+
+#### Calling C and FORTRAN ####
+
+var lang = FFI.C(val(\getenv, "libc"), type :: Ptr(Uint8), val(type :: Ptr(Uint8)), "LANGUAGE")
+
+#=
+FFI - Foreign Function Interface
+In general, C function takes the following arguments:
+
+	A (\function, "library") tuple with the name of the C function (here, getenv) is used as a symbol, and the library name (here, libc) as a string
+	The return type (here, type :: Ptr(Uint8)), which can be any bitstype, or type :: Ptr
+
+	A tuple of types of the input arguments (here, (type :: Ptr(Uint8)), note the tuple)
+
+	The actual arguments if there are any (here, "LANGUAGE")
+=#
+
+#### Calling Python ####
+
+FFI.Python.eval("10*10") # 100
+
+@FFI.pyimport "math"
+math.sin(math.pi / 2) # 1.0
+
+#### Calling JavaScript ####
+
+FFI.JavaScript.eval("10*10") # 100
+FFI.JavaScript.eval("Math.PI * 2") # 6.2857
+ 
