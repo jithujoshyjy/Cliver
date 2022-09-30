@@ -2,17 +2,16 @@
 
 ```julia
 # native package
-import pkg :: (Collection, Crypto, FileSys)
-import stdin, stdout, fmt from pkg :: IO
+import ... from Std\Collection, Std\Crypto, Std\FileSys
+import read, write, fmt from Std\IO
 
 # registered package
-import pkg :: \UserFiles
-import pkg :: \Commands\Configs
-import ... from pkg :: WebSocket
+import ... from MyPkg\UserFiles
+import ... from MyPkg\Commands\Configs
 
 # file structure
 import "./dir/src/userfiles1.cli"
-import "./dir/src/userfiles2.cli" as Abc
+import ...Abc from "./dir/src/userfiles2.cli"
 import ... from "./dir/src/userfiles4.cli", "./dir/src/userfiles5.cli"
 ```
 
@@ -57,55 +56,54 @@ z = [ 4, 5, 6, 7 ]
     	* Rational:<br/>
 			* Bin, Oct, Hex, Exp<br/>
 			* Int:<br/>
-				* Int8, Int16, Int32, Int64, Int128,<br/>
+				* Int8, Int16, Int32, Int64, Int128<br/>
 			* Uint:<br/>
-			    * Uint8, Uint16, Uint32, Uint64, Uint128,<br/>
+			    * Uint8, Uint16, Uint32, Uint64, Uint128<br/>
 			* Float:<br/>
-			     * Float16, Float32, Float64, Float128,<br/>
+			     * Float16, Float32, Float64, Float128<br/>
 			* Ufloat:<br/>
-			     * Ufloat16, Ufloat32, Ufloat64, Ufloat128,<br/>
-			* BigInt,<br/>
-			* BigFloat<br/>
+			     * Ufloat16, Ufloat32, Ufloat64, Ufloat128<br/>
+			* BigNumber:
+					BigInt, BigFloat<br/>
     	* Irrational:<br/>
 			* NaN,<br/>
 			* Infinites,<br/>
 			* Infinity,<br/>
-    * AbstractComplex<br/>
-		* Complex,<br/>
-		* Imaginary,<br/>
-* AbstractChar:<br/>
-    * Char,<br/>
+    * Complex:<br/>
+		* GenericComplex,<br/>
+		* Imaginary<br/>
+* Char:<br/>
     * ASCIIChar,<br/>
     * UnicodeChar,<br/>
-* AbstractString:<br/>
-    * String,<br/>
+    * SymbolicChar
+* String:<br/>
     * ASCIIString,<br/>
     * UnicodeString,<br/>
     * Byte,<br/>
-    * Symbol,<br/>
+    * Symbol<br/>
 * URef<br/>
 * AbstractExpression:<br/>
     * RegExp,<br/>
-    * GramExp,<br/>
-    * BinarySyntaxTree,<br/>
-* AbstractRange:<br/>
-    * Range,<br/>
+    * GramExp<br/>
+* Range:<br/>
     * NumericRange,<br/>
-    * UnicodeRange,<br/>
-* AbstractCollection:<br/>
+    * UnicodeRange<br/>
+* Collection:<br/>
     * Array,<br/>
     * Map,<br/>
     * Set,<br/>
     * Trait,<br/>
-    * Matrix,<br/>
-    * Tuple, NamedTuple,<br/>
-* AbstractFunction:<br/>
-    * Function:<br/>
-		* GenericFunction,<br/>
-		* UnitFunction,<br/>
-		* AnonFunction,<br/>
-    * Constructor,<br/>
-    * Generator,<br/>
+    * Matrix<br/>
+    * Tuple:
+      * AnonTuple,<br/>
+      * NamedTuple<br/>
+* Function:<br/>
+    * GenericFunction:<br/>
+      * NamedFunction,<br/>
+      * UnitFunction,<br/>
+      * AnonFunction<br/>
+    * Constructor<br/>
+    * Generator<br/>
     * Macro<br/>
 * Object<br/>
 > there exists mutable versions of many of these types suffixed with !
@@ -417,24 +415,17 @@ print(test1 || test2 || "no match found")
 ```julia
 x = 124
 var gramexp = gr"""
-    -- this is a comment
-    $ignore _space
-    $import "x"
-    $consider _case -- case sensitive
-    addition ::= NUMBER PLUS NUMBER
-    PLUS ::= "+"
-    NUMBER ::= \-? \d+ (\.\d+)? | (\-? \d+)? \.\d+
-    $return addition
+    addition = Operator(\() Number InfixOperator(\+) Number Operator(\))
 """.flags("gims")
-gramexp(expr :: (1 + 2)).match
-gramexp("1 + 2").match
+gramexp.match(expr :: (1 + 2)) # True
+gramexp.match("1 + 2") # False
 ```
 
 #### Ranges and Arrays
 
 ```julia
 var :: Range
-ra = (1, 2) to 20
+ra = (1, 1) to 20 # (first, step) to last
 
 var :: Range(Number)
 nra = 2 to 20
@@ -442,12 +433,11 @@ nra = 2 to 20
 var :: Range(Char)
 cra = \a to \z
 
-ra = (1, 2) to 10
+ra = (2, 2) to 10
 
 ra = 1 to 10 # same as (1, 2) to 10
 
-ra = 1 to Infinity # same as (1, 2) to Infinity
-# same as (1 ; step: 1) to Infinity
+ra = 1 to Infinity # same as (1, 1) to Infinity
 
 ```
 
@@ -457,7 +447,7 @@ ra = 1 to Infinity # same as (1, 2) to Infinity
 * Arrays are immutable by default. There exists a mutable counterpart Array!
 
 ```julia
-var :: Array(Int).{ length = 4 }
+var :: Array(10, Int)
 arr = [1, 2, 3, 4]
 
 arr[1] # 1
@@ -469,7 +459,7 @@ arr[1 to 3] # [1, 2, 3]
 
 arr[5] = 5 # Error
 
-var :: Array!(Int).{ length = 4 }
+var :: Array!(4, Int)
 arr! = [1, 2, 3, 4]!
 
 arr![5] = 5 # 5
@@ -554,10 +544,10 @@ map["hello"] # "hai"
 var :: Trait.{
     fun :: Int -> Int
     fun :: (Int, Int) -> Int
-    fun :: ...Int -> Int
+    fun :: (...Int) -> Int
 }
 
-trait = @Trait {
+trait = Trait.{
     a -> a,
     (b, c) -> a * b,
     (...d) -> (+)(...d),
@@ -569,7 +559,7 @@ trait(1, 2, 3) # 6
 
 (type :: Infer -> Infer) in trait # True
 
-var trait! = @Trait! {
+var trait! = Trait!.{
     a :: Int -> a,
     (b, c) -> a * b,
     (...d) -> (+)(...d),
@@ -688,6 +678,7 @@ add(...pos_args; ...named_args):
 
 #### Pure Functions
 > pure functions must not produce a side effect
+> They cannot nor contain any mutable operations / invocations that cause side-effects
 
 ```julia
 fun greet<pure>(x)
@@ -753,7 +744,7 @@ end
 var pipeline = 5
     `` square
     `` root
-    `` power(y, ?)
+    `` power(y, _)
     `` x -> sin(x)
     `` x -> (1 + x)
     ?? e -> print(e)
@@ -875,7 +866,7 @@ type Person' = Object(Human, Mammal, Student).{
     id :: Hex(Int),
     job :: String,
     lives_in :: String,
-    greet, farewell :: ...(String -> Void),
+    greet, farewell :: (String -> Void),
     _salary :: Int,
     salary :: Getter(Int),
     salary :: Setter(Int -> Void),
@@ -936,12 +927,12 @@ fun Person<static>()
 
     fun getMood()
         if mindset == "positive"
-	    print("happy")
-	elseif mindset == "neutral"
-	    print("pleasant")
-	else
-	    print("sad")
-	end
+	        print("happy")
+        elseif mindset == "neutral"
+            print("pleasant")
+        else
+            print("sad")
+        end
     end
 
 end
@@ -985,7 +976,7 @@ person
 #### Object Literal
 
 ```julia
-var obj = @Object {
+var obj = Object.{
     var color = "red"
     fun fill()
 	# implementation logic
@@ -1027,7 +1018,7 @@ end
 var sign = if num >= 0: 1 else: -1
 
 var x = 7
-var y = if case x:
+var y = match x
     case 1: "sunday"
     case 2: "monday"
     case 3: "tuesday"
@@ -1036,11 +1027,9 @@ var y = if case x:
     case 6: "friday"
     case 7: "saturday"
     case 8 | 9 | 10: "hello Martian!"
-else: "invalid"
-
+    case _: "invalid"
 
 print(y) # "saturday"
-
 ```
 
 #### The For loop
@@ -1082,9 +1071,9 @@ for x <= 100
     if x % 5 == 0
         continue
     elseif x == 77
-	break
+	    break
     else:
-	print(x ^ 2)
+	    print(x ^ 2)
 end
 ```
 
@@ -1134,10 +1123,10 @@ var c :: String = "125"
 type.parse(type :: Int16, 12) # 12
 type.parse(type :: Int32, "121") # 121
 
-type.promote(1, 2.5, 3//4) # 1.0, 2.5, 0.75
-type.promote(1.5, 1!im) # 1.5 + 0.0!im, 0.0 + 1.0!im
+type.promote(1, 2.5, 3//4) # (1.0, 2.5, 0.75)
+type.promote(1.5, 1!im) # (1.5 + 0.0!im, 0.0 + 1.0!im)
 
-type.promote(True, \c, 1.0) # 1.0, 99.0, 1.0
+type.promote(True, \c, 1.0) # (1.0, 99.0, 1.0)
 ```
 
 #### The type hierarchy – subtypes and supertypes
@@ -1170,11 +1159,12 @@ type.subs(type :: Int64)
 Concrete types have no subtypes and might only have abstract types as their supertypes.
 ```julia
 type ImConcreteType(a) :: ImAbstractType = ImConcreteType(Int, a)
+# every concrete type is a subtype of NamedTuple
 ```
 
 An abstract type (such as Number and Real) is only a name that groups multiple subtypes together, but it can be used as a type annotation or used as a type in array literals.
 ```julia
-    type Cardinal :: DataType
+type Cardinal :: DataType
 ```
 
 #### User Defined and Composite Types
@@ -1193,14 +1183,13 @@ var p2 = Point(x: 1, y: 2, z: 3)
 #### Constrained Types ####
 
 * a type constrain must evaluate to a boolean
-* compile time constrains - must be immutable and pure
-
 ```julia
-val :: String .{x -> x in ["hello", "hi", "howdy"]}
+# compile time constrains - must be immutable and pure
+val :: String .{ x -> x in ["hello", "hi", "howdy"] }
 consT1 = "hi"
 
-# runtime constrains - may be mutable and impure
-val :: Array(Int) .{x -> x.every(x -> isPrime(x))}!
+# runtime constrains - may be mutable and impure - available on mutable types only
+val :: Array!(Int) .{ x -> x.every(x -> isPrime(x)) }
 consT2 = [1, 2, 3, 4]
 ```
 
@@ -1244,7 +1233,6 @@ end
 ```julia
 var e1 = Expr(\call, ((*), 3, 4))
 # expr :: ((*)(3, 4))
-
 
 var a = 4
 stmt :: $do
@@ -1304,7 +1292,7 @@ chan1.close()
 @async
 fun channeler2(ch)
     for(v = 1; v <= 4; v +=1)
-	ch <~ "hello world!"
+	    ch <~ "hello world!"
     end
     ch.close()
 end
