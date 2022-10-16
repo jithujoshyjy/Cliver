@@ -215,12 +215,14 @@ You can create a new object containing the intrinsics of another one.
 val objA = Object.{
     var propA = value
     fun methodA()
+        # ...
     end
 }
 
 val objB = objA.{
     var propB = value
     fun methodB()
+        # ...
     end
 }
 ```
@@ -365,7 +367,7 @@ val arr = [for item in iterable: item]
 
 #### Error Handling Constructs
 
-There two main error handling constructs in Cliver and it is the try...catch and error pipeline operator.
+There are two main error handling constructs in Cliver and it is the try...catch and error pipeline operator.
 
 ##### Try-Catch construct
 It is used for both block level and inline error handling.
