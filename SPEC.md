@@ -181,9 +181,9 @@ end
 
 #### Static Constructors
 
-```julia
-
 The methods and properties of a static constructor is bound to the constructor rather than to the constructed objects.
+
+```julia
 
 fun CtorFunction<static>()
     # static constructor logic...
@@ -208,7 +208,7 @@ CtorFunctionB()
 
 ##### Object extend notation
 
-You can create a new object containing the intrincs of another one.
+You can create a new object containing the intrinsics of another one.
 
 ```julia
 # creating a new object from the StaticConstructor Object
