@@ -291,7 +291,7 @@ elseif condition:
 
 if condition
     # ...
-elseif condition:
+elseif condition
     # ...
 else:
     expression
