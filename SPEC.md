@@ -1,6 +1,6 @@
 ### Comments
 
-Single line comments in Cliver start with **#** and multiline comments are enclosed within **#=** **=#** pairs.
+Single line comments in Cliver start with `#` and multiline comments are enclosed within `#= =#` pairs.
 
 ### Import/Export
 
@@ -58,7 +58,7 @@ y = value
 
 ### Type Declaration
 
-There are a whole bunch of standard types and the type system is flexible enought for you to define your own types.
+There are a whole bunch of standard types and the type system is flexible enought to let you define your own types.
 
 ```julia
 # type alias
