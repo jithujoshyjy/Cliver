@@ -1420,3 +1420,45 @@ math.sin(math.pi / 2) # 1.0
 FFI.JavaScript.eval("10*10") # 100
 FFI.JavaScript.eval("Math.PI * 2") # 6.2857
 ```
+
+## Inspired by
+import syntax - JavaScript, PHP
+variable/type declaration - Kotlin, TypeScript
+typing syntax - TypeScript, Julia, Hakell, Ada
+comment syntax - Julia
+standard objects properties - Swift
+Maybe type - Haskell
+Mustbe type - Odin
+Type System - Haskell, Julia, TypeScript
+Strings - Python
+BigNumber - Java, JavaScript
+Complex Number - Julia
+pattern matching - JavaScript/TypeScript, JavaScript(ESNext), Python, Rust, Haskell
+Fractional Number - Julia, Haskell
+Symbol - Pascal
+RegExp - Python
+macro system - Julia
+Range - Haskell
+comprehension syntax - Python, Julia, Haskell
+external callback syntax - Julia, Elixir
+cascade notation - Dart
+Channel - Go
+control structures - Go, Julia, JavaScript
+Unit Function - Julia, Swift
+Do Expression - JavaScript(ESNext), Julia, Haskell
+Object literals/extended Object literals - JavaScript/TypeScript, C#, C++
+data structures - JavaScript/TypeScript, Python, C#, Rust, Julia
+function pipeline - Haskell, JavaScript(ESNext), F#, Haxe
+await syntax - JavaScript/TypeScript, Python, C#
+Generator - JavaScript/TypeScript, JavaScript(ESNext)
+Contructor - JavaScript/TypeScript, Python, Kotlin, Scala
+FFI - Julia
+Module System - Julia, JavaScript/TypeScript, Python, C#
+infix function application - Haskell
+tagged number - JavaScript(ESNext)
+tagged string/tagged symbols - JavaScript/TypeScript
+constrained types - Agda
+---
+not yet implemented
+effect system - Coq
+variable shadowing - Rust
