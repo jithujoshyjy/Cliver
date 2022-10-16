@@ -32,7 +32,7 @@ import A as B from "./filename.cli"
 
 ### Variables and Constants
 
-variables are declared with the **var** keyword and constants by the **val** keyword.
+variables are declared with the **var** keyword and constants by the **val** keyword. Semicolons are optional in Cliver.
 
 ```julia
 # without initial value
