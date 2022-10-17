@@ -427,9 +427,9 @@ val value = match expression
 There exists only one looping construct in Cliver. It has atleast 6 variants.<br/>
 The statement form of the for loop comes with a done block. It will execute when the loop ends.<br/>
 The status of loop after execution can be on of:<br/>
-1. "broke" - the loop was terminated with a break clause,
-2. "completed" - the looping was completed successfully and it ran atleast once,
-3. "never" - the loop never ran.
+1. `"broke"` - the loop was terminated with a break clause,
+2. `"completed"` - the looping was completed successfully and it ran atleast once,
+3. `"never"` - the loop never ran.
 
 ```julia
 # for statements
@@ -470,16 +470,16 @@ val arr = [for item in iterable: item]
 
 #### Error Handling Constructs
 
-There are two main error handling constructs in Cliver and it is the try...catch and error pipeline operator.
+There are two main error handling constructs in Cliver and it is the **try...catch** and **error pipeline** operator.
 
 ##### Try-Catch construct
 It is used for both block level and inline error handling.<br/>
 The statement form of the try...catch construct comes with a done block.<br/>
 It will execute after the execution of all try and catch blocks, regardless of the error.<br/>
 The status of error handling can be one of three:<br/>
-1. "caught" - there was an error and it was caught by a catch block,
-2. "uncaught" - the error was not caught or an uncaught error was thrown,
-3. "success" - the code ran without producing an error.
+1. `"caught"` - there was an error and it was caught by a catch block,
+2. `"uncaught"` - the error was not caught or an uncaught error was thrown,
+3. `"success"` - the code ran without producing an error.
 ```julia
 try
     # ...
@@ -601,7 +601,7 @@ Number is an abstract type containg many core number types.
 
 **Int**<br/>
 
-Eg: -1, -2, 0, 1, 2, 3, ...
+Eg: `-1, -2, 0, 1, 2, 3, ...`
 There's also a Uint counterpart.<br/>
 
 ```julia
@@ -613,7 +613,7 @@ type.sub(type :: Int)
 
 **Float**<br/>
 
-Eg: -2.0, -0.5, 1.0, 1.5, 10.99, ...<br/>
+Eg: `-2.0, -0.5, 1.0, 1.5, 10.99, ...`<br/>
 There's also a Ufloat counterpart.
 
 ```julia
@@ -626,8 +626,8 @@ type.sub(type :: Float)
 **BigNumber**<br/>
 
 This type represents arbitary precision Numbers.<br/>
-Eg: BigInt - 1!n, 2!n, -10000!n ...<br/>
-Eg: BigFloat - 1.2!n, -0.2!n, 11.5000!n ...<br/>
+Eg: BigInt - `1!n, 2!n, -10000!n ...`<br/>
+Eg: BigFloat - `1.2!n, -0.2!n, 11.5000!n ...`<br/>
 
 ```julia
 type BigNumber :: DataType
@@ -640,7 +640,7 @@ type.sub(type :: BigNumber)
 **Fractional**<br/>
 
 This type represents ratio or a fraction. This is the only concrete type in the subtypes of Rational.<br/>
-Eg: 1//2, 1//4, 3//4 ...<br/>
+Eg: `1//2, 1//4, 3//4 ...`<br/>
 
 ```julia
 val fr :: Fractional(Int, Int) = 1//6
@@ -658,7 +658,7 @@ type Irrational() = NaN | Infinites | Infinity
 ```
 
 **Complex Numbers**<br/>
-Eg: `1 + 2!im`, `1!im`, `2 - 3im`, ... <br/>
+Eg: `1 + 2!im, 1!im, 2 - 3im, ... `<br/>
 Unlike in mathematics, Complex is not a super type of Real rather they are sibling types in the type hierarchy.
 
 ###### Tagged Numbers
@@ -676,9 +676,9 @@ print(5!fact) # 120
 
 This data type represents either ASCII charactors or utf-8 unicode charactors.<br/>
 
-Eg: ASCIIChar - 'A', '7', '!', ...<br/>
-Eg: UnicodeChar - '🎉', 'Â', 'α', ...<br/>
-Eg: SymChar - \a, \B, \0, ...<br/>
+Eg: ASCIIChar - `'A', '7', '!', ...`<br/>
+Eg: UnicodeChar - `'🎉', 'Â', 'α', ...`<br/>
+Eg: SymChar - `\a, \B, \0, ...`<br/>
 
 ```julia
 type Char :: DataType
@@ -690,9 +690,9 @@ type.sub(type :: Char)
 
 String is an Array of Char values.
 
-Eg: ASCIIChar - "Abc", "$7ffG", "Ab*8", ...<br/>
-Eg: UnicodeChar - '🎉zzʑ', 'Âlp', 'α🕶ɜ', ...<br/>
-Eg: SymChar - \abC, \Bcd, \012FF, ...<br/>
+Eg: ASCIIChar - `"Abc", "$7ffG", "Ab*8", ...`<br/>
+Eg: UnicodeChar - `'🎉zzʑ', 'Âlp', 'α🕶ɜ', ...`<br/>
+Eg: SymChar - `\abC, \Bcd, \012FF, ...`<br/>
 
 ```julia
 type String :: Array
