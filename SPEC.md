@@ -4,7 +4,7 @@ Single line comments in Cliver start with `#` and multiline comments are enclose
 
 ### Naming Conventions
 
-In Cliver identifiers, start with an underscore (_) or a utf-8 letter and thereafter can contain letters, numbers, underscores, and any utf-8 alphanumeric characters. They may optionally end with an exclamation mark (!), followed optional by single quotes (')
+In Cliver identifiers, start with an underscore (_) or a utf-8 letter and thereafter can contain letters, numbers, underscores, and any utf-8 alphanumeric characters. They may end with an exclamation mark (!), followed optionally by single quotes (')
 
 ```julia
 # valid identifiers
@@ -15,6 +15,7 @@ val Abc, _D0ef, Ghi!, Jkl', Mno!''
 
 Cliver import syntax is inspired by JavaScript and TypeScript.<br/>
 Any identifier prefixed with underscore (_) is considered private and cannot be imported.<br/>
+These can only appear at the top of a scope.<br/>
 All other identifiers are exported implicitely.<br/>
 
 ```julia
@@ -89,8 +90,8 @@ type TypeCtor(a, b :: AbstractType, c :: ConcreteType) = a | DataCtorA | DataCto
 
 Abstract types have no values associated with them they are merely there for building the type hierarchy.<br/>
 But however they can have a structural type definition.<br/>
-An abstract type can inherit from other abstarct type.<br/>
-Subtyping is only possible with Abstract types. The root abstract type is the DataType.<br/>
+An abstract type can inherit from another abstarct type.<br/>
+Subtyping is only possible with Abstract types. The root abstract type is DataType.<br/>
 Concrete types have one or more data constructors associated with them. All data constructors are publically accessable values.
 ```julia
 # abstract type decalration
@@ -179,7 +180,7 @@ end
 # ...etc,.
 ```
 
-> If the types annotatations of a UnitFunction gets out of hand, consider switching to an AnonFunction.
+> If the type annotations of a UnitFunction gets out of hand, consider switching to an AnonFunction.
 
 ##### NamedFunctions
 
@@ -188,6 +189,29 @@ They are similar to AnonFunctions execpt they have a name.
 ```julia
 fun FunName()
     # ...
+end
+```
+
+##### Operators as Functions
+
+All operators in Cliver are just functions.<br/>
+They can be referenced like functions and can be passed around like any other value.
+```julia
+# operator referance as callback
+funName(argA, (+))
+funName(argA, (*))
+
+# operator invoked like a function
+(+)(1, 2, 3, 4, 5) # 15
+(*)(1, 2, 3, 4, 5) # 120
+```
+
+###### Do Expressions
+a do expression can contain any number of statements and/or expressions and returns the last value inside of it.
+```julia
+val item = do
+    # ...
+    value
 end
 ```
 
@@ -219,6 +243,23 @@ If a function accepts atleast 2 or optionally many arguments, then it can be cal
     fun add(...n): # ...
     print(1 `add` 2) # 3
     print(10 `add` 10.5) # 20.5
+```
+
+###### External Callback Syntax
+
+It is an alternative to the below approach.
+```julia
+# without external callback and using regular callback
+funName(argA, fun(...args)
+    # ...
+end)
+```
+
+```julia
+# with external callback syntax
+funName(argA, fun(...args)) do
+    # ...
+end
 ```
 
 ### Object Oriented Programming
@@ -489,7 +530,7 @@ end
 
 try
     # ...
-catch e :: Type:
+catch e: # This form doesn't support type annotation
     expression
 
 try
@@ -508,7 +549,7 @@ done status:
     expression
 ```
 
-There exists a **try-catch** expression which handles inline errors or handles errors thrown at the expression level. This form doesn't support annotation of the error parameter.
+There exists a **try-catch** expression which handles inline errors or handles errors thrown at the expression level. This form doesn't support annotating the error parameter.
 
 ```julia
 val someVal = try: expression catch e: expression
@@ -517,8 +558,41 @@ val someVal = try: expression catch e: expression
 ##### Error Pipeline Operator
 
 The error pipeline operator functions identically to the try-catch expression except it can also be used in function pipelines.
+
 ```julia
 val someVal = expression ?? callback
+```
+
+##### Use Statements
+
+These statements are used to enable and disable certain language features.
+These can only appear at the top of a scope.
+```julia
+use "linting: force semicolons", "!feature: variable shadowing"
+use "!typing: type inference"
+```
+
+##### Labels and As Expressions
+
+**Labels** are used in conjunction with break and continue clauses in loops and **as expressions** create associations between a value and an identifier. They both are similar in syntax and in a way functions similar to an assignment operation.
+
+```julia
+# Labels
+outer as for x in arr:
+    inner as for y in x:
+        if condition:
+            break outer
+
+# As expression
+if expression as identifier
+    print(identifier)
+end
+
+# As expressions are useful in anonymous functions since they could be used to enable recursion
+funName(fun()
+    # ...
+    identifier()
+end as identifier)
 ```
 
 #### Primitive Types
@@ -555,7 +629,7 @@ end
 
 It is simply a compiler constant.<br/>
 The possible values of this type are primitive literals and expressions yielding primitive values that can be infered at compile time.<br/>
-References and derieved types such as objects and arrays are not permitted. It has two data constructors: Literal and Apparent.
+References types or runtime types are not permitted. It has two data constructors: Literal and Apparent.
 
 ```julia
 type Mustbe(a) = Literal(a) | Apparent(a)
@@ -639,7 +713,7 @@ type.sub(type :: BigNumber)
 
 **Fractional**<br/>
 
-This type represents ratio or a fraction. This is the only concrete type in the subtypes of Rational.<br/>
+This type represents a ratio or a fraction. This is the only concrete type in the subtypes of Rational.<br/>
 Eg: `1//2, 1//4, 3//4 ...`<br/>
 
 ```julia
@@ -654,12 +728,26 @@ print(fr.numer, fr.denom) # Numerator(1) Denominator(6)
 There are 3 values for this type NaN, Infinites and Infinity.
 
 ```julia
-type Irrational() = NaN | Infinites | Infinity
+type Irrational() :: Real = NaN | Infinites | Infinity
 ```
 
 **Complex Numbers**<br/>
 Eg: `1 + 2!im, 1!im, 2 - 3im, ... `<br/>
 Unlike in mathematics, Complex is not a super type of Real rather they are sibling types in the type hierarchy.
+
+###### Numeric Notations
+
+**Base-2 - decimal**<br/>
+Eg: `101!b, 1100!b, -1011!b, ...`<br/>
+
+**Base-8 - octal**<br/>
+Eg: `347!o, 6534!o, -5260!o, ...`<br/>
+
+**Base-16 - hexadecimal**<br/>
+Eg: `x\ff460, x\bc461, x\20cae, ...`<br/>
+
+**Scientific Notation**<br/>
+Eg: `6.022!e ^ 23, 1.6!e ^ -35, -5.3!e ^ 4, ...`<br/>
 
 ###### Tagged Numbers
 
@@ -671,6 +759,11 @@ fact(n): n * fact(n - 1)
 
 print(5!fact) # 120
 ```
+
+###### Implicit Multiplication
+
+When multiplying a number with a identifier, you can omit the (*) sign and deal with multiplications in a mathematically accurate notation.<br/>
+Eg: `2x + 1, -3y(5 + 2), 2.25z, ...`
 
 ##### Char
 
