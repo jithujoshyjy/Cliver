@@ -14,6 +14,7 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
     const isNumber = (numStr: string) => (/^(?:(?:\d+(?:_?\d+)*|\d)?\.)?(?:\d+(?:_?\d+)*|\d)$/ug).test(numStr);
     const isNewline = (char: string) => (/[\r\n]/u).test(char);
     const isWhiteSpace = (char: string) => (/\s/u).test(char);
+    const isComment = (char: string) => char == '#';
 
     const keywords = [
         "done", "do", "fun", "var", "val", "type",
@@ -46,9 +47,9 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
             const startPos = pos;
             const parsedNum = parseNumber(char, i, pos);
 
-            if(!isNumber(parsedNum.res))
+            if (!isNumber(parsedNum.res))
                 throw new Error(`Unexpected token '${parsedNum.res}' on ${line}:${startPos}`);
-            
+
             ({ res, i, pos, char, type } = parsedNum);
             tokens.push({
                 value: res,
@@ -61,7 +62,7 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
         else if (isNewline(char)) { // newline
             let res = "";
             const startPos = pos;
-            
+
             ({ res, i, pos, char, line } = parseNewline(char, i, pos));
             tokens.push({
                 value: res,
@@ -75,7 +76,7 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
         else if (isWhiteSpace(char)) { // whitespace
             let res = "";
             const startPos = pos;
-            
+
             ({ res, i, pos, char, line } = parseWhiteSpace(char, i, pos));
             tokens.push({
                 value: res,
@@ -84,6 +85,22 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
                 column: startPos,
                 file: fileName,
             });
+        }
+        else if(isComment(char)) { // singleline | multiline comment
+            let res = "", type: TokenType;
+            const startPos = pos;
+
+            ({ res, i, pos, char, type, line } = parseComment(char, i, pos));
+            tokens.push({
+                value: res,
+                type,
+                line,
+                column: startPos,
+                file: fileName,
+            });
+
+            if(type === TokenType.SingleLineComment)
+                line++;
         }
         else {
             pos++;
@@ -104,7 +121,7 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
             consumeChar();
         while (char && char == "'")
             consumeChar();
-        return { res, i: i-1, pos, char };
+        return { res, i: i - 1, pos, char };
     }
 
     function parseNumber(char: string, i: number, pos: number) {
@@ -124,7 +141,7 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
             consumeChar();
         parseInteger();
         return {
-            res, i: i-1, pos, char,
+            res, i: i - 1, pos, char,
             type: res.includes('.')
                 ? TokenType.FloatLiteral
                 : TokenType.IntegerLiteral
@@ -139,22 +156,62 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
             pos = 1;
             char = code[i];
         };
-        while(res !== EOL)
+        while (res !== EOL)
             consumeChar();
-        return { res, i: i-1, pos, char, line };
+        return { res, i: i - 1, pos, char, line };
     }
 
     function parseWhiteSpace(char: string, i: number, pos: number) {
-        let res = ""
+        let res = "";
         const consumeChar = () => {
             res += char;
             i++;
             pos++;
             char = code[i];
         };
-        while(isWhiteSpace(char))
+        while (isWhiteSpace(char))
             consumeChar();
-        return { res, i: i-1, pos, char, line };
+        return { res, i: i - 1, pos, char, line };
+    }
+
+    function parseComment(char: string, i: number, pos: number) {
+        let res = "", type: TokenType, _line = line;
+        const consumeChar = () => {
+            res += char;
+            i++;
+            pos++;
+            char = code[i];
+        };
+        consumeChar(); // #
+        if (char === "=") { // multiline comment
+            type = TokenType.MultiLineComment
+            consumeChar();
+            void function parseMultilineComment() {
+                while (char && char !== '=')
+                    consumeChar();
+                if (char === '=') {
+                    consumeChar();
+                    // @ts-ignore
+                    if (char === '#' || i >= code.length-1)
+                        consumeChar();
+                    else
+                        parseMultilineComment()
+	            }
+            }()
+        }
+        else { // singleline comment
+            type = TokenType.SingleLineComment
+            while(char && char !== '\n' && i <= code.length-1)
+                consumeChar();
+            if(isNewline(char)) {
+                let nl: string;
+                ({ res: nl, i, pos, char, line } = parseNewline(char, i, pos));
+                i++;
+                res += nl;
+                line++;
+            }
+        }
+        return { res, i: i - 1, pos, char, line: _line, type };
     }
 
     console.dir(tokens);

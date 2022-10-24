@@ -14,7 +14,9 @@ export enum TokenType {
     Keyword = 'Keyword',
     Operator = 'Operator',
     WhiteSpace = 'WhiteSpace',
-    Newline = 'Newline'
+    Newline = 'Newline',
+    SingleLineComment = 'SingleLineComment',
+    MultiLineComment = 'MultiLineComment'
 }
 
 export class TokenStream {
