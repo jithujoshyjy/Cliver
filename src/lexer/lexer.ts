@@ -7,14 +7,15 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
 
     let line = 1;
     let pos = 1;
-    const isAlpha = (char: string) => (/\p{L}|_/u).test(char);
-    const isAlNum = (char: string) => (/\p{L}|\d|_/u).test(char);
+    const isAlpha = (char: string) => (/[\p{L}_]/u).test(char);
+    const isAlNum = (char: string) => (/[\p{L}\d_]/u).test(char);
     const isDigit = (char: string) => (/\d/u).test(char);
     const isUnderscore = (char: string, res: string) => (/\d$/gu).test(res) && char == '_';
     const isNumber = (numStr: string) => (/^(?:(?:\d+(?:_?\d+)*|\d)?\.)?(?:\d+(?:_?\d+)*|\d)$/ug).test(numStr);
     const isNewline = (char: string) => (/[\r\n]/u).test(char);
     const isWhiteSpace = (char: string) => (/\s/u).test(char);
     const isComment = (char: string) => char == '#';
+    const isOperator = (char: string) => operators.includes(char) || unicodeOpr.test(char);
 
     const keywords = [
         "done", "do", "fun", "var", "val", "type",
@@ -25,6 +26,13 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
         "of", "use!", "use", "import", "export", "from",
         "getter", "setter", "to", "is!", "is", "as", "await"
     ];
+
+    const enclosures = {'(': ')', '[': ']', '{': '}'}
+    const operators = [
+        "=", ":", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
+    "%", "<", ">", "\\"
+    ]
+    const unicodeOpr = /[\u0021\u0025\u0026\u002A\u002B\u002D\u002E\u002F\u003A\u005C\u005E\u0060\u007C\u007E\u00D7\u00F7\u003C-\u0040\u00A1-\u00AC\u00AE-\u00BF\u2100-\u215F\u2180-\u21FF\u2500-\u25FF\u2200-\u22FF]/u
 
     for (let i = 0; i < code.length; i++) {
         let char = code[i];
@@ -101,6 +109,19 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
 
             if(type === TokenType.SingleLineComment)
                 line++;
+        }
+        else if (isOperator(char)) { // operator
+            let res = "";
+            const startPos = pos;
+
+            ({ res, i, pos, char, line } = parseOperator(char, i, pos));
+            tokens.push({
+                value: res,
+                type: TokenType.Operator,
+                line,
+                column: startPos,
+                file: fileName,
+            });
         }
         else {
             pos++;
@@ -212,6 +233,19 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
             }
         }
         return { res, i: i - 1, pos, char, line: _line, type };
+    }
+
+    function parseOperator(char: string, i: number, pos: number) {
+        let res = ""
+        const consumeChar = () => {
+            res += char;
+            i++;
+            pos++;
+            char = code[i];
+        };
+        while (isOperator(char))
+            consumeChar();
+        return { res, i: i - 1, pos, char, line };
     }
 
     console.dir(tokens);
