@@ -16,6 +16,8 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
     const isWhiteSpace = (char: string) => (/\s/u).test(char);
     const isComment = (char: string) => char == '#';
     const isOperator = (char: string) => operators.includes(char) || unicodeOpr.test(char);
+    const isPunctuator = (char: string) => punctuators.includes(char);
+    const isString = (char: string) => char == '"';
 
     const keywords = [
         "done", "do", "fun", "var", "val", "type",
@@ -27,7 +29,7 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
         "getter", "setter", "to", "is!", "is", "as", "await"
     ];
 
-    const enclosures = {'(': ')', '[': ']', '{': '}'}
+    const punctuators = ['(', ')', '[', ']', '{', '}', ',', ';', '\'', '"', '`']
     const operators = [
         "=", ":", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
     "%", "<", ">", "\\"
@@ -118,6 +120,48 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
             tokens.push({
                 value: res,
                 type: TokenType.Operator,
+                line,
+                column: startPos,
+                file: fileName,
+            });
+        }
+        else if(isString(char)) {
+            let res: Array<string | object> = [""], type = TokenType.InlineStringLiteral;
+            const startPos = pos;
+
+            do {
+                var j = tokens.length-1;
+                const token = tokens[j] ?? {type: "unknown"};
+                const skipables = [TokenType.MultiLineComment, TokenType.WhiteSpace];
+                if(skipables.includes(token.type))
+                    j--;
+                else {
+                    const strTagEndsWith = [TokenType.ParenEnclosed, TokenType.BracketEnclosed, TokenType.Identifier, TokenType.InlineFormatString];
+                    if(strTagEndsWith.includes(token.type))
+                        ({ res, i, pos, char, line, type } = parseInlineFormatString(char, i, pos));
+                    else {
+                        ({ res, i, pos, char, line, type } = parseInlineStringLiteral(char, i, pos));
+                    }
+                    break;
+                }
+            } while(j >= 0);
+
+            tokens.push({
+                value: res,
+                type,
+                line,
+                column: startPos,
+                file: fileName,
+            });
+        }
+        else if (isPunctuator(char)) { // punctuator
+            let res = "";
+            const startPos = pos;
+
+            ({ res, i, pos, char, line } = parsePunctuator(char, i, pos));
+            tokens.push({
+                value: res,
+                type: TokenType.Punctuator,
                 line,
                 column: startPos,
                 file: fileName,
@@ -246,6 +290,106 @@ export function tokenize(codeStr: string, fileName: string = ""): TokenStream {
         while (isOperator(char))
             consumeChar();
         return { res, i: i - 1, pos, char, line };
+    }
+
+    function parsePunctuator(char: string, i: number, pos: number) {
+        let res = "";
+        const consumeChar = () => {
+            res += char;
+            i++;
+            pos++;
+            char = code[i];
+        };
+        consumeChar();
+        return { res, i: i - 1, pos, char, line };
+    }
+
+    function parseInlineFormatString(char: string, i: number, pos: number) {
+        const res: Array<string | object> = [""];
+        const consumeChar = () => {
+            res[res.length-1] += char;
+            i++;
+            pos++;
+            char = code[i];
+        };
+        consumeChar(); //  "
+        while (i < code.length) {
+            if(char == '\\') {
+                const escSequence = parseEscapeSequence(char, i, pos);
+                ({ i, pos, char } = escSequence);
+                res.push(escSequence, "");
+            }
+            else if(char == '"') {
+                consumeChar(); //  "
+                break;
+            }
+            else if (char == '\n') {
+                throw new Error(`Unexpected linebreak inside of an inline string on ${line}:${pos}`);
+            }
+            else {
+                consumeChar();
+            }
+        }
+        return { res, i: i - 1, pos, char, line, type: TokenType.InlineFormatString };
+    }
+
+    function parseInlineStringLiteral(char: string, i: number, pos: number) {
+        const res: Array<string | object> = [""];
+        const consumeChar = () => {
+            res[res.length-1] += char;
+            i++;
+            pos++;
+            char = code[i];
+        };
+        consumeChar(); //  "
+        while (i < code.length) {
+            if(char == '\\') {
+                const escSequence = parseEscapeSequence(char, i, pos);
+                ({ i, pos, char } = escSequence);
+                res.push(escSequence, "");
+            }
+            else if(char == '"') {
+                consumeChar(); //  "
+                break;
+            }
+            else if (char == '\n') {
+                throw new Error(`Unexpected linebreak inside of an inline string on ${line}:${pos}`);
+            }
+            else {
+                consumeChar();
+            }
+        }
+        return { res, i: i - 1, pos, char, line, type: TokenType.InlineStringLiteral };
+    }
+
+    function parseEscapeSequence(char: string, i: number, pos: number) {
+        let raw = "", value = "";
+        const consumeChar = () => {
+            raw += char;
+            i++;
+            pos++;
+            char = code[i];
+        };
+        consumeChar(); //  \
+        if(/u/i.test(char)) { // parse unicode sequence
+            let sequence = "";
+            consumeChar(); // u
+            const _consumeChar = () => {
+                sequence += char;
+                consumeChar();
+            };
+            for(let k = 1; k <= 6; k++) {
+                if(/[0-9a-f]/i.test(char))
+                    _consumeChar();
+                else
+                    throw new Error(`Invalid unicode escape sequence '${raw}' on ${line}:${pos}`);
+            }
+            value = String.fromCharCode(+`0x${sequence}`);
+        }
+        else { // parse regular escape sequence
+            consumeChar();
+        }
+        return { raw, i, pos, char, line, value, type: TokenType.EscapeSequence };
     }
 
     console.dir(tokens);

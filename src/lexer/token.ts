@@ -1,5 +1,5 @@
 export interface Token {
-    value: string;
+    value: string | object;
     type: TokenType;
     line: number;
     column: number;
@@ -7,14 +7,24 @@ export interface Token {
 }
 
 export enum TokenType {
-    StringLiteral = 'StringLiteral',
+    Punctuator = 'Punctuator',
+    CharLiteral = 'CharLiteral',
+    InlineFormatString = 'InlineFormatString',
+    InlineStringLiteral = 'InlineStringLiteral',
     IntegerLiteral = 'IntegerLiteral',
     FloatLiteral = 'FloatLiteral',
+    OperatorRef = 'OperatorRef',
     Identifier = 'Identifier',
+    Newline = 'Newline',
     Keyword = 'Keyword',
     Operator = 'Operator',
     WhiteSpace = 'WhiteSpace',
-    Newline = 'Newline',
+    ImplicitMult = 'ImplicitMult',
+    SymbolLiteral = 'SymbolLiteral',
+    ParenEnclosed = 'ParenEnclosed',
+    BraceEnclosed = 'BraceEnclosed',
+    EscapeSequence = 'EscapeSequence',
+    BracketEnclosed = 'BracketEnclosed',
     SingleLineComment = 'SingleLineComment',
     MultiLineComment = 'MultiLineComment'
 }
