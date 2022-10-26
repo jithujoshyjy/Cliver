@@ -1,5 +1,5 @@
 export interface Token {
-    value: string | object;
+    value: string | Array<string|object>;
     type: TokenType;
     line: number;
     column: number;
