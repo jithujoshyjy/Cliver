@@ -7,26 +7,29 @@ export interface Token {
 }
 
 export enum TokenType {
-    Punctuator = 'Punctuator',
-    CharLiteral = 'CharLiteral',
+    ASCIICharLiteral = 'ASCIICharLiteral',
+    UnicodeCharLiteral = 'UnicodeCharLiteral',
+    SymASCIICharLiteral = 'SymASCIICharLiteral',
+    SymUnicodeCharLiteral = 'SymUnicodeCharLiteral',
+    SymASCIIStringLiteral = 'SymASCIIStringLiteral',
+    SymUnicodeStringLiteral = 'SymUnicodeStringLiteral',
+    InlineUnicodeStringLiteral = 'InlineUnicodeStringLiteral',
+    InlineASCIIStringLiteral = 'InlineASCIIStringLiteral',
     InlineFormatString = 'InlineFormatString',
-    InlineStringLiteral = 'InlineStringLiteral',
     IntegerLiteral = 'IntegerLiteral',
     FloatLiteral = 'FloatLiteral',
-    OperatorRef = 'OperatorRef',
     Identifier = 'Identifier',
     Newline = 'Newline',
     Keyword = 'Keyword',
     Operator = 'Operator',
+    Punctuator = 'Punctuator',
     WhiteSpace = 'WhiteSpace',
-    ImplicitMult = 'ImplicitMult',
-    SymbolLiteral = 'SymbolLiteral',
-    ParenEnclosed = 'ParenEnclosed',
     BraceEnclosed = 'BraceEnclosed',
+    ParenEnclosed = 'ParenEnclosed',
     EscapeSequence = 'EscapeSequence',
     BracketEnclosed = 'BracketEnclosed',
+    MultiLineComment = 'MultiLineComment',
     SingleLineComment = 'SingleLineComment',
-    MultiLineComment = 'MultiLineComment'
 }
 
 export class TokenStream {

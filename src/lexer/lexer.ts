@@ -1,11 +1,12 @@
 import { type Token, TokenStream, TokenType } from "./token.js";
 import { EOL } from "os";
+import { isSymbol } from "util";
 
 type Predicate = (token?: Token, input?: string | string[], i?: number) => boolean
 
 export function tokenize(
     codeStr: string | string[],
-    fileName: string = "",
+    fileName: string = '',
     predicate: Predicate = () => false): Token | TokenStream {
 
     const tokens: Token[] = [];
@@ -24,6 +25,8 @@ export function tokenize(
     const isOperator = (char: string) => operators.includes(char) || unicodeOpr.test(char);
     const isPunctuator = (char: string) => punctuators.includes(char);
     const isString = (char: string) => char == '"';
+    const isChar = (char: string) => char == "'";
+    const isSymbol = (char: string) => char == '\\';
 
     const keywords = [
         "done", "do", "fun", "var", "val", "type",
@@ -45,7 +48,7 @@ export function tokenize(
     for (let i = 0; i < code.length; i++) {
         let char = code[i];
         if (isAlpha(char)) { // identifier | keyword
-            let res = "";
+            let res = '';
             const startPos = pos;
             ({ res, i, pos, char } = parseIdentifier(char, i, pos));
             tokens.push({
@@ -59,7 +62,7 @@ export function tokenize(
             });
         }
         else if (isDigit(char) || char == '.') { // integer | float
-            let res = "", type: TokenType;
+            let res = '', type: TokenType;
             const startPos = pos;
             const parsedNum = parseNumber(char, i, pos);
 
@@ -76,7 +79,7 @@ export function tokenize(
             });
         }
         else if (isNewline(char)) { // newline
-            let res = "";
+            let res = '';
             const startPos = pos;
 
             ({ res, i, pos, char, line } = parseNewline(char, i, pos));
@@ -90,7 +93,7 @@ export function tokenize(
             line++;
         }
         else if (isWhiteSpace(char)) { // whitespace
-            let res = "";
+            let res = '';
             const startPos = pos;
 
             ({ res, i, pos, char, line } = parseWhiteSpace(char, i, pos));
@@ -103,7 +106,7 @@ export function tokenize(
             });
         }
         else if (isComment(char)) { // singleline | multiline comment
-            let res = "", type: TokenType;
+            let res = '', type: TokenType;
             const startPos = pos;
 
             ({ res, i, pos, char, type, line } = parseComment(char, i, pos));
@@ -118,21 +121,8 @@ export function tokenize(
             if (type === TokenType.SingleLineComment)
                 line++;
         }
-        else if (isOperator(char)) { // operator
-            let res = "";
-            const startPos = pos;
-
-            ({ res, i, pos, char, line } = parseOperator(char, i, pos));
-            tokens.push({
-                value: res,
-                type: TokenType.Operator,
-                line,
-                column: startPos,
-                file: fileName,
-            });
-        }
-        else if (isString(char)) {
-            let res: Array<string | object> = [""], type = TokenType.InlineStringLiteral;
+        else if (isString(char)) { // ASCII string | Unicode string
+            let res: Array<string | object> = [''], type = TokenType.InlineASCIIStringLiteral;
             const startPos = pos;
 
             let j = tokens.length - 1;
@@ -159,6 +149,45 @@ export function tokenize(
                 file: fileName,
             });
         }
+        else if (isChar(char)) { // ASCII character | Unicode character
+            let res: Array<string | object> = [''], type: TokenType;
+            const startPos = pos;
+
+            ({ res, i, pos, char, line, type } = parseChar(char, i, pos));
+            tokens.push({
+                value: res,
+                type,
+                line,
+                column: startPos,
+                file: fileName,
+            });
+        }
+        else if (isSymbol(char)) { // symbolic (ASCII | Unicode) character | symbolic (ASCII | Unicode) string
+            let res = '', type: TokenType;
+            const startPos = pos;
+
+            ({ res, i, pos, char, line, type } = parseSymbol(char, i, pos));
+            tokens.push({
+                value: res,
+                type,
+                line,
+                column: startPos,
+                file: fileName,
+            });
+        }
+        else if (isOperator(char)) { // operator
+            let res = '';
+            const startPos = pos;
+
+            ({ res, i, pos, char, line } = parseOperator(char, i, pos));
+            tokens.push({
+                value: res,
+                type: TokenType.Operator,
+                line,
+                column: startPos,
+                file: fileName,
+            });
+        }
         else if (isPunctuator(char)) { // punctuator | collection
             type Punch = {
                 res: string;
@@ -168,7 +197,7 @@ export function tokenize(
                 line: number;
                 type: TokenType;
             };
-            let res: string | Array<string | object> = "";
+            let res: string | Array<string | object> = '';
             const startPos = pos;
 
             const punchOrCollection = parsePunctuator(char, i, pos);
@@ -197,11 +226,11 @@ export function tokenize(
         if (predicate())
             return new TokenStream(tokens);
     }
-    
+
     return new TokenStream(tokens);
 
     function parseIdentifier(char: string, i: number, pos: number) {
-        let res = "";
+        let res = '';
         const consumeChar = () => {
             res += char;
             i++;
@@ -218,7 +247,7 @@ export function tokenize(
     }
 
     function parseNumber(char: string, i: number, pos: number) {
-        let res = "";
+        let res = '';
         const consumeChar = () => {
             res += char;
             i++;
@@ -242,7 +271,7 @@ export function tokenize(
     }
 
     function parseNewline(char: string, i: number, pos: number) {
-        let res = "";
+        let res = '';
         const consumeChar = () => {
             res += char;
             i++;
@@ -255,7 +284,7 @@ export function tokenize(
     }
 
     function parseWhiteSpace(char: string, i: number, pos: number) {
-        let res = "";
+        let res = '';
         const consumeChar = () => {
             res += char;
             i++;
@@ -268,25 +297,27 @@ export function tokenize(
     }
 
     function parseComment(char: string, i: number, pos: number) {
-        let res = "", type: TokenType, _line = line;
-        const consumeChar = () => {
-            res += char;
+        let res = '', type: TokenType, _line = line;
+        const consumeChar = (omit = false) => {
+            if (!omit) {
+                res += char;
+            }
             i++;
             pos++;
             char = code[i];
         };
-        consumeChar(); // #
+        consumeChar(true); // #
         if (char === "=") { // multiline comment
             type = TokenType.MultiLineComment
-            consumeChar();
+            consumeChar(true);
             void function parseMultilineComment() {
                 while (char && char !== '=')
                     consumeChar();
                 if (char === '=') {
-                    consumeChar();
+                    consumeChar(true);
                     // @ts-ignore
                     if (char === '#' || i >= code.length - 1)
-                        consumeChar();
+                        consumeChar(true);
                     else
                         parseMultilineComment()
                 }
@@ -308,7 +339,7 @@ export function tokenize(
     }
 
     function parseOperator(char: string, i: number, pos: number) {
-        let res = ""
+        let res = ''
         const consumeChar = () => {
             res += char;
             i++;
@@ -321,9 +352,11 @@ export function tokenize(
     }
 
     function parsePunctuator(char: string, i: number, pos: number) {
-        let res: string = "";
-        const consumeChar = () => {
-            res += char;
+        let res: string = '';
+        const consumeChar = (omit = false) => {
+            if (!omit) {
+                res += char;
+            }
             i++;
             pos++;
             char = code[i];
@@ -333,50 +366,80 @@ export function tokenize(
         const punch = { res, i: i - 1, pos, char, line, type: TokenType.Punctuator };
         if (res in collPunches) {
             const collection = parseCollection(i, pos, collPunches);
-            (collection.value as Array<unknown>).push({
-                value: res,
-                type: TokenType.Punctuator,
-                line,
-                column: pos,
-                file: fileName,
-            });
             return { ...collection, i: i - 1 };
         }
         return punch;
     }
 
     function parseInlineFormatString(char: string, i: number, pos: number) {
-        const res: Array<string | object> = [""];
-        const consumeChar = () => {
-            res[res.length - 1] += char;
+        const res: Array<string | object> = [''];
+        const consumeChar = (omit = false) => {
             i++;
             pos++;
+            if (!omit) {
+                res[res.length - 1] += char;
+            }
             char = code[i];
         };
-        consumeChar(); //  "
+        consumeChar(true); //  "
         while (i < code.length) {
             if (char == '\\') {
                 const escSequence = parseEscapeSequence(char, i, pos);
                 ({ i, pos, char } = escSequence);
-                res.push(escSequence, "");
+                res.push(escSequence, '');
             }
             else if (char == '"') {
-                consumeChar(); //  "
+                consumeChar(true); //  "
                 break;
+            }
+            else if (char == '$') {
+                consumeChar(true); //  $
+                if (isAlpha(char)) { // identifier
+                    let _res = '';
+                    const startPos = pos;
+                    ({ res: _res, pos, char } = parseIdentifier(char, i, pos));
+
+                    if (keywords.includes(_res))
+                        throw new Error(`Unexpected keyword '${_res}' on ${line}:${pos}`);
+
+
+                    i += _res.length;
+
+                    char = code[i];
+
+                    if (res[res.length - 1] === '')
+                        res.pop();
+
+                    res.push({
+                        value: _res,
+                        type: TokenType.Identifier,
+                        line,
+                        column: startPos,
+                        file: fileName,
+                    }, '');
+                }
+                else {
+                    throw new Error(`Unexpected character '${char}' on ${line}:${pos}`);
+                }
             }
             else if (char == '{') {
                 let lenToSkip = 0;
                 const predicate: Predicate = (_, input, j) => {
                     if (input !== undefined && j !== undefined) {
-                        lenToSkip = j+1;
+                        lenToSkip = j + 1;
                         return input[j] === code[i]
                     }
                     return false
                 }
                 const interopExpr = tokenize(code.slice(i, code.length), fileName, predicate) as Token;
                 i += lenToSkip;
+
                 char = code[i];
-                res.push(interopExpr, "");
+
+                if (res[res.length - 1] === '')
+                    res.pop();
+
+                res.push(interopExpr, '');
             }
             else if (char == '\n') {
                 throw new Error(`Unexpected linebreak inside of an inline string on ${line}:${pos}`);
@@ -385,50 +448,64 @@ export function tokenize(
                 consumeChar();
             }
         }
+
         return { res, i: i - 1, pos, char, line, type: TokenType.InlineFormatString };
     }
 
     function parseInlineStringLiteral(char: string, i: number, pos: number) {
-        const res: Array<string | object> = [""];
-        const consumeChar = () => {
-            res[res.length - 1] += char;
+        const res: Array<string | object> = [''];
+        let containsUnicodeChar = false;
+        const consumeChar = (omit = false) => {
+            if (!omit) {
+                res[res.length - 1] += char;
+            }
             i++;
             pos++;
             char = code[i];
         };
-        consumeChar(); //  "
+        consumeChar(true); //  "
         while (i < code.length) {
             if (char == '\\') {
+                const j = i + 1;
                 const escSequence = parseEscapeSequence(char, i, pos);
                 ({ i, pos, char } = escSequence);
-                res.push(escSequence, "");
+                containsUnicodeChar = containsUnicodeChar || !!code[j] && /u/i.test(code[j]);
+                res.push(escSequence, '');
             }
             else if (char == '"') {
-                consumeChar(); //  "
+                consumeChar(true); //  "
                 break;
             }
             else if (char == '\n') {
                 throw new Error(`Unexpected linebreak inside of an inline string on ${line}:${pos}`);
             }
             else {
+                containsUnicodeChar = containsUnicodeChar || !!char && char.codePointAt(0)! > 127;
                 consumeChar();
             }
         }
-        return { res, i: i - 1, pos, char, line, type: TokenType.InlineStringLiteral };
+        return {
+            res, i: i - 1, pos, char, line,
+            type: containsUnicodeChar
+            ? TokenType.InlineUnicodeStringLiteral
+            : TokenType.InlineASCIIStringLiteral
+        };
     }
 
     function parseEscapeSequence(char: string, i: number, pos: number) {
-        let raw = "", value = "";
-        const consumeChar = () => {
-            raw += char;
+        let raw = '', value = '';
+        const consumeChar = (omit = false) => {
+            if (!omit) {
+                raw += char;
+            }
             i++;
             pos++;
             char = code[i];
         };
-        consumeChar(); //  \
+        consumeChar(true); //  \
         if (/u/i.test(char)) { // parse unicode sequence
-            let sequence = "";
-            consumeChar(); // u
+            let sequence = '';
+            consumeChar(true); // u
             const _consumeChar = () => {
                 sequence += char;
                 consumeChar();
@@ -437,11 +514,12 @@ export function tokenize(
                 if (/[0-9a-f]/i.test(char))
                     _consumeChar();
                 else
-                    throw new Error(`Invalid unicode escape sequence '${raw}' on ${line}:${pos}`);
+                    throw new Error(`Invalid unicode escape sequence '\\u${raw}' on ${line}:${pos}`);
             }
             value = String.fromCharCode(+`0x${sequence}`);
         }
         else { // parse regular escape sequence
+            value = eval(`"\\${char}"`);
             consumeChar();
         }
         return { raw, i, pos, char, line, value, type: TokenType.EscapeSequence };
@@ -464,6 +542,7 @@ export function tokenize(
                     : token.value == '['
                         ? TokenType.BracketEnclosed
                         : TokenType.BraceEnclosed;
+                resArr.shift();
                 return {
                     value: resArr,
                     type,
@@ -474,5 +553,78 @@ export function tokenize(
             }
         }
         throw new Error(`Unexpected character '${endPunch}' on ${line}:${pos}`);
+    }
+
+    function parseChar(char: string, i: number, pos: number) {
+        const res: Array<string | object> = [''];
+        let isUnicodeChar = false;
+        const startPos = pos;
+        const consumeChar = (omit = false) => {
+            if (!omit) {
+                res[res.length - 1] += char;
+            }
+            i++;
+            pos++;
+            char = code[i];
+        };
+        consumeChar(true); // '
+        if (char == '\\') {
+            const j = i + 1;
+            const escSequence = parseEscapeSequence(char, i, pos);
+            ({ i, pos, char } = escSequence);
+            isUnicodeChar = !!code[j] && /u/i.test(code[j]);
+            res.push(escSequence);
+        }
+        else {
+            isUnicodeChar = !!char && char.codePointAt(0)! > 127;
+            if (char == "'")
+                throw new Error(`Invalid character literal on ${line}:${startPos}`);
+            consumeChar();
+        }
+
+        if (char == "'") {
+            consumeChar(true); //  '
+        }
+        else {
+            throw new Error(`Unexpected character '${char}' on ${line}:${pos}`);
+        }
+
+        return {
+            res, i: i - 1, pos, char, line,
+            type: isUnicodeChar
+                ? TokenType.UnicodeCharLiteral
+                : TokenType.ASCIICharLiteral
+        };
+    }
+
+    function parseSymbol(char: string, i: number, pos: number) {
+        let res = '', containsUnicodeChar = false;
+
+        const consumeChar = (omit = false) => {
+            if (!omit) {
+                res += char;
+            }
+            i++;
+            pos++;
+            char = code[i];
+        };
+
+        consumeChar(true); // \
+        while (char && isAlNum(char)) {
+            containsUnicodeChar = char.codePointAt(0)! > 127;
+            consumeChar();
+        }
+
+        if (res.length === 0)
+            throw new Error(`Unexpected character '\\' on ${line}:${pos-1}`)
+
+        const isSymStr = res.length > 1;
+
+        return {
+            res, i: i - 1, pos, char, line,
+            type: containsUnicodeChar
+                ? isSymStr ? TokenType.SymUnicodeStringLiteral : TokenType.SymUnicodeCharLiteral
+                : isSymStr ? TokenType.SymASCIIStringLiteral : TokenType.SymASCIICharLiteral
+        };
     }
 }

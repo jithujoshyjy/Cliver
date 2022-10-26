@@ -12,6 +12,7 @@ void async function main() {
     const code = await readFile(args[0], "utf-8");
     
     const tokens: TokenStream = tokenize(code, args[0]) as TokenStream;
+    
     console.dir(tokens);
 
 }()
