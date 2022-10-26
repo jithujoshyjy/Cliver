@@ -17,6 +17,13 @@ export function tokenize(
     const isAlpha = (char: string) => (/[\p{L}_]/u).test(char);
     const isAlNum = (char: string) => (/[\p{L}\d_]/u).test(char);
     const isDigit = (char: string) => (/\d/u).test(char);
+    const isDotFloat = (char: string, i: number) => {
+        if(char == '.') {
+            const nextChar = code[i+1];
+            return !!nextChar && isDigit(nextChar);
+        }
+        return false;
+    }
     const isUnderscore = (char: string, res: string) => (/\d$/gu).test(res) && char == '_';
     const isNumber = (numStr: string) => (/^(?:(?:\d+(?:_?\d+)*|\d)?\.)?(?:\d+(?:_?\d+)*|\d)$/ug).test(numStr);
     const isNewline = (char: string) => (/[\r\n]/u).test(char);
@@ -61,7 +68,8 @@ export function tokenize(
                 file: fileName,
             });
         }
-        else if (isDigit(char) || char == '.') { // integer | float
+        else if (isDigit(char) || isDotFloat(char, i)) { // integer | float
+
             let res = '', type: TokenType;
             const startPos = pos;
             const parsedNum = parseNumber(char, i, pos);
@@ -248,8 +256,10 @@ export function tokenize(
 
     function parseNumber(char: string, i: number, pos: number) {
         let res = '';
-        const consumeChar = () => {
-            res += char;
+        const consumeChar = (omit = false) => {
+            if (!omit) {
+                res += char;
+            }
             i++;
             pos++;
             char = code[i];
@@ -487,8 +497,8 @@ export function tokenize(
         return {
             res, i: i - 1, pos, char, line,
             type: containsUnicodeChar
-            ? TokenType.InlineUnicodeStringLiteral
-            : TokenType.InlineASCIIStringLiteral
+                ? TokenType.InlineUnicodeStringLiteral
+                : TokenType.InlineASCIIStringLiteral
         };
     }
 
@@ -616,7 +626,7 @@ export function tokenize(
         }
 
         if (res.length === 0)
-            throw new Error(`Unexpected character '\\' on ${line}:${pos-1}`)
+            throw new Error(`Unexpected character '\\' on ${line}:${pos - 1}`)
 
         const isSymStr = res.length > 1;
 
