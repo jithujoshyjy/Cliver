@@ -135,13 +135,11 @@ export function tokenize(
             let res: Array<string | object> = [""], type = TokenType.InlineStringLiteral;
             const startPos = pos;
 
+            let j = tokens.length - 1;
             do {
-                var j = tokens.length - 1;
                 const token = tokens[j] ?? { type: "unknown" };
                 const skipables = [TokenType.MultiLineComment, TokenType.WhiteSpace];
-                if (skipables.includes(token.type))
-                    j--;
-                else {
+                if (!skipables.includes(token.type)) {
                     const strTagEndsWith = [TokenType.ParenEnclosed, TokenType.BracketEnclosed, TokenType.Identifier, TokenType.InlineFormatString];
                     if (strTagEndsWith.includes(token.type))
                         ({ res, i, pos, char, line, type } = parseInlineFormatString(char, i, pos));
@@ -150,6 +148,7 @@ export function tokenize(
                     }
                     break;
                 }
+                j--;
             } while (j >= 0);
 
             tokens.push({
@@ -198,8 +197,7 @@ export function tokenize(
         if (predicate())
             return new TokenStream(tokens);
     }
-
-    console.dir(tokens);
+    
     return new TokenStream(tokens);
 
     function parseIdentifier(char: string, i: number, pos: number) {
