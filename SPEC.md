@@ -851,7 +851,7 @@ type.sub(type :: Range)
 ```
 Eg: NumericRange
 ```julia
-print(1 to 10) # 1 2 3 4 5
+print(1 to 5) # 1 2 3 4 5
 # same as
 print((1, 1) to 5) # 1 2 3 4 5
 ```
