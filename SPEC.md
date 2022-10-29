@@ -783,9 +783,9 @@ type.sub(type :: Char)
 
 String is an Array of Char values.
 
-Eg: ASCIIChar - `"Abc", "$7ffG", "Ab*8", ...`<br/>
-Eg: UnicodeChar - `'🎉zzʑ', 'Âlp', 'α🕶ɜ', ...`<br/>
-Eg: SymChar - `\abC, \Bcd, \012FF, ...`<br/>
+Eg: ASCIIString - `"Abc", "$7ffG", "Ab*8", ...`<br/>
+Eg: UnicodeString - `'🎉zzʑ', 'Âlp', 'α🕶ɜ', ...`<br/>
+Eg: SymString - `\abC, \Bcd, \012FF, ...`<br/>
 
 ```julia
 type String :: Array
