@@ -863,7 +863,7 @@ print(\a to \d) # a b c d
 print((\a, 1) to \d) # a b c d
 ```
 
-> if the last element is omited the Range becomes infinite.
+> if the last element is the irrational value Infinity, the Range becomes infinite.
 
 #### Collections
 
