@@ -13,6 +13,8 @@ void async function main() {
     
     const tokens: TokenStream = tokenize(code, args[0]) as TokenStream;
     
-    console.dir(tokens);
+    for(let token of tokens) {
+        console.log(token.toString());
+    }
 
 }()

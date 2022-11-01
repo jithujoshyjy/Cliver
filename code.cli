@@ -1,14 +1,2 @@
-# native package
-import ... from Std\Collection, Std\Crypto, Std\FileSys
-import read, write, fmt from Std\IO
-
-# registered package
-import ... from MyPkg\UserFiles
-import ... from MyPkg\Commands\Configs
-
-# file structure
-import "./dir/src/userfiles1.cli"
-import ...Abc from "./dir/src/userfiles2.cli"
-import ... from "./dir/src/userfiles4.cli", "./dir/src/userfiles5.cli"
-
-a ⇆ b
+f"abcd{
+    efgh + ijkl}mnop"

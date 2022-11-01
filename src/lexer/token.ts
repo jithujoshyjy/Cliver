@@ -4,6 +4,7 @@ export interface Token {
     line: number;
     column: number;
     file: string;
+    toString: () => string;
 }
 
 export enum TokenType {
@@ -33,52 +34,64 @@ export enum TokenType {
 }
 
 export class TokenStream {
-    private index: number = 0;
-    private length: number = 0;
-    private finished: boolean = false;
+    #index: number = 0;
+    #length: number = 0;
+    #isFinished: boolean = false;
+    #tokens: Token[] = [];
 
-    public constructor(private tokens: Token[]) {
-        this.length = tokens.length;
+    constructor(tokens: Token[]) {
+        this.#tokens = tokens;
+        this.#length = tokens.length;
     }
 
-    public get getLength(): number { 
-        return this.length; 
+    get length(): number { 
+        return this.#length; 
     }
 
-    public currentToken(): Token {
-        return this.tokens[this.index];   
+    get currentToken(): Token {
+        return this.#tokens[this.#index];   
     }
 
-    public nextToken(): Token | null {
-        if (this.index < this.length - 1) {
-            this.index++;
-            return this.tokens[this.index];
+    get nextToken(): Token | null {
+        if (this.#index < this.#length - 1) {
+            this.#index++;
+            return this.#tokens[this.#index];
         }
-        this.finished = true;
+        this.isFinished = true;
         return null;
     }
 
-    public advance(): boolean {
-        if (this.index < this.length - 1) {
-            this.index++;
+    advance(): boolean {
+        if (this.#index < this.#length - 1) {
+            this.#index++;
             return true;
         }
-        this.finished = true;
+        this.isFinished = true;
         return false;
     }
 
-    public peek(amount: number): Token | null {
-        if (-amount > this.index) {
+    peek(amount: number): Token | null {
+        if (-amount > this.#index) {
             return null;
         }
-        if (this.index < this.length - amount) {
-            return this.tokens[this.index + amount];
+        if (this.#index < this.#length - amount) {
+            return this.#tokens[this.#index + amount];
         }
         return null;
     }
 
-    public isFinished(): boolean {
-        return this.finished;
+    get isFinished(): boolean {
+        return this.#isFinished;
     }
 
+    set isFinished(value: boolean) {
+        this.#isFinished = value;
+    }
+
+    *[Symbol.iterator]() {
+        while(!this.isFinished) {
+            yield this.currentToken;
+            this.advance();
+        }
+    }
 }

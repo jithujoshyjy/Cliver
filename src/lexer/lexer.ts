@@ -1,6 +1,5 @@
 import { type Token, TokenStream, TokenType } from "./token.js";
 import { EOL } from "os";
-import { isSymbol } from "util";
 
 type Predicate = (token?: Token, input?: string | string[], i?: number) => boolean
 
@@ -66,6 +65,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}(${this.value})`;
+                }
             });
         }
         else if (isDigit(char) || isDotFloat(char, i)) { // integer | float
@@ -84,6 +86,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}(${this.value})`;
+                }
             });
         }
         else if (isNewline(char)) { // newline
@@ -97,6 +102,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}('\\n')`;
+                }
             });
             line++;
         }
@@ -111,6 +119,13 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    const wsCodePoints = (this.value as string)
+                        .split('')
+                        .map(x => '\\u'+x.codePointAt(0)?.toString().padStart(6, '0'))
+                        .join('');
+                    return `${this.type}(${wsCodePoints})`;
+                }
             });
         }
         else if (isComment(char)) { // singleline | multiline comment
@@ -124,6 +139,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}(${this.value})`;
+                }
             });
 
             if (type === TokenType.SingleLineComment)
@@ -155,6 +173,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}(${res.join(', ')})`;
+                }
             });
         }
         else if (isChar(char)) { // ASCII character | Unicode character
@@ -168,6 +189,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}(${this.value.toString()})`;
+                }
             });
         }
         else if (isSymbol(char)) { // symbolic (ASCII | Unicode) character | symbolic (ASCII | Unicode) string
@@ -181,6 +205,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}(${this.value})`;
+                }
             });
         }
         else if (isOperator(char)) { // operator
@@ -194,6 +221,9 @@ export function tokenize(
                 line,
                 column: startPos,
                 file: fileName,
+                toString() {
+                    return `${this.type}(${this.value})`;
+                }
             });
         }
         else if (isPunctuator(char)) { // punctuator | collection
@@ -217,6 +247,9 @@ export function tokenize(
                     line,
                     column: startPos,
                     file: fileName,
+                    toString() {
+                        return `${this.type}(${this.value.toString()})`;
+                    }
                 });
             }
             else {
@@ -441,7 +474,7 @@ export function tokenize(
                     }
                     return false
                 }
-                const interopExpr = tokenize(code.slice(i, code.length), fileName, predicate) as Token;
+                const interopExpr = [...(tokenize(code.slice(i, code.length), fileName, predicate) as TokenStream)];
                 i += lenToSkip;
 
                 char = code[i];
@@ -559,6 +592,9 @@ export function tokenize(
                     line: token.line,
                     column: token.column,
                     file: fileName,
+                    toString() {
+                        return `${this.type}(\n\t${resArr.join(",\n\t")}\n)`;
+                    }
                 } as Token;
             }
         }
