@@ -637,10 +637,6 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 throw new Error(`Expected a closing '}' after line ${lastToken.line}`)
             }
 
-            if (res.length === 0) {
-                throw new Error(`Unexpected token '${char}' on ${line}:${pos}`);
-            }
-
             return { res, i: i + 1, pos, char, line, type };
         }
 
