@@ -4,6 +4,7 @@ export interface Token {
     line: number;
     column: number;
     file: string;
+    i: number;
     toString: () => string;
 }
 
