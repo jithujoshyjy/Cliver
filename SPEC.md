@@ -908,7 +908,7 @@ Maps contain key-value pairs.<br/>
 The super type is AbstractMap.
 
 ```julia
-val pairs :: Map(KeyType: ValueType) = {
+val pairs :: Map(KeyType, ValueType) = {
     keyA: valueA,
     keyB: valueB
 }
