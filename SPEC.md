@@ -75,7 +75,7 @@ There are a whole bunch of standard types and the type system is flexible enough
 type NewType = ExistingType
 
 # type constructor without parameters
-type TypeCtor() = DataCtorA | DataCtorB
+type TypeCtor<data>() = data DataCtorA | data DataCtorB
 ```
 Type constructors can take parameters; the parameter can be a generic type, an abstract type or a concrete type.<br/>
 If the parameter is not annotated with a type, then it is considered generic.<br/>
@@ -83,7 +83,7 @@ If the parameter is abstract, the parameter value should be a subtype of the spe
 If it's a concrete type, the parameter value should be a literal value of that type.<br/>
 ```julia
 # type constructor with parameters
-type TypeCtor(a, b :: AbstractType, c :: ConcreteType) = a | DataCtorA | DataCtorB(c, b)
+type TypeCtor<data>(a, b :: AbstractType, c :: ConcreteType) = a | data DataCtorA | data DataCtorB(c, b)
 ```
 
 #### Abstract and Concrete types
@@ -95,10 +95,10 @@ Subtyping is only possible with Abstract types. The root abstract type is DataTy
 Concrete types have one or more data constructors associated with them. All data constructors are publically accessable values.
 ```julia
 # abstract type decalration
-type AbstractCtor() :: DataType
+type AbstractCtor<abstract>() :: DataType
 
 # concrete type declaration
-type ConcreteCtor() :: AbstractType = DataCtorA | DataCtorB
+type ConcreteCtor<data>() :: AbstractType = data DataCtorA | data DataCtorB
 ```
 
 #### Type Constraints
@@ -106,27 +106,55 @@ type ConcreteCtor() :: AbstractType = DataCtorA | DataCtorB
 type constraints follow the same rules as type constructor parameters.
 
 ```julia
-type ConcreteCtor() = Type a => DataCtorA | DataCtorB(a)
+type ConcreteCtor<data>() = data DataCtorA | data DataCtorB(a, b) where a :: Type
+# multiple constraints
+type ConcreteCtor<data>() = data DataCtorA | data DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 #### Structural Typing
 
-Structural typing defines the object structure of a type. Structural types are only possible with abstract types.
-They can have value assertion to check whether the value associated with the type meets certain conditions.
+Structural typing defines the object structure of a type. They can have value assertion to check whether the value associated with the type meets certain conditions.
 
 ```julia
-type AbstractCtor() :: DataType = {
+type AbstractCtor<abstract>() :: DataType = where {
     propertyA :: Type,
     methodB :: Type
 }
 
 # with value assertions
-type AbstractCtor() :: DataType = {
+type AbstractCtor<abstract>() :: DataType = where {
     value -> boolean_expression,
     propertyA :: Type,
     methodB :: Type
 }
+
+# with lone value assertion
+type AbstractCtor<abstract>() :: DataType = where value -> boolean_expression
+
+# in concrete types
+
+type ConcreteCtor<data>() = data DataCtorA | data DataCtorB(a, b) where (a :: Type, b :: Type) {
+    propertyA :: Type,
+    methodB :: Type
+}
 ```
+
+```julia
+fun<self>() :: where self :: Maybe(x)
+    @@where
+
+    fun Just<self>(a)
+        @@where
+        fun add(b): a + b
+    end
+    
+    fun None<self>()
+        @@where
+        fun add(b): b
+    end
+end
+```
+
 
 #### Functions
 
