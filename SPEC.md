@@ -140,7 +140,8 @@ type ConcreteCtor<data>() = data DataCtorA | data DataCtorB(a, b) where (a :: Ty
 ```
 
 ```julia
-fun<self>() :: where self :: Maybe(x)
+@typestruct
+fun<self>() :: Maybe(x)
     @@where
 
     fun Just<self>(a)
