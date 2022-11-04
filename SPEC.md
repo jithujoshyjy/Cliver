@@ -75,7 +75,7 @@ There are a whole bunch of standard types and the type system is flexible enough
 type NewType = ExistingType
 
 # type constructor without parameters
-type TypeCtor<data>() = data DataCtorA | data DataCtorB
+type TypeCtor<data>() = DataCtorA | DataCtorB
 ```
 Type constructors can take parameters; the parameter can be a generic type, an abstract type or a concrete type.<br/>
 If the parameter is not annotated with a type, then it is considered generic.<br/>
@@ -83,7 +83,7 @@ If the parameter is abstract, the parameter value should be a subtype of the spe
 If it's a concrete type, the parameter value should be a literal value of that type.<br/>
 ```julia
 # type constructor with parameters
-type TypeCtor<data>(a, b :: AbstractType, c :: ConcreteType) = a | data DataCtorA | data DataCtorB(c, b)
+type TypeCtor<data>(a, b :: AbstractType, c :: ConcreteType) = DataCtorA | DataCtorB(c, b)
 ```
 
 #### Abstract and Concrete types
@@ -98,7 +98,7 @@ Concrete types have one or more data constructors associated with them. All data
 type AbstractCtor<abstract>() :: DataType
 
 # concrete type declaration
-type ConcreteCtor<data>() :: AbstractType = data DataCtorA | data DataCtorB
+type ConcreteCtor<data>() :: AbstractType = DataCtorA | DataCtorB
 ```
 
 #### Type Constraints
@@ -106,9 +106,9 @@ type ConcreteCtor<data>() :: AbstractType = data DataCtorA | data DataCtorB
 type constraints follow the same rules as type constructor parameters.
 
 ```julia
-type ConcreteCtor<data>() = data DataCtorA | data DataCtorB(a, b) where a :: Type
+type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where a :: Type
 # multiple constraints
-type ConcreteCtor<data>() = data DataCtorA | data DataCtorB(a, b) where (a :: Type, b :: Type)
+type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 #### Structural Typing
@@ -133,7 +133,7 @@ type AbstractCtor<abstract>() :: DataType = where value -> boolean_expression
 
 # in concrete types
 
-type ConcreteCtor<data>() = data DataCtorA | data DataCtorB(a, b) where (a :: Type, b :: Type) {
+type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type) {
     propertyA :: Type,
     methodB :: Type
 }
