@@ -41,8 +41,12 @@ export class TokenStream {
     #tokens: Token[] = [];
 
     constructor(tokens: Token[]) {
+        
         this.#tokens = tokens;
         this.#length = tokens.length;
+
+        if(tokens.length === 0)
+            this.#isFinished = true;
     }
 
     get length(): number { 

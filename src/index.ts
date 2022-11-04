@@ -10,10 +10,10 @@ void async function main() {
     }
     const code = await readFile(args[0], "utf-8");
 
-    const tokens: TokenStream = tokenize(code, args[0]) as TokenStream;
+    const tokens = tokenize(code, args[0]) as TokenStream;
 
     for (let token of tokens) {
-        token && console.log(token.toString());
+        console.log(token.toString());
     }
 
 }()

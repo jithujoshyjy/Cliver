@@ -3,13 +3,13 @@ import { EOL } from "os";
 
 export function tokenize(codeStr: string | string[], fileName: string = ''): Token | TokenStream {
 
-    function* _tokenize(i: number): Generator<Token | TokenStream> {
+    function* _tokenize(i: number, _line: number, _pos: number): Generator<Token | TokenStream> {
 
         const tokens: Token[] = [];
         const code = typeof codeStr == 'string' ? [...(codeStr.trim().match(/[\s\S]/gu) ?? [])] : codeStr;
 
-        let line = 1;
-        let pos = 1;
+        let line = _line;
+        let pos = _pos;
 
         const isAlpha = (char: string) => (/[\p{L}_]/u).test(char);
         const isAlNum = (char: string) => (/[\p{L}\d_]/u).test(char);
@@ -296,7 +296,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                         column: startPos,
                         file: fileName,
                         toString() {
-                            return `${this.type}(${this.value})`;
+                            return `${this.type}('${this.value}')`;
                         }
                     };
                     tokens.push(token);
@@ -616,25 +616,30 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     ? TokenType.BracketEnclosed
                     : TokenType.BraceEnclosed;
 
-            i += 1;
-            const tokenGenerator = _tokenize(i);
+            i++, pos++; // skip (
+            
+            const tokenGenerator = _tokenize(i, line, pos);
             let closingSigilFound = false;
+            type openingPunches = '(' | '[' | '{';
+            const closingPunch = collPunches[char as openingPunches];
             for (let token of tokenGenerator) {
-                if (!(token instanceof TokenStream) && token.value === collPunches[char as '(' | '[' | '{']) {
+                token = token as Token;
+                if (token.value === closingPunch) {
                     pos = token.column;
                     line = token.line;
-                    i = token.i;
-                    char = token.value as string;
+                    i = token.i-1;
+                    char = token.value;
 
                     closingSigilFound = true;
                     break;
-                } else
+                } else {
                     res.push(token);
+                }
             }
 
             if(!closingSigilFound) {
                 const lastToken = res[res.length-1] as Token;
-                throw new Error(`Expected a closing '}' after line ${lastToken.line}`)
+                throw new Error(`Expected a closing '${closingPunch}' after line ${lastToken.line}`)
             }
 
             return { res, i: i + 1, pos, char, line, type };
@@ -714,7 +719,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
         }
     }
 
-    const tokenGenerator = _tokenize(0);
+    const tokenGenerator = _tokenize(0, 1, 1);
     let done = false, value = new TokenStream([]);
 
     while (!done) {
