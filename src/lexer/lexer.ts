@@ -32,6 +32,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
         const isString = (char: string) => char == '"';
         const isChar = (char: string) => char == "'";
         const isSymbol = (char: string) => char == '\\';
+        const isMultilineString = (char: string, i: number) => code.slice(i, i + 3).every(x => x == char)
 
         const keywords = [
             "done", "do", "fun", "var", "val", "type",
@@ -164,33 +165,58 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
 
                 yield token;
             }
-            else if (isString(char)) { // ASCII string | Unicode string
+            else if (isString(char)) { // inline | multiline string
                 let res: Array<string | object> = [''], type = TokenType.InlineASCIIStringLiteral;
                 const startPos = pos;
 
-                let j = tokens.length - 1;
-                do {
-                    const token = tokens[j] ?? { type: "unknown" };
-                    const skipables = [
-                        TokenType.MultiLineComment,
-                        TokenType.WhiteSpace,
-                    ];
+                const skipables = [
+                    TokenType.MultiLineComment,
+                    TokenType.WhiteSpace,
+                ];
+
+                const strTagEndsWith = [
+                    TokenType.ParenEnclosed,
+                    TokenType.BracketEnclosed,
+                    TokenType.Identifier
+                ];
+
+                const isMultiStr = isMultilineString(char, i);
+
+                for (let j = tokens.length - 1; j >= 0; j--) {
+                    const token = tokens[j];
+
                     if (!skipables.includes(token.type)) {
-                        const strTagEndsWith = [
-                            TokenType.ParenEnclosed,
-                            TokenType.BracketEnclosed,
-                            TokenType.Identifier,
-                            TokenType.InlineFormatString
-                        ];
-                        if (strTagEndsWith.includes(token.type))
-                            ({ res, i, pos, char, line, type } = parseInlineFormatString(char, i, pos));
-                        else {
-                            ({ res, i, pos, char, line, type } = parseInlineStringLiteral(char, i, pos));
+
+                        if (isMultiStr) { // multiline string
+                            if (strTagEndsWith.includes(token.type)) { // format string
+                                ({ res, i, pos, char, line, type } = parseMultilineFormatString(char, i, pos));
+                            }
+                            else { // regular string
+                                ({ res, i, pos, char, line, type } = parseMultilineStringLiteral(char, i, pos));
+                            }
+                        }
+                        else { // inline string
+                            if ([TokenType.InlineFormatString, ...strTagEndsWith].includes(token.type)) {
+                                // format string
+                                ({ res, i, pos, char, line, type } = parseInlineFormatString(char, i, pos));
+                            }
+                            else { // regular string
+                                ({ res, i, pos, char, line, type } = parseInlineStringLiteral(char, i, pos));
+                            }
                         }
                         break;
                     }
-                    j--;
-                } while (j >= 0);
+                }
+
+                if (tokens.length === 0) {
+                    if (isMultiStr) { // regular multiline string
+                        ({ res, i, pos, char, line, type } = parseMultilineStringLiteral(char, i, pos));
+                    }
+                    else { // regular inline string
+                        ({ res, i, pos, char, line, type } = parseInlineStringLiteral(char, i, pos));
+                    }
+                }
+
 
                 const token = {
                     value: res,
@@ -394,8 +420,13 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 type = TokenType.MultiLineComment
                 consumeChar(true);
                 void function parseMultilineComment() {
-                    while (char && char !== '=')
+                    while (char && char !== '=') {
+                        if (isNewline(char)) {
+                            line++;
+                            pos = 0;
+                        }
                         consumeChar();
+                    }
                     if (char === '=') {
                         consumeChar(true);
                         // @ts-ignore
@@ -408,14 +439,13 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
             }
             else { // singleline comment
                 type = TokenType.SingleLineComment
-                while (char && char !== '\n' && i <= code.length - 1)
+                while (char && !isNewline(char) && i <= code.length - 1)
                     consumeChar();
                 if (isNewline(char)) {
                     let nl: string;
                     ({ res: nl, i, pos, char, line } = parseNewline(char, i, pos));
                     i++;
                     res += nl;
-                    line++;
                 }
             }
             return { res, i: i - 1, pos, char, line: _line, type };
@@ -575,6 +605,188 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
             };
         }
 
+        function parseMultilineStringLiteral(char: string, i: number, pos: number) {
+            const res: Array<string | object> = [];
+            let containsUnicodeChar = false;
+            const consumeChar = (omit = false) => {
+                if (!omit) {
+                    res[res.length - 1] += char;
+                }
+                i++, pos++, char = code[i];
+            };
+
+            let quotesCount = 0;
+            while (char == '"') {
+                consumeChar(true);
+                quotesCount++;
+            }
+
+            if(i < code.length && res.length == 0)
+                res.push('');
+
+            while (i < code.length) {
+                
+                if (char == '\\') {
+                    const j = i + 1;
+                    const escSequence = parseEscapeSequence(char, i, pos);
+                    ({ i, pos, char } = escSequence);
+                    containsUnicodeChar = containsUnicodeChar || !!code[j] && /u/i.test(code[j]);
+                    res.push(escSequence, '');
+                }
+                else if (char == '"' && isMultilineString(char, i)) {
+
+                    let _quotesCount = 0;
+                    while (char === '"') {
+                        consumeChar(true);
+                        _quotesCount++;
+                    }
+                    if (quotesCount !== _quotesCount) {
+                        if (i >= code.length - 1) {
+                            throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+                        }
+                        res[res.length - 1] += '"'.repeat(_quotesCount);
+                        continue;
+                    }
+                    break;
+                }
+                else if (isNewline(char)) {
+                    let nl: string;
+                    ({ res: nl, i, pos, char, line } = parseNewline(char, i, pos));
+                    i++;
+                    res[res.length - 1] += nl;
+                }
+                else {
+                    containsUnicodeChar = containsUnicodeChar || !!char && char.codePointAt(0)! > 127;
+                    consumeChar();
+                }
+            }
+            
+
+            if(res.length === 0) {
+                throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+            }
+            
+            return {
+                res, i: i - 1, pos, char, line,
+                type: containsUnicodeChar
+                    ? TokenType.MultilineUnicodeStringLiteral
+                    : TokenType.MultilineASCIIStringLiteral
+            };
+        }
+
+        function parseMultilineFormatString(char: string, i: number, pos: number) {
+            const res: Array<string | object> = [''];
+            const consumeChar = (omit = false) => {
+                i++;
+                pos++;
+                if (!omit) {
+                    res[res.length - 1] += char;
+                }
+                char = code[i];
+            };
+
+            let quotesCount = 0;
+            while (char == '"') {
+                consumeChar(true);
+                quotesCount++;
+            }
+
+            if(i < code.length && res.length == 0)
+                res.push('');
+
+            while (i < code.length) {
+                if (char == '\\') {
+                    const escSequence = parseEscapeSequence(char, i, pos);
+                    ({ i, pos, char } = escSequence);
+                    res.push(escSequence, '');
+                }
+                else if (char == '"' && isMultilineString(char, i)) {
+                    let _quotesCount = 0;
+                    while (char === '"') {
+                        consumeChar(true);
+                        _quotesCount++;
+                    }
+                    if (quotesCount !== _quotesCount) {
+                        if (i >= code.length - 1) {
+                            throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+                        }
+                        continue;
+                    }
+                    break;
+                }
+                else if (char == '$') {
+                    consumeChar(true); //  $
+                    if (isAlpha(char)) { // identifier
+                        let _res = '';
+                        const startPos = pos;
+                        ({ res: _res, pos, char } = parseIdentifier(char, i, pos));
+
+                        if (keywords.includes(_res))
+                            throw new Error(`Unexpected keyword '${_res}' on ${line}:${pos}`);
+
+
+                        i += _res.length;
+
+                        char = code[i];
+
+                        if (res[res.length - 1] === '')
+                            res.pop();
+
+                        res.push({
+                            value: _res,
+                            type: TokenType.Identifier,
+                            line,
+                            column: startPos,
+                            file: fileName,
+                        }, '');
+                    }
+                    else {
+                        throw new Error(`Unexpected character '${char}' on ${line}:${pos}`);
+                    }
+                }
+                else if (char == '{') {
+                    const startPos = pos;
+
+                    const interExpr = parseCollection(code, char, i, pos);
+                    i = interExpr.i;
+
+                    char = code[i];
+
+                    if (res[res.length - 1] === '')
+                        res.pop();
+
+                    const token = {
+                        value: interExpr.res,
+                        type: interExpr.type,
+                        line,
+                        i,
+                        column: startPos,
+                        file: fileName,
+                        toString() {
+                            return `${this.type}(${this.value.join(', ')})`;
+                        }
+                    };
+
+                    res.push(token, '');
+                }
+                else if (isNewline(char)) {
+                    let nl: string;
+                    ({ res: nl, i, pos, char, line } = parseNewline(char, i, pos));
+                    i++;
+                    res[res.length - 1] += nl;
+                }
+                else {
+                    consumeChar();
+                }
+            }
+
+            if(res.length === 0) {
+                throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+            }
+
+            return { res, i: i - 1, pos, char, line, type: TokenType.MultilineFormatString };
+        }
+
         function parseEscapeSequence(char: string, i: number, pos: number) {
             let raw = '', value = '';
             const consumeChar = (omit = false) => {
@@ -617,7 +829,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     : TokenType.BraceEnclosed;
 
             i++, pos++; // skip (
-            
+
             const tokenGenerator = _tokenize(i, line, pos);
             let closingSigilFound = false;
             type openingPunches = '(' | '[' | '{';
@@ -627,7 +839,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 if (token.value === closingPunch) {
                     pos = token.column;
                     line = token.line;
-                    i = token.i-1;
+                    i = token.i - 1;
                     char = token.value;
 
                     closingSigilFound = true;
@@ -637,8 +849,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 }
             }
 
-            if(!closingSigilFound) {
-                const lastToken = res[res.length-1] as Token;
+            if (!closingSigilFound) {
+                const lastToken = res[res.length - 1] as Token;
                 throw new Error(`Expected a closing '${closingPunch}' after line ${lastToken.line}`)
             }
 
