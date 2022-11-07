@@ -11,16 +11,19 @@ struct Cli {
 }
 
 fn main() {
-    let args = Cli::parse();
-    let mut file = File::open(args.path).expect("Cannot open file!");
-    let mut code: String = "".to_string();
-    file.read_to_string(&mut code).expect("File cannot be read");
-    println!("{}", code);
-
+    let code = get_args();
     //Lexer
 
     //Parse into AST
 
     //LLVM JIT compile
 
+}
+
+fn get_args() -> String {
+    let args = Cli::parse();
+    let mut file = File::open(args.path).expect("Cannot open file!");
+    let mut code: String = String::from("");
+    file.read_to_string(&mut code).expect("File cannot be read");
+    return code;
 }
