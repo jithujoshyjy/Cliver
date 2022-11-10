@@ -472,6 +472,13 @@ else:
     expression
 ```
 
+There's another variant which makes use of pattern matching.
+```julia
+if expression as case pattern
+    # ...
+end
+```
+
 The third variant is the if...else expression
 
 ```julia
@@ -542,27 +549,27 @@ val arr = [for item in iterable: item]
 
 There are two main error handling constructs in Cliver and it is the **try...catch** and **error pipeline** operator.
 
-##### Try-Catch construct
-It is used for both block level and inline error handling.<br/>
-The statement form of the try...catch construct comes with a done block.<br/>
-It will execute after the execution of all try and catch blocks, regardless of the error.<br/>
+##### Do-Catch construct
+It is used for block level error handling.<br/>
+do...catch construct comes with an optional done block.<br/>
+It will execute after the execution of all do and catch blocks, regardless of the error.<br/>
 The status of error handling can be one of three:<br/>
 1. `"caught"` - there was an error and it was caught by a catch block,
 2. `"uncaught"` - the error was not caught or an uncaught error was thrown,
 3. `"success"` - the code ran without producing an error.
 ```julia
-try
+do
     # ...
 catch e :: Type
     # ...
 end
 
-try
+do
     # ...
 catch e: # This form doesn't support type annotation
     expression
 
-try
+do
     # ...
 catch e :: Type
     # ...
@@ -570,7 +577,7 @@ done status
     # ...
 end
 
-try
+do
     # ...
 catch e :: Type
     # ...
@@ -578,18 +585,21 @@ done status:
     expression
 ```
 
-There exists a **try-catch** expression which handles inline errors or handles errors thrown at the expression level. This form doesn't support annotating the error parameter.
-
-```julia
-val someVal = try: expression catch e: expression
-```
+There's no expression variant of this construct.
 
 ##### Error Pipeline Operator
 
-The error pipeline operator functions identically to the try-catch expression except it can also be used in function pipelines.
+The error pipeline operator functions identically to the do-catch expression except it is used for inline error handling and can also be used in function pipelines.
 
 ```julia
 val someVal = expression ?? callback
+```
+
+If an expression throws an error and the expression is enclosed withn a function then it can be used to return the error as an object from the function.
+```julia
+fun funName()
+    val someVal = expression ?? x -> return x
+end
 ```
 
 ##### Use Statements
