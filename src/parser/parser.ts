@@ -1,4 +1,4 @@
-import { TokenType, type TokenStream } from "../lexer/token";
+import { TokenType, type TokenStream } from "../lexer/token.js";
 
 export function generateAST(tokens: TokenStream): object {
     const currentToken = tokens.currentToken;

@@ -1,17 +1,18 @@
 import { readFile } from "fs/promises";
-import { tokenize } from "./lexer/lexer";
-import { type Token, TokenStream, TokenType } from "./lexer/token";
-import { generateAST } from "./parser/parser";
+import { tokenize } from "./lexer/lexer.js";
+import { type Token, TokenStream, TokenType } from "./lexer/token.js";
+import { generateAST } from "./parser/parser.js";
 
 void async function main() {
     const [_, __, ...args] = process.argv;
     if (args.length < 1) {
-        console.log("Please provide an input file");
+        console.log("Error: Please provide an input file");
         process.exit(1);
     }
-    const code = await readFile(args[0], "utf-8");
+    const filepath = args[0];
+    const code = await readFile(filepath, "utf-8");
 
-    const tokens = tokenize(code, args[0]) as TokenStream;
+    const tokens = tokenize(code, filepath) as TokenStream;
     const ast = generateAST(tokens);
 
     for (let token of tokens) {
