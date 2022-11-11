@@ -1,4 +1,4 @@
-import { type Token, TokenStream, TokenType } from "./token.js";
+import { type Token, TokenStream, TokenType } from "./token";
 import { EOL } from "os";
 
 export function tokenize(codeStr: string | string[], fileName: string = ''): Token | TokenStream {
