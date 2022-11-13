@@ -1,5 +1,77 @@
-import { TypeOfTag } from "typescript"
 import { type TokenStream } from "../lexer/token"
+
+type Token = (Identifier
+    | TopLevel
+    | Assignment
+    | FunctionCall
+    | Group
+    | SemiGroup
+    | RawValue
+    | OneOrMoreQuantifier
+    | ZeroOrMoreQuantifier
+    | AtmostOneQuantifier
+    | Either)
+    & { type: string, parent?: Token }
+
+type TermsArray = Array<Exclude<Token, TopLevel | Assignment | RawValue>>
+
+type Identifier = {
+    type: "Identifier"
+    value: string,
+}
+
+type TopLevel = {
+    type: "TopLevel",
+    value: Assignment[]
+}
+
+type Assignment = {
+    type: "Assignment",
+    left: Identifier,
+    right: Array<Exclude<Token, TopLevel | RawValue>>
+}
+
+type FunctionCall = {
+    type: "FunctionCall",
+    caller: string,
+    args: Array<Exclude<Token, TopLevel | Assignment>>
+}
+
+type Group = {
+    type: "Group",
+    value: TermsArray
+}
+
+type RawValue = {
+    type: "RawValue",
+    value: string
+}
+
+type SemiGroup = {
+    type: "SemiGroup",
+    value: TermsArray
+}
+
+type OneOrMoreQuantifier = {
+    value: Identifier | FunctionCall | Group,
+    type: "OneOrMoreQuantifier"
+}
+
+type ZeroOrMoreQuantifier = {
+    value: Identifier | FunctionCall | Group,
+    type: "ZeroOrMoreQuantifier"
+}
+
+type AtmostOneQuantifier = {
+    value: Identifier | FunctionCall | Group,
+    type: "AtmostOneQuantifier"
+}
+
+type Either = {
+    type: "Either",
+    left: TermsArray,
+    right: TermsArray
+}
 
 export function grammaticParse(grammar: string, tokenStream: TokenStream) {
 
@@ -19,79 +91,6 @@ export function grammaticParse(grammar: string, tokenStream: TokenStream) {
     const isComma = (char: string) => char && /,/u.test(char)
     const isQuote = (char: string) => char && /"/u.test(char)
     const isBackslash = (char: string) => char && /\\/u.test(char)
-
-    type Token = (Identifier
-        | TopLevel
-        | Assignment
-        | FunctionCall
-        | Group
-        | SemiGroup
-        | RawValue
-        | OneOrMoreQuantifier
-        | ZeroOrMoreQuantifier
-        | AtmostOneQuantifier
-        | Either)
-        & { type: string, parent?: Token }
-    
-    type TermsArray = Array<Exclude<Token, TopLevel | Assignment | RawValue>>
-
-    type Identifier = {
-        type: "Identifier"
-        value: string,
-    }
-
-    type TopLevel = {
-        type: "TopLevel",
-        value: Assignment[]
-    }
-
-    type Assignment = {
-        type: "Assignment",
-        left: Identifier,
-        right: Array<Exclude<Token, TopLevel | RawValue>>
-    }
-
-    type FunctionCall = {
-        type: "FunctionCall",
-        caller: string,
-        args: Array<Exclude<Token, TopLevel | Assignment>>
-    }
-
-    type Group = {
-        type: "Group",
-        value: TermsArray
-    }
-
-    type RawValue = {
-        type: "RawValue",
-        value: string
-    }
-
-    type SemiGroup = {
-        type: "SemiGroup",
-        value: TermsArray
-    }
-
-    type OneOrMoreQuantifier = {
-        value: Identifier | FunctionCall | Group,
-        type: "OneOrMoreQuantifier"
-    }
-
-    type ZeroOrMoreQuantifier = {
-        value: Identifier | FunctionCall | Group,
-        type: "ZeroOrMoreQuantifier"
-    }
-
-    type AtmostOneQuantifier = {
-        value: Identifier | FunctionCall | Group,
-        type: "AtmostOneQuantifier"
-    }
-    
-    type Either = {
-        type: "Either",
-        left: TermsArray,
-        right: TermsArray
-    }
 
     const topLevel: TopLevel = { type: "TopLevel", value: [] }
     let context: Token = topLevel
@@ -312,9 +311,113 @@ export function grammaticParse(grammar: string, tokenStream: TokenStream) {
 
     const rules = topLevel.value
     const main = rules.find(rule => rule.left.value == "main")
-    
-    if(!main)
+
+    if (!main)
         throw new Error(`Entry point 'main' is not specified`)
 
+    new Visitable(main).accept(new Visitor())
+
     return topLevel
+}
+
+class Visitor {
+    rules: string[] = []
+    visit(term: Visitable) {
+        term.accept(this)
+    }
+    visitMain(term: Assignment) {
+        const ruleName = term.left.value
+
+        if (this.rules.includes(ruleName))
+            throw new Error(`Duplicate rule '${ruleName}'`)
+        
+        this.rules.push(ruleName)
+
+        for (let subTerm of term.right)
+            new Visitable(subTerm).accept(this);
+
+        const topLevel = (term as Token).parent!
+        new Visitable(topLevel).accept(this);
+    }
+    visitRule(term: Assignment) {
+        const ruleName = term.left.value
+        if (this.rules.includes(ruleName))
+            throw new Error(`Duplicate rule '${ruleName}'`)
+        this.rules.push(ruleName)
+        for (let subTerm of term.right)
+            new Visitable(subTerm).accept(this)
+    }
+    visitAtmostOneQuantifier(term: AtmostOneQuantifier) {
+        new Visitable(term.value).accept(this)
+    }
+    visitEither(term: Either) {
+        for (let subTerm of term.left)
+            new Visitable(subTerm).accept(this)
+
+        for (let subTerm of term.right)
+            new Visitable(subTerm).accept(this)
+    }
+    visitFunctionCall(term: FunctionCall) {
+        for (let subTerm of term.args)
+            new Visitable(subTerm).accept(this)
+    }
+    visitGroup(term: Group) {
+        for (let subTerm of term.value)
+            new Visitable(subTerm).accept(this)
+    }
+    visitIdentifier(term: Identifier) {
+
+    }
+    visitOneOrMoreQuantifier(term: OneOrMoreQuantifier) {
+        new Visitable(term.value).accept(this)
+    }
+    visitRawValue(term: RawValue) {
+
+    }
+    visitSemiGroup(term: SemiGroup) {
+        for (let subTerm of term.value)
+            new Visitable(subTerm).accept(this)
+    }
+    visitTopLevel(term: TopLevel) {
+        const subterms = term.value.filter(x => x.left.value !== "main")
+        for (let subTerm of subterms)
+            new Visitable(subTerm).accept(this)
+    }
+    visitZeroOrMoreQuantifier(term: ZeroOrMoreQuantifier) {
+        new Visitable(term.value).accept(this)
+    }
+}
+
+class Visitable {
+    constructor(public token: Token) { }
+    dispatch(visitor: Visitor) {
+        switch (this.token.type) {
+            case "Assignment":
+                return this.token.left.value == "main" ?
+                    visitor.visitMain(this.token) : visitor.visitRule(this.token)
+            case "AtmostOneQuantifier":
+                return visitor.visitAtmostOneQuantifier(this.token)
+            case "Either":
+                return visitor.visitEither(this.token)
+            case "FunctionCall":
+                return visitor.visitFunctionCall(this.token)
+            case "Group":
+                return visitor.visitGroup(this.token)
+            case "Identifier":
+                return visitor.visitIdentifier(this.token)
+            case "OneOrMoreQuantifier":
+                return visitor.visitOneOrMoreQuantifier(this.token)
+            case "RawValue":
+                return visitor.visitRawValue(this.token)
+            case "SemiGroup":
+                return visitor.visitSemiGroup(this.token)
+            case "TopLevel":
+                return visitor.visitTopLevel(this.token)
+            case "ZeroOrMoreQuantifier":
+                return visitor.visitZeroOrMoreQuantifier(this.token)
+        }
+    }
+    accept(visitor: Visitor) {
+        return this.dispatch(visitor)
+    }
 }

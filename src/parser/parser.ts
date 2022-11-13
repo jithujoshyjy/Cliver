@@ -3,7 +3,10 @@ import { grammaticParse } from "./grammarParser.js";
 import { readFile } from "fs/promises";
 
 export async function generateAST(tokens: TokenStream): Promise<any> {
-    const grammar = await readFile("../../grammar.txt", "utf-8")
+    console.log();
+    
+    const grammerPath = new URL('../../', import.meta.url).pathname + "grammar.txt"
+    const grammar = await readFile(grammerPath, "utf-8")
 
     console.log(grammaticParse(grammar, tokens))
 
