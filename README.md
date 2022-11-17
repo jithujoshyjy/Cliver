@@ -705,7 +705,7 @@ print(match isEven(10) case Apparent(n): n case _: False) # True
 This type constructor only contains 2 values, True and False
 
 ```julia
-type Boolean() = True | False
+type Boolean<data>() = True | False
 ```
 
 ##### Number
