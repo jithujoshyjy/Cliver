@@ -628,10 +628,10 @@ if expression as identifier
 end
 
 # As expressions are useful in anonymous functions since they could be used to enable recursion
-funName(fun()
+funName(identifier as fun()
     # ...
     identifier()
-end as identifier)
+end)
 ```
 
 #### Primitive Types
