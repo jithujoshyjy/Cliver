@@ -1,1466 +1,1008 @@
-#### Import/Export
+### Comments
+
+Single line comments in Cliver start with `#` and multiline comments are enclosed within `#= =#` pairs.
+
+### Naming Conventions
+
+In Cliver identifiers, start with an underscore (_) or a utf-8 letter and thereafter can contain letters, numbers, underscores, and any utf-8 alphanumeric characters. They may end with an exclamation mark (!), followed optionally by single quotes (')
 
 ```julia
-# native package
-import ... from Std\Collection, Std\Crypto, Std\FileSys
-import read, write, fmt from Std\IO
-
-# registered package
-import ... from MyPkg\UserFiles
-import ... from MyPkg\Commands\Configs
-
-# file structure
-import "./dir/src/userfiles1.cli"
-import ...Abc from "./dir/src/userfiles2.cli"
-import ... from "./dir/src/userfiles4.cli", "./dir/src/userfiles5.cli"
+# valid identifiers
+val Abc, _D0ef, Ghi!, Jkl', Mno!''
 ```
 
+### Import/Export
 
-#### Variables, Types, and Operations
+Cliver import syntax is inspired by JavaScript and TypeScript.<br/>
+Any identifier prefixed with underscore (_) is considered private and cannot be imported.<br/>
+These can only appear at the top of a scope.<br/>
+All other identifiers are exported implicitely.<br/>
 
 ```julia
-var x :: Int
-x = 5
+# import module for it's side effect
+import Package\Module
+import "./filename.cli"
 
-var :: String
-y = "hi"
+# import all into current scope
+import ... from Package\Module
+import ... from "./filename.cli"
 
+# import all as a namespace
+import ...Abc from Package\Module
+import ...Abc from "./filename.cli"
 
-# values
+# import specific things
+import A, B from Package\Module
+import A, B from "./filename.cli"
 
-val :: Array
-z = [ 4, 5, 6, 7 ]
-
-
+# import as identifier syntax
+import A as B from Package\Module
+import A as B from "./filename.cli"
 ```
 
-#### Comments
+### Variables and Constants
+
+variables are declared with the **var** keyword and constants by the **val** keyword. Semicolons are optional in Cliver.
 
 ```julia
-# single line comment
+# without initial value
+var x;
 
-#=
-    multi-line
-    comments
-=#
-
+# with initial value
+var x = value
+val y = value
 ```
-
-#### Types
-
-* Maybe<br/>
-* Mustbe<br/>
-* Boolean<br/>
-* Number:<br/>
-    * Real:<br/>
-    	* Rational:<br/>
-			* Bin, Oct, Hex, Exp<br/>
-			* Int:<br/>
-				* Int8, Int16, Int32, Int64, Int128<br/>
-			* Uint:<br/>
-			    * Uint8, Uint16, Uint32, Uint64, Uint128<br/>
-			* Float:<br/>
-			     * Float16, Float32, Float64, Float128<br/>
-			* Ufloat:<br/>
-			     * Ufloat16, Ufloat32, Ufloat64, Ufloat128<br/>
-			* BigNumber:
-					BigInt, BigFloat<br/>
-    	* Irrational:<br/>
-			* NaN,<br/>
-			* Infinites,<br/>
-			* Infinity,<br/>
-    * Complex:<br/>
-		* GenericComplex,<br/>
-		* Imaginary<br/>
-* Char:<br/>
-    * ASCIIChar,<br/>
-    * UnicodeChar,<br/>
-    * SymbolicChar
-* String:<br/>
-    * ASCIIString,<br/>
-    * UnicodeString,<br/>
-    * Byte,<br/>
-    * Symbol<br/>
-* URef<br/>
-* AbstractExpression:<br/>
-    * RegExp,<br/>
-    * GramExp<br/>
-* Range:<br/>
-    * NumericRange,<br/>
-    * UnicodeRange<br/>
-* Collection:<br/>
-    * Array,<br/>
-    * Map,<br/>
-    * Set,<br/>
-    * Trait,<br/>
-    * Matrix<br/>
-    * Tuple:
-      * AnonTuple,<br/>
-      * NamedTuple<br/>
-* Function:<br/>
-    * GenericFunction:<br/>
-      * NamedFunction,<br/>
-      * UnitFunction,<br/>
-      * AnonFunction<br/>
-    * Constructor<br/>
-    * Generator<br/>
-    * Macro<br/>
-* Object<br/>
-> there exists mutable versions of many of these types suffixed with !
 
 ```julia
-var q = "hello"
-var r = 0
-var s = true
+# with type annotation
+var x :: Type = value
+val y :: Type = value
 
-type.of(2 + 3) # type :: Int64
+# with type signature
+var :: Type
+x = value
 
-type.is(type :: String, "abc") # True
-```
-#### Maybe - type :: Maybe
-```julia
-val may1 :: Number? = [1, 2, 3].indexOf(2)
-# same as may1 :: Maybe(Number)
-print(may1)
-# ValueError: encountered an unattended Maybe value
-print(may1 || NaN) # 2
-# same as
-print(alt@(NaN) may1) # 2
-# same as
-print(may1 ?? x -> NaN) # 2
-
-var :: Int?
-may2 = 1
-may2 = None
+val :: Type
+y = value
 ```
 
-#### Mustbe
+### Type Declaration
+
+There are a whole bunch of standard types and the type system is flexible enought to let you define your own types. The type declarations are polymorphic so they do support overloading like with functions. They also support destructuring.
 
 ```julia
-# the values associated with Mustbe type must be known at the compile time
+# type alias
+type NewType = ExistingType
 
-var must1 :: Mustbe(String)
-must1 = @literal "Hello"
-type.of(must1) # Mustbe(String)
-
-var must2 :: Mustbe(Async(String))
-must2 = @apparent await read("say something", stdin)
-# Error
-
-var must3 :: Mustbe(Maybe(Int))
-must3 = @literal 5
-# Error
+# type constructor without parameters
+type TypeCtor<data>() = DataCtorA | DataCtorB
+```
+Type constructors can take parameters; the parameter can be a generic type, an abstract type or a concrete type.<br/>
+If the parameter is not annotated with a type, then it is considered generic.<br/>
+If the parameter is abstract, the parameter value should be a subtype of the specified type.<br/>
+If it's a concrete type, the parameter value should be a literal value of that type.<br/>
+```julia
+# type constructor with parameters
+type TypeCtor<data>(a, b :: AbstractType, c :: ConcreteType) = DataCtorA | DataCtorB(c, b)
 ```
 
-#### Integers - type :: Int
+#### Abstract and Concrete types
 
-* ranges from Int8 to Int128
-* also
-* ranges from Uint8 to Uint128
+Abstract types have no values associated with them they are merely there for building the type hierarchy.<br/>
+But however they can have a structural type definition.<br/>
+An abstract type can inherit from another abstarct type.<br/>
+Subtyping is only possible with Abstract types. The root abstract type is DataType.<br/>
+Concrete types have one or more data constructors associated with them. All data constructors are publically accessable values.
+```julia
+# abstract type decalration
+type AbstractCtor<abstract>() :: DataType
+
+# concrete type declaration
+type ConcreteCtor<data>() :: AbstractType = DataCtorA | DataCtorB
+```
+
+#### Type Constraints
+
+type constraints follow the same rules as type constructor parameters.
 
 ```julia
-var :: Int16
-i16 = -123
-
-var :: Uint16
-ui16 = 123
-
-type.max(type :: Int)
-# 9223372036854775807
-
-type.min(type :: Int)
-# -9223372036854775807
+type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where a :: Type
+# multiple constraints
+type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
-##### formats
-* 5cffa!x - hex
-* 127!o - octal
-* 10011!b - binary
+#### Structural Typing
 
-#### Arbitrary Precision Integers
+Structural typing defines the object structure of a type. They can have value assertion to check whether the value associated with the type meets certain conditions.
 
 ```julia
-var :: BigInt
-bInt1 = BigInt(1234)
+type AbstractCtor<abstract>() :: DataType = where {
+    propertyA :: Type,
+    methodB :: Type
+}
 
-var :: BigInt
-bInt2 = 1234!n
+# with value assertions
+type AbstractCtor<abstract>() :: DataType = where {
+    value -> boolean_expression,
+    propertyA :: Type,
+    methodB :: Type
+}
+
+# with lone value assertion
+type AbstractCtor<abstract>() :: DataType = where value -> boolean_expression
+
+# in concrete types
+
+type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type) {
+    propertyA :: Type,
+    methodB :: Type
+}
 ```
-
-#### Floats - type :: Float
-
-* Floating point numbers follow the IEEE 754 standard
-* ranges from Float16 to Float128
-* also
-* ranges from Ufloat16 to Ufloat128
 
 ```julia
-var :: Float16
-f16 = -123.456
-
-var :: Ufloat16
-uf16 = 123.456
-```
-
-#### Arbitrary Precision Floats
-
-```julia
-var :: BigFloat
-bFlt1 = BigFloat(1234.543)
-
-var :: BigFloat
-bFlt2 = 1234.543!n
-```
-
-**Infinity** and **-Infinity** for infinity, **NaN** is used for "not a number" and **Infinites** is used to denote an infinitesimal.
-
-##### Elementary mathematical functions and operations
-
-```julia
-Math.round(123.7568) # 124
-Math.sqrt(4) # 2
-Math.cbrt(9) # 3
-Math.exp(1) # 1
-Math.log(10) # 1
-Math.sin(60) # 0.567
-Math.cos(30) # 0.345
-Math.tan(0) # 1
-# and many more...
-```
-
-#### Chained assignments
-
-```julia
-var a, b, c, d
-a = b = c = d = 1
-
-a = 1; b = 2; c = 3; d = 4
-
-(a, b) = (b, a) # now a is 2 and b is 1
-
-c = [ 0, 1, 2, 3, 4 ]
-[ a, b ] = c
-
-c = { \v: 0, \w: 1, 'x': 2, 'y': 3, 'z': 4 }
-{ v, w } = c
-# but can't { x, y, z } = c
-```
-
-#### Boolean operators
-
-```julia
-var t = True
-var f = False
-
-t && t # True
-t || f # True
-!t # False
-```
-
-#### Bitwise operators
-
-```julia
-a -& b # bitwise AND
-a -| b # bitwise OR
--!c # bitwise NOT
-a -^ b # bitwise XOR
-a ->> b # bitwise right shift
-a -<< b # bitwise left shift
-```
-
-
-#### Fractional and complex numbers
-
-##### Complex numbers
-
-```julia
-3 + 5!im
-0 - 2!im
--1 + 0!im
-```
-
-It is a parametric type
-```julia
-type.of(3 + 5!im) # type :: Complex(Int64, Int64)
-```
-
-also
-```julia
-cp = Complex(3, 5) # 3 + 5!im
-cp.real # 3
-cp.imag # 5
-```
-
-#### Fractional numbers
-
-```julia
-3//4
-1//2
-1//4
- 
-type.is(type :: Fractional(Int64, Int64), 1//2) # True
- 
-# also
-fr = Fractional(1, 2) # 1//2
-
-fr.numer # 1
-fr.denom # 2
-```
-
-#### Characters
-
-```julia
-\a == 'a'
-\b == 'b'
-\c == 'c'
-type.of(\a) # type :: Char
-# ranges from 0!cx to ffffffff!cx
-```
-
-#### Strings
-
-```julia
-"Hi"
-\greet
-
-"""
-    multiline double quote string
-"""
-```
-
-Literal strings are always ASCII (if they only contain ASCII letters) or UTF8 (if they contain characters that cannot be represented in ASCII)
-
-```julia
-type.of("hello")
-# type :: ASCIIString
-
-type.of("Güdrun")
-# type :: UTF8String
-
-str = "Cliver"
-str[3 to 5] # ive
-
-greet = "hello"
-world = "earth"
-strIntrop = f"$greet {world + '!'}"
-
-greet + " " + world # hello world
-"hello" " " "world" # hello world
-```
-
-#### Symbols
-
-```julia
-\hello
-\hi
-```
-
-#### URef
-
-```julia
-U\hello
-U\hi
-```
-
-#### Formatting numbers and strings
-
-```julia
-name = "Pascal"
-
-fmt("Hello, %s \n", name)
-# returns Hello, Pascal
-
-# d for integers
-fmt("%d\n", 1!e ^ 5) # 100000
-
-	
-# f = float format, rounded if needed
-fmt("x = %0.3f\n", 7.35679) # x = 7.357
-
-# or to create another string
-str = fmt("%0.3f", 7.35679) # 7.357
-
-
-# e = scientific format with e
-fmt("%0.6e\n", 7.35679) # 7.356790e+00
-
-# c = for characters
-fmt("output: %c\n", 'α') # output α
-
-# s for strings
-fmt("%s\n", "I like Cliver")
-
-# right justify
-fmt("%50s\n", "text right justified!")
-
-```
-
-#### Regular Expressions
-
-```julia
-var :: RegExp
-regexp = re"(h | y) ellow?""gims"
-# same as re"(h | y) ellow?".flags("gims")
-# re@("gims") "(h | y) ellow?"
-
-var :: Maybe(RegExpMatch)
-test1 = regexp.match("hello"),
-test2 = regexp.match("yellow")
-
-print(test1 || test2 || "no match found")
-```
-
-#### Gramatic Expressions
-
-```julia
-x = 124
-var gramexp = gr"""
-    addition = Operator(\() Number InfixOperator(\+) Number Operator(\))
-""".flags("gims")
-gramexp.match(expr :: (1 + 2)) # True
-gramexp.match("1 + 2") # False
-```
-
-#### Ranges and Arrays
-
-```julia
-var :: Range
-ra = (1, 1) to 20 # (first, step) to last
-
-var :: Range(Number)
-nra = 2 to 20
-
-var :: Range(Char)
-cra = \a to \z
-
-ra = (2, 2) to 10
-
-ra = 1 to 10 # same as (1, 2) to 10
-
-ra = 1 to Infinity # same as (1, 1) to Infinity
-
-```
-
-#### Array
-
-* Cliver arrays start indexing from 1
-* Arrays are immutable by default. There exists a mutable counterpart Array!
-
-```julia
-var :: Array(10, Int)
-arr = [1, 2, 3, 4]
-
-arr[1] # 1
-# arr.1
-
-arr.length # 4
-
-arr[1 to 3] # [1, 2, 3]
-
-arr[5] = 5 # Error
-
-var :: Array!(4, Int)
-arr! = [1, 2, 3, 4]!
-
-arr![5] = 5 # 5
-```
-
-**There is also:**<br/>
-```julia 
-    Array.drop(index) # gets any index
-    Array.first() # gets first index
-    Array.last() # gets last index
-	
-    Array.add(index, item) # sets at any index
-    Array.first(item) # sets at first index
-    Array.last(item) # sets at last index
-```
-
-* the above are all immutable methods, meaning they don't modify their parent array
-* mutable methods by the same name also exist for mutable arrays - drop!, add!, first!, last!, etc.
-
-#### Map, Filter and Array Comprehensions
-
-```julia
-var :: Array(Int)
-primes = [2, 3, 5, 7, 11]
-
-primes.map(x -> x * 2) # [4, 6, 10, 14, 22]
-# same as
-
-primes.map(fun(x)) do
-    x * 2
+@typestruct
+fun<self>() :: Maybe(x)
+    @@where
+
+    fun Just<self>(a)
+        @@where
+        fun add(b): a + b
+    end
+    
+    fun None<self>()
+        @@where
+        fun add(b): b
+    end
 end
-
-primes.filter(x -> x %2 == 0) # [2]
-
-[ for x in 1 to 10: x ]
-# [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
 ```
 
-#### Other Collection Types
-
-#### Set
-
-> sets are immutable and there're no mutable counterparts for them.
-
-```julia
-
-var :: Set(Int)
-set = { 1, 2, 3, 4 }
-
-set[1] # 1
-# set.1
-
-2 in set # True
-
-```
-
-#### Map
-> maps are immutable by default. However there exists a mutable counterpart Map!
-
-```julia
-var :: Map(Int | String: String)
-# same as Map(Pair(Int | String, String))
-map = {
-    \wow: "how",
-    "hello": "hai",
-    5: "bye",
-    (3: "lie")
-}
-
-5 in map # False
-# means (5: 5) which isn't present
-(5: _) in map # True
-(5: "bye") in map # True
-
-map["hello"] # "hai"
-```
-
-#### Trait
-> traits are immutable by default. However there exists a mutable counterpart Trait!
-
-```julia
-var :: Trait.{
-    fun :: Int -> Int
-    fun :: (Int, Int) -> Int
-    fun :: (...Int) -> Int
-}
-
-trait = Trait.{
-    a -> a,
-    (b, c) -> a * b,
-    (...d) -> (+)(...d),
-}
-
-trait(1) # 1
-trait(1, 2) # 2
-trait(1, 2, 3) # 6
-
-(type :: Infer -> Infer) in trait # True
-
-var trait! = Trait!.{
-    a :: Int -> a,
-    (b, c) -> a * b,
-    (...d) -> (+)(...d),
-}
-
-trait!.add(
-    c  -> print("closed"), type :: Char -> Infer)
-```
-
-#### Matrix
-> matrix is immutable and there's no mutable counterpart for it.
-
-```julia
-var :: Matrix(Int).{ shape = 3//3 }
-matrix = [
-	1, 2, 3;
-	4, 5, 6;
-	7, 8, 9;
-]
-
-matrix[1//2] # 2
-```
-
-#### Tuple
-> tuple is immutable and there's no mutable counterpart for it.
-
-```julia
-var :: Tuple(Int, String, Boolean, Float)
-tuple1 = (1, "hi", True, 4.5)
-# same as
-# tuple1 = val(1, "hi", True, 4.5)
-
-tuple1[1] # 1
-# tuple1.1
-```
-
-#### NamedTuple
-> it is immutable and there's no mutable counterpart for it.
-
-```julia
-var :: NamedTuple(Int, String, Boolean; Int, Char)
-ntuple1 = var(_, _, _; a, b)
-# _ specifies a default value
-
-var tuple2 = ntuple1(1, "hi", True; a: 7, b: 'b')
-
-print(tuple2.1, tuple2.b) # 1, 'b'
-```
-
-#### Dates and Times
-
-```julia
-var initial = DateTime.elapsed()
-# --------------------------
-# long computation
-# ---------------------------
-var final = DateTime.elapsed()
-var time_elapsed = final - initial
-print(f"Time elapsed: $time_elapsed")
-
-DateTime.now() # "10:30:67 22/08/2014"
-DateTime.now(\time) # 10:30:67
-DateTime.now(\hour) # 10
-DateTime.now(\minute) # 30
-DateTime.now(\second) # 67
-
-DateTime.now(\date) # 22/08/2014
-DateTime.now(\day) # 22
-DateTime.now(\month) # 08
-DateTime.now(\year) # 2014
-
-DateTime.sleep(500)
-DateTime.setImmediate(fun) do  smt() end
-DateTime.setInterval(1000, fun) do  smt() end
-DateTime.setTimeout(2000, fun) do  smt() end
-```
 
 #### Functions
 
-#### Defining functions
+Functions are the backbone of Cliver. There are 3 main types of functions.
+Their base type is AbstractFunction.
+
+##### UnitFunction
+
+These are simple one-line function expressions.
 
 ```julia
-fun :: String -> Infer
-greet(name)
-    print("hello " + name)
+# untyped
+(...parameters) -> expression
+
+# with type anotation
+(paramA :: Type, paramB :: Type) :: Type -> expression
+```
+
+##### AnonFunction
+
+AnonFunctions / anonymous functions are of two varients.
+
+```julia
+# inline varient
+fun(...parameters): expression
+
+# block varient
+fun(paramA :: Type, paramB :: Type) :: Type
+    # ...
+end
+```
+
+The syntax form of anonymous functions can be used to create other types such as Constructors, Generators, Macros, etc.
+
+```julia
+# Constructor
+fun<self>()
+    # ...
 end
 
-fun greet(name): print("hello " + name)
-
-@call
-fun greet()
-    print("greetings!")
+# Generator
+fun<yield, payload>()
+    # ...
 end
 
-call@(99)
-fun(age)
-    age + 1
+# Macro
+fun<macro>()
+    # ...
+end
+
+# ...etc,.
+```
+
+> If the type annotations of a UnitFunction gets out of hand, consider switching to an AnonFunction.
+
+##### NamedFunctions
+
+They are similar to AnonFunctions execpt they have a name.
+
+```julia
+fun FunName()
+    # ...
 end
 ```
 
-#### Optional and Keyword Arguments
+##### Operators as Functions
 
+All operators in Cliver are just functions.<br/>
+They can be referenced like functions and can be passed around like any other value.
 ```julia
+# operator referance as callback
+funName(argA, (+))
+funName(argA, (*))
 
-fun :: (Int, Int) -> Int
-add(a, b = 10): a + b
-
-fun :: (Int, Int ; Int, Int) -> Int
-add(a, b = 10; c, d = 2):
-    (a + b) - (c * d)
-
-fun :: (...String ; ...String) -> IO
-add(...pos_args; ...named_args):
-    print(pos_args, named_args)
+# operator invoked like a function
+(+)(1, 2, 3, 4, 5) # 15
+(*)(1, 2, 3, 4, 5) # 120
 ```
 
-#### Pure Functions
-> pure functions must not produce a side effect
-> They cannot nor contain any mutable operations / invocations that cause side-effects
-
+###### Do Expressions
+a do expression can contain any number of statements and/or expressions and returns the last value inside of it.
 ```julia
-fun greet<pure>(x)
-    print(x) # error
+val item = do
+    # ...
+    value
 end
-
-fun greet<pure>(x): "hi" + x
 ```
 
-#### Anonymous Functions
+###### Function Pipeline Operation
+
+In this operation, a value is passed through various functions and each function transforms it and passes the transformed value to the next function.
+There are two type of pipeline operators in Cliver, transformation pipelines and error pipelines.
+The pipeline syntax has two varients: point free pipelines and expressive pipelines.
 
 ```julia
-fun(x): print(x)
+# point free pipelines
+value
+    `` functionA # transformation pipelines
+    `` functionB # transformation pipelines
+    ?? e -> print(e) # error pipeline
 
-# same as
-fun(x, y)
-    print(x)
-    print(y)
+# expressive pipelines
+value as altVal
+    `` functionA(altVal)
+    `` functionB(altVal)
+    ?? (e -> print(e))(altVal)
+```
+
+##### Infix Function Call
+
+If a function accepts atleast 2 or optionally many arguments, then it can be called using infix function call notation.
+
+```julia
+    fun add(...n): # ...
+    print(1 `add` 2) # 3
+    print(10 `add` 10.5) # 20.5
+```
+
+###### External Callback Syntax
+
+It is an alternative to the below approach.
+```julia
+# without external callback and using regular callback
+funName(argA, fun(...args)
+    # ...
+end)
+```
+
+```julia
+# with external callback syntax
+funName(argA, fun(...args)) do
+    # ...
 end
-
 ```
 
-#### UnitFunctions
+### Object Oriented Programming
+
+There are no classes in Cliver instead there are Constructor functions.
 
 ```julia
-() -> print("hello")
+fun CtorFunction<self>(argA, argB)
 
-x -> print(x)
+    # constructor logic...
 
-x -> do
-    print(x * 2)
-    print(x * 3)
-end
-
-```
-
-#### IIFE
-
-```julia
-(x -> print(x))("hello") # hello
-# same as
-
-call@("hello")
-x -> print(x) # hello
-
-
-(fun(x): print(x))("hello")
-# same as
-
-call@("hello")
-fun(x): print(x) # hello
-
-@call
-fun greet()
-    print("greetings")
-end
-
-```
-
-#### Pipeline Operator
-
-```julia
-var pipeline = 5
-    `` square
-    `` root
-    `` power(y, _)
-    `` x -> sin(x)
-    `` x -> (1 + x)
-    ?? e -> print(e)
-
-# same as
-
-pipeline = 5 as arg
-    `` square(arg)
-    `` root(arg)
-    `` power(y, arg)
-    `` sin(arg)
-    `` 1 + arg
-    ?? e -> print(e)
-
-```
-
-#### Error Dejection Operator
-
-```julia
-fun err(e): type.of(e)
-
-var file = await FileSys.File("file-name.txt") ?? err
-
-var fileContent = await file.read() ?? err
-print(fileContent)
-
-# same as
-
-file = try:
-        await FileSys.File("file-name.txt")
-    catch e: err(e)
-
-fileContent = try:
-        await file.read()
-    catch e: err(e)
-
-print(fileContent)
-
-```
-
-#### Generic Functions and Multiple Dispatch
-
-```julia
-fun greet(): print("hello")
-
-fun greet(name): print("hi ", name)
-
-fun greet(name, age):
-    print("hi ", age, " year old ", name)
-
-fun :: (Number, Number) -> Number
-add(num1, num2): num1 + num2
-
-fun :: (Number, String) -> Number
-add(num1, str1):
-    num1 + parse(type :: Int, str1)
-
-```
-
-#### Generators
-
-```julia
-fun :: Generator(() -> String, Char -> Int)
-generate<yield, payload>()
-    print(payload) # 'a'
-    yield 10
-	
-    print(payload) # 'b'
-    yield 20
-	
-    print(payload) # 'c'
-    yield 30
-	
-    print(payload) # 'd'
-    yield 40
-	
-    print(payload) # 'e'
-    return "string value"
-end
-
-generate()
-    ..next('a') # 10
-    ..next('b') # 20
-    ..next('c') # 30
-    ..next('d') # 40
-    ..next('e') # "string value"
-    ..next('f') # (end)
-# when done, it returns the (end) operator
-
-for n in generate():    print(n)
-```
-
-#### Object Oriented Programming
-
-#### Constructor Functions
-
-```julia
-type Human = Object.{
-    intelligence :: String,
-    consciousness :: Boolean,
-    defineTraits :: ...Options -> Trait
-}
-
-type Mammal = Object.{
-    isNocturnal :: Boolean,
-    height :: Int,
-    weight :: Int,
-    speed :: Float
-}
-
-type Student = Object.{
-    IQ :: Float,
-    skills :: Array(String),
-    favSubject :: String
-}
-
-type Person' = Object(Human, Mammal, Student).{
-    date :: DateTime,
-    id :: Hex(Int),
-    job :: String,
-    lives_in :: String,
-    greet, farewell :: (String -> Void),
-    _salary :: Int,
-    salary :: Getter(Int),
-    salary :: Setter(Int -> Void),
-    _handleDeletion :: EventData -> Void,
-    macro :: Macro(MetaData -> Void),
-}
-
-fun :: Constructor((String, String, String) -> Person')
-
-Person<self>(var name, var age, var address)
-	
-    var self.date = DateTime.now()
-    var self.id = 123ffce!x
-	
-    Person.mindset = "neutral"
-	
     @@where
-	
-    import ... from Mammal(215, "bye"), Human(125, "hi"), Student(512, "yay")
-	
-    var job = "programmer"
-	
-    var lives_in = "India"
-	
-    fun greet(word)
-	print(f"$word from {self.name}")
-    end
-	
-    fun farewell(word)
-	print(f"$word from {self.name}")
-    end
-	
-    var _salary = 3000
-	
-    fun salary<getter>(): _salary
-	
-    fun salary<setter>(value)
-	if value < 50 ^ 10
-	    self._salary = value
-	else
-	    throw BoundError("")
-    end
-	
-    onevent@(\delete)
-    fun _handleDeletion(evt)
-	# event handler logic
-    end
-	
-    fun _macc<meta>()
-	# macro definition
+
+    val propA = value
+    fun methodB()
+        # ...
     end
 end
+```
 
-fun Person<static>()
-    # static constructor logic
+#### Accessors
+
+Accessors, i.e getters and setters are special functions.
+
+```julia
+
+fun CtorFunction<self>()
+    
+    fun GetVal<getter>()
+        # getter logic
+    end
+
+    fun SetVal<setter>(value)
+        # setter logic
+    end
+end
+```
+
+#### Composition in Constructors
+
+In Constructor functions, composition is done through import statements.<br/>
+Cliver doesn't support inheritance in it's OO design.
+
+```julia
+
+type AType = Constructor().{ aProp :: Type }
+type BType = Constructor().{ ...Object(AType), bProp :: Type }
+
+fun :: AType
+A<self>()
+    # ...
+    val aProp = value
+end
+
+fun :: BType
+B<self>()
+    # ...
     @@where
-    var mindset = "positive"
-
-    fun getMood()
-        if mindset == "positive"
-	        print("happy")
-        elseif mindset == "neutral"
-            print("pleasant")
-        else
-            print("sad")
-        end
-    end
-
+    import ... from A()
+    val bProp = value
 end
 ```
 
-#### AsyncFunction
+#### Static Constructors
+
+The methods and properties of a static constructor is bound to the constructor rather than to the constructed objects.
 
 ```julia
-fun :: AsyncFunction(String -> String)
-@async sayHello(word)
-    var name = await FileSys.File("/file.txt").read()
-    var greet = name + word
-    return greet
+
+fun CtorFunction<static>()
+    # static constructor logic...
+
+    @@where
+
+    val propA = value
+    fun methodB()
+        # ...
+    end
 end
 ```
 
-#### Object
+#### Objects
+
+Objects are similar to most other programming languages. They are created by Constructor functions.
 
 ```julia
-var :: Person
-person = Person("John", 100, ["a", "bb", "ccc"])
-
-person.greet("hello") # hello from John
-person.getMood() # pleasant
-Person.getMood() # happy
-
-print(person.salary) # 30000
-person.salary = 40000
-print(person.salary) # 40000
+CtorFunctionA()
+CtorFunctionB()
 ```
 
-#### Cascade Notation
+##### Object extend notation
+
+You can create a new object containing the intrinsics of another one.
 
 ```julia
-person
-    ..name = "Jack" # Jack
-    ..greet("hello") # hello from Jack
-    ..getMood() # pleasant
-```
-
-#### Object Literal
-
-```julia
-var obj = Object.{
-    var color = "red"
-    fun fill()
-	# implementation logic
-    end
-    fun stroke()
-	# implementation logic
+# creating a new object from the StaticConstructor Object
+val objA = Object.{
+    var propA = value
+    fun methodA()
+        # ...
     end
 }
 
-type.of(obj) # type :: Object
+val objB = objA.{
+    var propB = value
+    fun methodB()
+        # ...
+    end
+}
 ```
 
-#### Control Flow
+##### Object Cascade Notation
 
-#### Conditional Evaluation
+The cascade notation is a syntatic form of the Builder design pattern.
 
 ```julia
-var num = 7
+objB()
+    ..propA = value
+    ..methodB()
+    ..methodA()
+```
 
-if num > 10
-    print("greater")
-elseif num < 10
-    print("lesser")
+### Control Structures
+
+#### Conditionals
+
+There are two types of conditionals in Cliver; if conditional and match expression.
+
+##### If Conditional
+There exists 3 syntatic variants of this construct.
+
+```julia
+# If statements - variant1
+
+if condition
+    # ...
+end
+
+if condition
+    # ...
 else
-    print("equals")
+    # ...
 end
 
-# same as
+if condition
+    # ...
+elseif condition
+    # ...
+end
 
-num = 7
-if num > 10
-    print("greater")
-elseif num < 10
-    print("lesser")
+if condition
+    # ...
+elseif condition
+    # ...
 else
-    print("equals")
+    # ...
 end
-	
-var sign = if num >= 0: 1 else: -1
-
-var x = 7
-var y = match x
-    case 1: "sunday"
-    case 2: "monday"
-    case 3: "tuesday"
-    case 4: "wednesday"
-    case 5: "thursday"
-    case 6: "friday"
-    case 7: "saturday"
-    case 8 | 9 | 10: "hello Martian!"
-    case _: "invalid"
-
-print(y) # "saturday"
 ```
 
-#### The For loop
+```julia
+# If statements - variant2
+
+if condition:
+    expression
+
+if condition
+    # ...
+else:
+    expression
+
+if condition
+    # ...
+elseif condition:
+    expression
+
+if condition
+    # ...
+elseif condition
+    # ...
+else:
+    expression
+```
+
+There's another variant which makes use of pattern matching.
+```julia
+if expression as case pattern
+    # ...
+end
+```
+
+The third variant is the if...else expression
 
 ```julia
-x = 1
-for x < 100
-    print(x)
+print(if condition: expression else: expression)
+```
+
+##### Match Expression
+
+Match expression is the pattern matching construct in Cliver.
+
+```julia
+val value = match expression
+    case pattern:
+        expression
+    case pattern:
+        expression
+    case _:
+        expression
+```
+
+#### Loops - the for loop
+
+There exists only one looping construct in Cliver. It has atleast 6 variants.<br/>
+The statement form of the for loop comes with a done block. It will execute when the loop ends.<br/>
+The status of loop after execution can be on of:<br/>
+1. `"broke"` - the loop was terminated with a break clause,
+2. `"completed"` - the looping was completed successfully and it ran atleast once,
+3. `"never"` - the loop never ran.
+
+```julia
+# for statements
+
+for item in iterable
+    # ...
 end
 
-for x < 100
-    print(x)
-done s
-    print(x ^ 2)
+for item in iterable
+    # ...
+done status
+    # ...
 end
 
-for(x = 1; x < 10; x += 1)
-    print(x)
+for item in iterable
+    # ...
+done status:
+    expression
+
+# traditional C-style syntax
+for(i = 1; i < x; i += 1)
+    # ...
 end
 
-arr = [1, 2, 3, 4, 5, 6, 7]
-for (k: v) in arr.pairs
-    print(v)
+# syntatic equivalent of while loop
+for condition
+    # ...
+end
+```
+
+There exists a **for** expression which returns an iterator and can be used in arrays and other data structures.
+
+```julia
+val arr = [for item in iterable: item]
+```
+
+**break** and **continue** are used to alter the execution of the loop and are only available within the for statement.
+
+#### Error Handling Constructs
+
+There are two main error handling constructs in Cliver and it is the **try...catch** and **error pipeline** operator.
+
+##### Do-Catch construct
+It is used for block level error handling.<br/>
+do...catch construct comes with an optional done block.<br/>
+It will execute after the execution of all do and catch blocks, regardless of the error.<br/>
+The status of error handling can be one of three:<br/>
+1. `"caught"` - there was an error and it was caught by a catch block,
+2. `"uncaught"` - the error was not caught or an uncaught error was thrown,
+3. `"success"` - the code ran without producing an error.
+```julia
+do
+    # ...
+catch e :: Type
+    # ...
 end
 
-for v in 1 to 10
-    print(v)
+do
+    # ...
+catch e: # This form doesn't support type annotation
+    expression
+
+do
+    # ...
+catch e :: Type
+    # ...
+done status
+    # ...
 end
 
+do
+    # ...
+catch e :: Type
+    # ...
+done status:
+    expression
+```
+
+There's no expression variant of this construct.
+
+##### Error Pipeline Operator
+
+The error pipeline operator functions identically to the do-catch expression except it is used for inline error handling and can also be used in function pipelines.
+
+```julia
+val someVal = expression ?? callback
+```
+
+If an expression throws an error and the expression is enclosed withn a function then it can be used to return the error as an object from the function.
+```julia
+fun funName()
+    val someVal = expression ?? x -> return x
+end
+```
+
+##### Use Statements
+
+These statements are used to enable and disable certain language features.
+These can only appear at the top of a scope.
+```julia
+use "linting: force semicolons", "!feature: variable shadowing"
+use "!typing: type inference"
+```
+
+##### Labels and As Expressions
+
+**Labels** are used in conjunction with break and continue clauses in loops and **as expressions** create associations between a value and an identifier. They both are similar in syntax and in a way functions similar to an assignment operation.
+
+```julia
+# Labels
+outer as for x in arr:
+    inner as for y in x:
+        if condition:
+            break outer
+
+# As expression
+if expression as identifier
+    print(identifier)
+end
+
+# As expressions are useful in anonymous functions since they could be used to enable recursion
+funName(fun()
+    # ...
+    identifier()
+end as identifier)
+```
+
+#### Primitive Types
+
+Cliver has a wide variety of standard types.
+
+##### Maybe
+
+This type is inspired by haskell. It is handy when dealing with potential empty values.<br/>
+Maybe is a type constructor containing two data constructors.
+
+```julia
+type Maybe(a) = Just(a) | None
+```
+
+```julia
+# handling a Maybe value
+val :: Maybe(Char)
+item = ['A', 'B', 'C'].find(x -> x == 'D')
+
+print(item || 'not found')
+```
+
+```julia
+# returning a maybe value
+fun :: Array(Char) -> Char? # same as Maybe(Char)
+findItem(arr)
+    # ...
+    return if found: Just(item) else: None
+end
+```
+
+##### Mustbe
+
+It is simply a compiler constant.<br/>
+The possible values of this type are primitive literals and expressions yielding primitive values that can be infered at compile time.<br/>
+References types or runtime types are not permitted. It has two data constructors: Literal and Apparent.
+
+```julia
+type Mustbe(a) = Literal(a) | Apparent(a)
+```
+
+```julia
+val :: Mustbe(String)
+name = @literal "Abc"
+
+name = @literal f"Abc" # error
+
+val newName = "Xyz"
+name = @apparent newName
+```
+
+```julia
+# returning Mustbe value
+fun :: Int -> Mustbe(Boolean)
+isEven(num)
+    return @apparent num % 2 == 0
+end
+```
+
+```julia
+# handling Mustbe value
+print(isEven(10)) # Apparent(True)
+
+# to get the actual value True
+print(match isEven(10) case Apparent(n): n case _: False) # True
+```
+
+##### Boolean
+
+This type constructor only contains 2 values, True and False
+
+```julia
+type Boolean() = True | False
+```
+
+##### Number
+
+Number is an abstract type containg many core number types.
+
+**Int**<br/>
+
+Eg: `-1, -2, 0, 1, 2, 3, ...`
+There's also a Uint counterpart.<br/>
+
+```julia
+type Int :: DataType
+type.sub(type :: Int)
+# Union(Int8, Int16, Int32, Int128)
+```
+<br/>
+
+**Float**<br/>
+
+Eg: `-2.0, -0.5, 1.0, 1.5, 10.99, ...`<br/>
+There's also a Ufloat counterpart.
+
+```julia
+type Float :: DataType
+type.sub(type :: Float)
+# Union(Float16, Float32, Float128)
+```
+<br/>
+
+**BigNumber**<br/>
+
+This type represents arbitary precision Numbers.<br/>
+Eg: BigInt - `1!n, 2!n, -10000!n ...`<br/>
+Eg: BigFloat - `1.2!n, -0.2!n, 11.5000!n ...`<br/>
+
+```julia
+type BigNumber :: DataType
+type.sub(type :: BigNumber)
+# Union(BigInt, BigFloat)
+```
+
+<br/>
+
+**Fractional**<br/>
+
+This type represents a ratio or a fraction. This is the only concrete type in the subtypes of Rational.<br/>
+Eg: `1//2, 1//4, 3//4 ...`<br/>
+
+```julia
+val fr :: Fractional(Int, Int) = 1//6
+print(fr.numer, fr.denom) # Numerator(1) Denominator(6)
+```
+
+> Int, Float, BigNumber and Fractional are subtypes of Rational which itself is a subtype of Real.
+
+**Irrationals**<br/>
+
+There are 3 values for this type NaN, Infinites and Infinity.
+
+```julia
+type Irrational() :: Real = NaN | Infinites | Infinity
+```
+
+**Complex Numbers**<br/>
+Eg: `1 + 2!im, 1!im, 2 - 3im, ... `<br/>
+Unlike in mathematics, Complex is not a super type of Real rather they are sibling types in the type hierarchy.
+
+###### Numeric Notations
+
+**Base-2 - decimal**<br/>
+Eg: `101!b, 1100!b, -1011!b, ...`<br/>
+
+**Base-8 - octal**<br/>
+Eg: `347!o, 6534!o, -5260!o, ...`<br/>
+
+**Base-16 - hexadecimal**<br/>
+Eg: `x\ff460, x\bc461, x\20cae, ...`<br/>
+
+**Scientific Notation**<br/>
+Eg: `6.022!e ^ 23, 1.6!e ^ -35, -5.3!e ^ 4, ...`<br/>
+
+###### Tagged Numbers
+
+Numbers can be tagged by an identifier.
+
+```julia
+fun :: Uint -> Int
+fact(n): n * fact(n - 1)
+
+print(5!fact) # 120
+```
+
+###### Implicit Multiplication
+
+When multiplying a number with a identifier, you can omit the (*) sign and deal with multiplications in a mathematically accurate notation.<br/>
+Eg: `2x + 1, -3y(5 + 2), 2.25z, ...`
+
+##### Char
+
+This data type represents either ASCII charactors or utf-8 unicode charactors.<br/>
+
+Eg: ASCIIChar - `'A', '7', '!', ...`<br/>
+Eg: UnicodeChar - `'🎉', 'Â', 'α', ...`<br/>
+Eg: SymChar - `\a, \B, \0, ...`<br/>
+
+```julia
+type Char :: DataType
+type.sub(type :: Char)
+# Union(ASCIIChar, UnicodeChar, SymChar)
+```
+
+##### String
+
+String is an Array of Char values.
+
+Eg: ASCIIString - `"Abc", "$7ffG", "Ab*8", ...`<br/>
+Eg: UnicodeString - `'🎉zzʑ', 'Âlp', 'α🕶ɜ', ...`<br/>
+Eg: SymString - `\abC, \Bcd, \012FF, ...`<br/>
+
+```julia
+type String :: Array
+type.sub(type :: String)
+# Union(ASCIIString, UnicodeString, SymString)
+```
+
+###### String Fragments
+
+When strings are placed next to each other, they can merge into a single string.
+```julia
+print("abc" "def" "ghi") # abcdefghi
+
+# with SymString
+print(\abc\def\ghi) # abcdefghi
+```
+> This works with chars too; i.e they merge into a String in a similar fashion.
+
+###### Mutiline Strings
+
+If a string is formed with atleast 3 double quotes, it can span multiple lines and can include n-1 consecutive double quotes where n is the number of double quotes it began with.
+
+```julia
+"""
+multiline
+string
+"""
+
+""""
+also
+multiline
+string
+""""
+```
+
+###### Tagged Strings
+
+Strings can be tagged to enable interpolation and form special constructs.
+
+```julia
+val world = "earth", punch = '!'
+val greet = f"hello {world}$punch"
+
+print(greet) # hello earth!
+
+# with SymString
+print\hello # hello
+```
+> tagging can also be done with multiline strings
+
+##### Range
+
+They can be finite or infinite.
+```julia
+type Range :: DataType
+
+type.sub(type :: Range)
+# Union(NumericRange, UnicodeRange)
+```
+```julia
+# syntax
+(start, step) to last
+```
+Eg: NumericRange
+```julia
+print(1 to 5) # 1 2 3 4 5
 # same as
-
-for v in 1 to 10: print(v)
+print((1, 1) to 5) # 1 2 3 4 5
 ```
 
-#### The break and continue statements
-
+Eg: UnicodeRange
 ```julia
-for x <= 100
-    if x % 5 == 0
-        continue
-    elseif x == 77
-	    break
-    else:
-	    print(x ^ 2)
-end
-```
-
-#### Exception Handling
-
-```julia
-var codes = ["AO", "ZD", "SG", "EZ"]
-if code in codes
-    print(f"This is an acceptable $code")
-else
-    throw DomainError()
-end
-
-var a = []
-try
-    a.drop!()
-catch ex :: DomainError
-    print(type.of(ex))
-catch ex :: IndexError | RangeError
-    print(type.of(ex))
-catch ex
-    print(type.of(ex))
-done s
-    print("finished")
-end
-
-```
-
-#### More on Types, Methods & Modules
-
-#### Type Signatures and Conversions
-
-```julia
-var :: Int16
-a = 16
-
-var :: String
-b = "hello"
-
+print(\a to \d) # a b c d
 # same as
-var c :: String = "125"
+print((\a, 1) to \d) # a b c d
 ```
 
-#### Type Conversions and Promotions
+> if the last element is the irrational value Infinity, the Range becomes infinite.
+
+#### Collections
+
+Most collections in Cliver are immutable and some even have mutable counterpart prefixed with exclamation mark.
+
+##### Array
+Arrays are the most basic collection type in Cliver.<br/>
+The super type is AbstractArray.
 
 ```julia
-type.parse(type :: Int16, 12) # 12
-type.parse(type :: Int32, "121") # 121
+val items :: Array(Type) = [A, B, C, D]
 
-type.promote(1, 2.5, 3//4) # (1.0, 2.5, 0.75)
-type.promote(1.5, 1!im) # (1.5 + 0.0!im, 0.0 + 1.0!im)
-
-type.promote(True, \c, 1.0) # (1.0, 99.0, 1.0)
+# mutable version
+val items :: Array!(Type) = [A, B, C, D]!
 ```
 
-#### The type hierarchy – subtypes and supertypes
-
+The `in` operator can check for the presence of a value in an array.
+Arrays support destructuring with the following syntax.
 ```julia
-type.of(type :: Int64) # type :: Signed
+val [itemA, itemB] = items
 
-type.of(type :: Signed) # type :: Integer
-
-type.of(type :: Integer) # type :: Real
-
-type.of(type :: Real) # type :: Number
-
-type.of(type :: Number) # type :: Primitive
-
-type.of(type :: Primitive) # type :: DataType
-
-type.subs(type :: Integer)
-# type :: Any(BigInt, Bool, Char, Signed, Unsigned)
-
-type.subs(type :: Signed)
-# type :: Any(Int128, Int16, Int32, Int64, Int8)
-
-type.subs(type :: Int64)
-# type :: Any
-```
-
-#### Concrete and Abstract Types
-
-Concrete types have no subtypes and might only have abstract types as their supertypes.
-```julia
-type ImConcreteType(a) :: ImAbstractType = ImConcreteType(Int, a)
-# every concrete type is a subtype of NamedTuple
-```
-
-An abstract type (such as Number and Real) is only a name that groups multiple subtypes together, but it can be used as a type annotation or used as a type in array literals.
-```julia
-type Cardinal :: DataType
-```
-
-#### User Defined and Composite Types
-
-```julia
-
-type Point :: Cardinal = Point(Float64, Float64, Float64) | Point(x: Float64, y: Float64, z: Float64)
-
-var p1 = Point(1, 2, 3)
-# (p1.1, p1.2, p1.3) == (1, 2, 3)
-
-var p2 = Point(x: 1, y: 2, z: 3)
-# (p2.x, p2.y, p2.z) == (1, 2, 3)
-```
-
-#### Constrained Types ####
-
-* a type constrain must evaluate to a boolean
-```julia
-# compile time constrains - must be immutable and pure
-val :: String .{ x -> x in ["hello", "hi", "howdy"] }
-consT1 = "hi"
-
-# runtime constrains - may be mutable and impure - available on mutable types only
-val :: Array!(Int) .{ x -> x.every(x -> isPrime(x)) }
-consT2 = [1, 2, 3, 4]
-```
-
-#### When are two values or objects equal or identical?
-
-```julia
-var i16 = 125 :: Int16
-var i64 = 125 :: Int64 # default
-var d = { 'a': 100, 'b': 200, 'c': 300 }
-
-i16 == i64 # True
-i16 is i64 # False
-i16 is! i64 # True
-
-var a = 50
-
-(_: 100) in d # True
-(\a: _) in d # True
-(\a: 100) in d # True
-
-(_: 100) in! d # False
-(\a: _) in! d # False
-(\a: 100) in! d # False
-```
-
-#### Metaprogramming
-
-#### Expressions and Symbols
-
-```julia
-expr :: (1 + 2)
-expr :: $do
-    var a = 5
-    var b = 2
-    a + b
+fun(items.[itemA, itemB])
+    # ...
 end
 ```
 
-#### Eval and Interpolation
-
+Array comprehension is done using for expressions
 ```julia
-var e1 = Expr(\call, ((*), 3, 4))
-# expr :: ((*)(3, 4))
-
-var a = 4
-stmt :: $do
-    var b = 1
-    var e5 = ${a} + b
-end # stmt :: var e5 = 4 + b
+[for item in items: if isValid(item): item]
 ```
 
-#### Defining Macros
+##### Tuple
 
-Macro takes the input expressions and returns the modified expressions at parse time
+Tuples are immutable, fixed sized collections. They can contain multiple types. Tuples are not iterable.
+```julia
+val :: Tuple(TypeA, TypeB, TypeC)
+items = (ValueA, ValueB, ValueC)
+```
+
+##### Map
+Maps contain key-value pairs.<br/>
+The super type is AbstractMap.
 
 ```julia
-fun macint<meta>()
-    expr :: $do
-        print("start")
-	${ meta.eval() }
-	print("after")
+val pairs :: Map(KeyType, ValueType) = {
+    keyA: valueA,
+    keyB: valueB
+}
+```
+
+The behaviour of the `in` operator varies in with the lhs value when used with a Map.
+```julia
+print(keyA in pairs) # True
+print((keyA: valueA) in pairs) # True
+print((_: valueA) in pairs) # True
+print((keyA: _) in pairs) # True
+```
+
+Maps support destructuring with the following syntax.
+```julia
+val {keyA, keyB as keyC} = pairs
+
+fun(pairs.{keyA, keyB})
+    # ...
+end
+```
+
+Map comprehension can be done using for expressions
+```julia
+{for pair in pairs: if isValid(pair): pair}
+# or
+{for (key: value) in (pairs.keys, pairs.values): if isValid(key): (key: value)}
+```
+
+> There are many more collection in Cliver with there on syntax varients!
+
+#### Metaprograming
+
+It is done mainly using Macros.
+
+##### Macro
+A macro is a construct which can access and modify the AST structure of a supplied statement or expression.
+```julia
+# Example
+fun runTime<meta>()
+    @@where do
+
+        import elapsed from Std\DateTime
+
+        val start = elapsed()
+        ${meta.raw}
+        val stop = elapsed()
+        print(stop - start + "ms")
     end
 end
 
-@macint print("Where am I?")
-#=
-start
-Where am I?
-after
-=#
-```
-
-#### I/O, Networking, and Parallel Computing
-
-#### Basic input and output
-
-#### Channels
-
-```julia
-var :: Channel(String)
-chan1 = Channel(\server; default: "", capacity: 4)
-# a channel can be a
-# \sender, \receiver or \server
-# \server is the default
-
-chan1.capacity # 4
-chan1.queued # 0
-
-@async
-fun channeler1(ch)
-    print(~ch)
-end
-
-await channeler1(chan1)
-chan1 <~ "hello world!"
-# prints "hello world!"
-
-chan1.close()
-
-@async
-fun channeler2(ch)
-    for(v = 1; v <= 4; v +=1)
-	    ch <~ "hello world!"
-    end
-    ch.close()
-end
-
-var chan2 = Channel()
-
-await channeler2(chan2)
-
-for true
-    var res = ~chan1
-        if res is (end)
-	    print("Channel Closed")
-	    break
-	end
-    print("Channel Open: ", res)
-end
-
-var chan3 = Channel(capacity: 4)
-
-@async do
-    chan3 <~ "first"
-    chan3 <~ "second"
-    chan3 <~ "third"
-    chan3 <~ "fourth"
-    chan3.close()
-end
-
-for res in chan3:    print(res)
-
-```
-
-* Cliver IO is stream-oriented
-* Stream is the Fundamental Stream Type
-* IO is its subtype
-
-```julia
-var stream = IO.stdin
-for line in stream.lines:
-    print(f"Found $line")
-
-var file = File("example.dat")
-
-for line in file.lines
-    print(line)
-done m
-    file.close()
-end
-```
-
-#### TCP Sockets and Servers
-
-```julia
-var server = HTTP.serve({ \port: 8080 })
-
-@async
-for req in server
-    req.respond({ \body: 'Hello World\n' })
-end
-```
-
-#### Parallel Operations and Computing
-
-```julia
-for pid in workers()
-    # do something with each process (pid = process id)
-
-end
-
-@parallel
+@runTime
 for i in 1 to 100000
-    arr[i] = i
+    print(i)
 end
+
+# prints: ---ms
 ```
-
-#### Running External Programs
-
-#### Running Shell Commands
-
-```julia
-Shell.pwd() # "c://test"
-Shell.cd("c://test//week1")
-Shell.ls()
-
-var cmd = "echo Cliver is clever"
-Shell.run(cmd) # returns Cliver is clever
-
-Shell.run("date")
-# Sun Oct 12 09:44:50 GMT 2014
-
-cmd = r"cat file1.txt" # raw string
-
-Shell.run(cmd)
-# prints the contents of file1.txt
-```
-
-#### Calling C and FORTRAN
-
-```julia
-var lang = FFI.C(val(\getenv, "libc"), type :: Ptr(Uint8), type :: Ptr(Uint8), "LANGUAGE")
-```
-
-FFI - Foreign Function Interface
-In general, C function takes the following arguments:
-
-	A (\function, "library") tuple with the name of the C function (here, getenv) is used as a symbol, and the library name (here, libc) as a string
-	The return type (here, type :: Ptr(Uint8)), which can be any bitstype, or type :: Ptr
-
-	A tuple of types of the input arguments (here, (type :: Ptr(Uint8)), note the tuple)
-
-	The actual arguments if there are any (here, "LANGUAGE")
-=#
-
-#### Calling Python
-
-```julia
-FFI.Python.eval("10*10") # 100
-
-@FFI.pyimport "math"
-math.sin(math.pi / 2) # 1.0
-```
-
-#### Calling JavaScript
-
-```julia
-FFI.JavaScript.eval("10*10") # 100
-FFI.JavaScript.eval("Math.PI * 2") # 6.2857
-```
-
-## Inspired by
-
-
-+ import syntax - JavaScript, PHP
-+ variable/type declaration - Kotlin, TypeScript
-+ typing syntax - TypeScript, Julia, Hakell, Ada
-+ comment syntax - Julia
-+ standard objects properties - Swift
-+ Maybe type - Haskell
-+ Mustbe type - Odin
-+ Type System - Haskell, Julia, TypeScript
-+ Strings - Python
-+ BigNumber - Java, JavaScript
-+ Complex Number - Julia
-+ pattern matching - JavaScript/TypeScript, JavaScript(ESNext), Python, Rust, Haskell
-+ Fractional Number - Julia, Haskell
-+ Symbol - Pascal
-+ RegExp - Python
-+ macro system - Julia
-+ Range - Haskell
-+ comprehension syntax - Python, Julia, Haskell
-+ external callback syntax - Julia, Elixir
-+ cascade notation - Dart
-+ Channel - Go
-+ control structures - Go, Julia, JavaScript
-+ Unit Function - Julia, Swift
-+ Do Expression - JavaScript(ESNext), Julia, Haskell
-+ Object literals/extended Object literals - JavaScript/TypeScript, C#, C++
-+ data structures - JavaScript/TypeScript, Python, C#, Rust, Julia
-+ function pipeline - Haskell, JavaScript(ESNext), F#, Haxe
-+ await syntax - JavaScript/TypeScript, Python, C#
-+ Generator - JavaScript/TypeScript, JavaScript(ESNext)
-+ Contructor - JavaScript/TypeScript, Python, Kotlin, Scala
-+ FFI - Julia
-+ Module System - Julia, JavaScript/TypeScript, Python, C#
-+ infix function application - Haskell
-+ tagged number - JavaScript(ESNext)
-+ tagged string/tagged symbols - JavaScript/TypeScript
-+ constrained types - Agda
----
-not yet implemented
-+ effect system - Coq
-+ variable shadowing - Rust
