@@ -644,7 +644,7 @@ This type is inspired by haskell. It is handy when dealing with potential empty 
 Maybe is a type constructor containing two data constructors.
 
 ```julia
-type Maybe(a) = Just(a) | None
+type Maybe<data>(a) = Just(a) | None
 ```
 
 ```julia
