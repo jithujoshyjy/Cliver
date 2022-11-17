@@ -547,7 +547,7 @@ val arr = [for item in iterable: item]
 
 #### Error Handling Constructs
 
-There are two main error handling constructs in Cliver and it is the **try...catch** and **error pipeline** operator.
+There are two main error handling constructs in Cliver and it is the **do...catch** and **error pipeline** operator.
 
 ##### Do-Catch construct
 It is used for block level error handling.<br/>
