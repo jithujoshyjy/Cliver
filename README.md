@@ -767,7 +767,7 @@ print(fr.numer, fr.denom) # Numerator(1) Denominator(6)
 There are 3 values for this type NaN, Infinites and Infinity.
 
 ```julia
-type Irrational() :: Real = NaN | Infinites | Infinity
+type Irrational<data>() :: Real = NaN | Infinites | Infinity
 ```
 
 **Complex Numbers**<br/>
