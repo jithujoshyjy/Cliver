@@ -671,7 +671,7 @@ The possible values of this type are primitive literals and expressions yielding
 References types or runtime types are not permitted. It has two data constructors: Literal and Apparent.
 
 ```julia
-type Mustbe(a) = Literal(a) | Apparent(a)
+type Mustbe<data>(a) = Literal(a) | Apparent(a)
 ```
 
 ```julia
