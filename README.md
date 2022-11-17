@@ -786,7 +786,7 @@ Eg: `347!o, 6534!o, -5260!o, ...`<br/>
 Eg: `x\ff460, x\bc461, x\20cae, ...`<br/>
 
 **Scientific Notation**<br/>
-Eg: `6.022!e ^ 23, 1.6!e ^ -35, -5.3!e ^ 4, ...`<br/>
+Eg: `6.022!e + 23, 1.6!e - 35, -5.3!e + 4, ...`<br/>
 
 ###### Tagged Numbers
 
