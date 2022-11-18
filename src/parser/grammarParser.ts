@@ -1,6 +1,23 @@
-import { type TokenStream } from "../lexer/token"
+import { type TokenStream, type Token as ProgramToken } from "../lexer/token"
 
-type Token = (Identifier
+interface ResultKind {
+    ok: boolean
+}
+
+interface Ok<L> extends ResultKind {
+    value: L
+}
+
+interface Err<R> extends ResultKind {
+    error: R
+}
+
+type Result<L, R> = Ok<L> | Err<R>
+
+const Ok = <T>(value: T): Ok<T> => ({ ok: true, value })
+const Err = <T>(error: T): Err<T> => ({ ok: false, error })
+
+type GrammarToken = (Identifier
     | TopLevel
     | Assignment
     | FunctionCall
@@ -11,9 +28,9 @@ type Token = (Identifier
     | ZeroOrMoreQuantifier
     | AtmostOneQuantifier
     | Either)
-    & { type: string, parent?: Token }
+    & { type: string, parent?: GrammarToken }
 
-type TermsArray = Array<Exclude<Token, TopLevel | Assignment | RawValue>>
+type TermsArray = Array<Exclude<GrammarToken, TopLevel | Assignment | RawValue>>
 
 type Identifier = {
     type: "Identifier"
@@ -28,13 +45,13 @@ type TopLevel = {
 type Assignment = {
     type: "Assignment",
     left: Identifier,
-    right: Array<Exclude<Token, TopLevel | RawValue>>
+    right: Array<Exclude<GrammarToken, TopLevel | RawValue>>
 }
 
 type FunctionCall = {
     type: "FunctionCall",
     caller: string,
-    args: Array<Exclude<Token, TopLevel | Assignment>>
+    args: Array<Exclude<GrammarToken, TopLevel | Assignment>>
 }
 
 type Group = {
@@ -93,35 +110,35 @@ export function grammaticParse(grammar: string, tokenStream: TokenStream) {
     const isBackslash = (char: string) => char && /\\/u.test(char)
 
     const topLevel: TopLevel = { type: "TopLevel", value: [] }
-    let context: Token = topLevel
+    let context: GrammarToken = topLevel
 
-    const addToContext = (token: Token) => {
+    const addToContext = (token: GrammarToken) => {
         token.parent = context
         if (context.type == "TopLevel")
-            (context.value as Token[]).push(token)
+            (context.value as GrammarToken[]).push(token)
         else if (context.type == "Assignment")
-            (context.right as Token[]).push(token)
+            (context.right as GrammarToken[]).push(token)
         else if (context.type == "Group")
-            (context.value as Token[]).push(token)
+            (context.value as GrammarToken[]).push(token)
         else if (context.type == "SemiGroup")
-            (context.value as Token[]).push(token)
+            (context.value as GrammarToken[]).push(token)
         else if (context.type == "Either")
-            (context.right as Token[]).push(token)
+            (context.right as GrammarToken[]).push(token)
         else if (context.type == "FunctionCall")
-            (context.args as Token[]).push(token)
+            (context.args as GrammarToken[]).push(token)
     }
 
     const popContext = () => {
         if (context.type == "Assignment")
-            return (context.right as Token[]).pop()
+            return (context.right as GrammarToken[]).pop()
         else if (context.type == "Group")
-            return (context.value as Token[]).pop()
+            return (context.value as GrammarToken[]).pop()
         else if (context.type == "SemiGroup")
-            return (context.value as Token[]).pop()
+            return (context.value as GrammarToken[]).pop()
         else if (context.type == "Either")
-            return (context.right as Token[]).pop()
+            return (context.right as GrammarToken[]).pop()
         else if (context.type == "FunctionCall")
-            return (context.args as Token[]).pop()
+            return (context.args as GrammarToken[]).pop()
         throw new Error(`Cannot pop value from the current context: ${context.type}`)
     }
 
@@ -204,7 +221,7 @@ export function grammaticParse(grammar: string, tokenStream: TokenStream) {
                     context = context.parent!
 
                     if (context.type == "FunctionCall") {
-                        context.args = value as Array<Exclude<Token, TopLevel | Assignment>>
+                        context.args = value as Array<Exclude<GrammarToken, TopLevel | Assignment>>
                         context = context.parent!
                     }
                     break
@@ -286,7 +303,7 @@ export function grammaticParse(grammar: string, tokenStream: TokenStream) {
             consumeChar()
 
             const left: TermsArray = []
-            let value: Token | undefined
+            let value: GrammarToken | undefined
 
             while (value = popContext() as TermsArray[0])
                 left.push(value)
@@ -315,52 +332,161 @@ export function grammaticParse(grammar: string, tokenStream: TokenStream) {
     if (!main)
         throw new Error(`Entry point 'main' is not specified`)
 
-    new Visitable(main).accept(new Visitor())
+    new Visitable(main).accept(new Visitor(tokenStream, rules))
 
     return topLevel
 }
 
+type Program = { type: "Program", value: ProgramContext[], parent: null }
+type ProgramContext = (Program
+    | Rule
+    | ProgramGroup
+    | ProgramSemiGroup
+    | ProgramEither
+    | ProgramFunctionCall
+    | ProgramAtmostOneQuantifier
+    | ProgramZeroOrMoreQuantifier
+    | ProgramOneOrMoreQuantifier)
+    & { type: string, parent?: ProgramContext | null }
+
+type Rule = {
+    type: "Rule",
+    name: string,
+    value: ProgramContext[],
+}
+
+type ProgramGroup = {
+    type: "ProgramGroup",
+    value: ProgramContext[]
+}
+
+type ProgramSemiGroup = {
+    type: "ProgramSemiGroup",
+    value: ProgramContext[]
+}
+
+type ProgramEither = {
+    type: "ProgramEither",
+    value: ProgramContext[]
+}
+
+type ProgramFunctionCall = {
+    type: "ProgramFunctionCall",
+    value: ProgramContext[]
+}
+
+type ProgramAtmostOneQuantifier = {
+    value: ProgramContext,
+    type: "ProgramAtmostOneQuantifier"
+}
+
+type ProgramZeroOrMoreQuantifier = {
+    value: ProgramContext[],
+    type: "ProgramZeroOrMoreQuantifier"
+}
+
+type ProgramOneOrMoreQuantifier = {
+    value: ProgramContext[],
+    type: "ProgramOneOrMoreQuantifier"
+}
+
 class Visitor {
-    rules: string[] = []
+    constructor(private tokenStream: TokenStream, private rules: GrammarToken[]) { }
+
+    program: Program = {
+        type: "Program",
+        value: [],
+        parent: null
+    }
+
+    context: ProgramContext = this.program
+
+    #addToContext = (token: ProgramContext) => {
+        token.parent = this.context
+        if (this.context.type == "Program")
+            (this.context.value as ProgramContext[]).push(token)
+        else if (this.context.type == "Rule")
+            (this.context.value as ProgramContext[]).push(token)
+        else if (this.context.type == "ProgramGroup")
+            (this.context.value as ProgramContext[]).push(token)
+        else if (this.context.type == "ProgramSemiGroup")
+            (this.context.value as ProgramContext[]).push(token)
+        else if (this.context.type == "ProgramEither")
+            (this.context.value as ProgramContext[]).push(token)
+        else if (this.context.type == "ProgramFunctionCall")
+            (this.context.value as ProgramContext[]).push(token)
+    }
+
+    #popContext = () => {
+        if (this.context.type == "Rule")
+            return (this.context.value as ProgramContext[]).pop()
+        else if (this.context.type == "ProgramGroup")
+            return (this.context.value as ProgramContext[]).pop()
+        else if (this.context.type == "ProgramSemiGroup")
+            return (this.context.value as ProgramContext[]).pop()
+        else if (this.context.type == "ProgramEither")
+            return (this.context.value as ProgramContext[]).pop()
+        else if (this.context.type == "ProgramFunctionCall")
+            return (this.context.value as ProgramContext[]).pop()
+        throw new Error(`Cannot pop value from the current context: ${this.context.type}`)
+    }
+
     visit(term: Visitable) {
         term.accept(this)
     }
+
     visitMain(term: Assignment) {
-        const ruleName = term.left.value
+        const tokens: object[] = []
+        for (let subTerm of term.right) {
+            const token = new Visitable(subTerm).accept(this)
+            // if(!["AtmostOneQuantifier", "ZeroOrMoreQuantifier"].includes(token.type)) {
 
-        if (this.rules.includes(ruleName))
-            throw new Error(`Duplicate rule '${ruleName}'`)
-        
-        this.rules.push(ruleName)
+            // }
 
-        for (let subTerm of term.right)
-            new Visitable(subTerm).accept(this);
-
-        const topLevel = (term as Token).parent!
-        new Visitable(topLevel).accept(this);
+        }
     }
+
     visitRule(term: Assignment) {
-        const ruleName = term.left.value
-        if (this.rules.includes(ruleName))
-            throw new Error(`Duplicate rule '${ruleName}'`)
-        this.rules.push(ruleName)
         for (let subTerm of term.right)
             new Visitable(subTerm).accept(this)
     }
-    visitAtmostOneQuantifier(term: AtmostOneQuantifier) {
-        new Visitable(term.value).accept(this)
-    }
-    visitEither(term: Either) {
-        for (let subTerm of term.left)
-            new Visitable(subTerm).accept(this)
 
-        for (let subTerm of term.right)
-            new Visitable(subTerm).accept(this)
+    visitAtmostOneQuantifier(term: AtmostOneQuantifier) {
+        const value = this.#popContext() as Rule | ProgramFunctionCall | ProgramGroup
+        if (value === undefined || !["Rule", "ProgramFunctionCall", "ProgramGroup"].includes(value.type)) {
+            return false;
+        }
+
+        const token: ProgramAtmostOneQuantifier = { value, type: "ProgramAtmostOneQuantifier" }
+        this.#addToContext(token)
+        // new Visitable(term.value).accept(this)
+
+        return true
     }
+
+    visitEither(term: Either) {
+        const leftContext = this.context as Rule | ProgramFunctionCall | ProgramGroup | ProgramSemiGroup | ProgramEither
+        const value: ProgramContext[] = leftContext.value
+
+        const token: ProgramEither = { value, type: "ProgramEither" }
+        this.#addToContext(token)
+
+        if(value.length < 1) {
+            this.context = token
+            return false;
+        }
+
+        return true;
+    }
+
     visitFunctionCall(term: FunctionCall) {
-        for (let subTerm of term.args)
-            new Visitable(subTerm).accept(this)
+        const caller = term.caller
+        for(let arg of term.args) {
+            // if(this.context.type == "ProgramEither")
+                new Visitable(arg).accept(this)
+        }
     }
+
     visitGroup(term: Group) {
         for (let subTerm of term.value)
             new Visitable(subTerm).accept(this)
@@ -389,7 +515,7 @@ class Visitor {
 }
 
 class Visitable {
-    constructor(public token: Token) { }
+    constructor(public token: GrammarToken) { }
     dispatch(visitor: Visitor) {
         switch (this.token.type) {
             case "Assignment":
