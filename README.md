@@ -334,8 +334,8 @@ Cliver doesn't support inheritance in it's OO design.
 
 ```julia
 
-type AType = Constructor().{ aProp :: Type }
-type BType = Constructor().{ ...Object(AType), bProp :: Type }
+type AType = Constructor() -> { aProp :: Type }
+type BType = Constructor() -> { ...Object(AType), bProp :: Type }
 
 fun :: AType
 A<self>()
