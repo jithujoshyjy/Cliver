@@ -3,17 +3,17 @@
 ##############################
 
 # native package
-import pkg :: (Collection, Crypto, FileSys)
-import stdin, stdout, fmt from pkg :: IO
+import ... from Std\Collection, Std\Crypto, Std\FileSys
+import stdin, stdout, fmt from Std\IO
 
 # registered package
-import pkg :: \UserFiles
-import pkg :: \Commands\Configs
-import ... from pkg :: WebSocket
+import MyPkg\UserFiles
+import MyPkg\Commands\Configs
+import ... from WebSocket
 
 # file structure
 import "./dir/src/userfiles1.cli"
-import "./dir/src/userfiles2.cli" as Abc
+import ...Abc from "./dir/src/userfiles2.cli"
 import ... from "./dir/src/userfiles4.cli", "./dir/src/userfiles5.cli"
 
 ##############################
@@ -170,12 +170,12 @@ type.min(type :: Int)
 # -9223372036854775807
 
 # formats
-# 5cffa!x	127!o	10011!b
+# x\5cffa	127!o	10011!b
 
 # Arbitrary Precision Integers
 
 var :: BigInt
-bInt1 = BigInt(1234)
+bInt1 = BigInt("1234")
 
 var :: BigInt
 bInt2 = 1234!n
@@ -198,24 +198,24 @@ uf16 = 123.456
 # Arbitrary Precision Floats
 
 var :: BigFloat
-bFlt1 = BigFloat(1234.543)
+bFlt1 = BigFloat("1234.543")
 
 var :: BigFloat
 bFlt2 = 1234.543!n
 
-# Infinity and -Infinity for infinity, NaN is used for "not a number", Infinites and -Infinites for infinitesimals
+# Infinity, NaN is used for "not a number" and Infinites
 
 
 #### Elementary mathematical functions and operations ####
 
-Math.round(123.7568) # 124
-Math.sqrt(4) # 2
-Math.cbrt(9) # 3
-Math.exp(1) # 1
-Math.log(10) # 1
-Math.sin(60) # 0.567
-Math.cos(30) # 0.345
-Math.tan(0) # 1
+round(123.7568) # 124
+sqrt(4) # 2
+cbrt(9) # 3
+exp(1) # 1
+log(10) # 1
+sin(60) # 0.567
+cos(30) # 0.345
+tan(0) # 1
 # and many more...
 
 # Chained assignments
@@ -296,10 +296,6 @@ type.of(\a) # type :: Char
 "Hi"
 \greet
 
-''
-double single quote string
-''
-
 """
 	multiline double quote string
 """
@@ -342,7 +338,7 @@ fmt@(name) "Hello, %s \n"
 # returns Hello, Pascal
 
 # d for integers
-fmt@(1!e ^ 5) "%d\n" # 100000
+fmt@(1!e + 5) "%d\n" # 100000
 
 	
 # f = float format, rounded if needed
@@ -399,7 +395,7 @@ gramexp("1 + 2").match
 #### Ranges and arrays ####
 
 var :: Range
-ra = (1, 2) to 20
+ra = (1, 1) to 20
 
 var :: Range(Number)
 nra = 2 to 20
@@ -407,19 +403,18 @@ nra = 2 to 20
 var :: Range(Char)
 cra = \a to \z
 
-ra = (1, 2) to 10
+ra = (1, 1) to 10
 
-ra = 1 to 10 # same as (1, 2) to 10
+ra = 1 to 10 # same as (1, 1) to 10
 
-ra = 1 to Infinity # same as (1, 2) to Infinity
-# same as (1 ; step := 1) to Infinity
+ra = 1 to Infinity # same as (1, 1) to Infinity
 
 
 #### Array ####
 # Cliver arrays start indexing from 1
 # Arrays are immutable by default. There exists a mutable counterpart Array!
 
-var :: Array(Int).{ length = 4 }
+var :: Array(Int).{ length :: 4 }
 arr = [1, 2, 3, 4]
 
 arr[1] # 1
@@ -431,7 +426,7 @@ arr[1 to 3] # [1, 2, 3]
 
 arr[5] = 5 # Error
 
-var :: Array!(Int) .{length = 4 }
+var :: Array!(4, Int)
 arr! = [1, 2, 3, 4]!
 
 arr![5] = 5 # 5
@@ -488,8 +483,7 @@ set[1] # 1
 # maps are immutable by default. However there exists a mutable counterpart Map!
 
 
-var :: Map(Int | String: String)
-# same as Map(Pair(Int | String, String))
+var :: Map(Int | String, String)
 map = {
 	\wow: "how",
 	"hello": "hai",
@@ -497,10 +491,9 @@ map = {
 	(3: "lie")
 }
 
-5 in map # False
-# means (5: 5) which isn't present
+5 in map # True
 (5: _) in map # True
-(5: "bye") in map # True
+(_: "bye") in map # True
 
 map["hello"] # "hai"
 
@@ -540,7 +533,7 @@ trait!.add({
 # Matrix
 # matrix is immutable and there's no mutable counterpart for it.
 
-var :: Matrix(Int) .{ shape = 3//3 }
+var :: Matrix(Int).{ shape :: 3//3 }
 matrix = [
 	1, 2, 3;
 	4, 5, 6;
@@ -569,7 +562,7 @@ var :: NamedTuple(Int, String, Boolean; Int, Char)
 ntuple1 = var(_, _, _; a, b)
 # _ specifies a default value
 
-var tuple2 = ntuple1(1, "hi", True; a := 7, b := 'b')
+var tuple2 = ntuple1(1, "hi", True; a: 7, b: 'b')
 
 print(tuple2.1, tuple2.b) # 1, 'b'
 
@@ -585,7 +578,7 @@ var time_elapsed = final - initial
 print(f"Time elapsed: $time_elapsed")
 
 Time.now() # "10:30:67 22/08/2014"
-Time.now(\clockAt) # 10:30:67
+Time.now(\time) # 10:30:67
 Time.now(\hour) # 10
 Time.now(\minute) # 30
 Time.now(\second) # 67
@@ -627,10 +620,10 @@ end
 ### Optional and keyword arguments ####
 
 fun :: (Int, Int) -> Int
-add(a, b := 10): a + b
+add(a, b = 10): a + b
 
 fun :: (Int, Int ; Int, Int) -> Int
-add(a, b := 10; c, d := 2):
+add(a, b = 10; c, d = 2):
 	(a + b) - (c * d)
 
 fun :: (...String ; ...String) -> IO
@@ -712,18 +705,6 @@ var file = await FileSys.File("file-name.txt") ?? err
 var fileContent = await file.read() ?? err
 print(await fileContent)
 
-# same as
-
-file = try:
-		await FileSys.File("file-name.txt")
-	catch e: err(e)
-
-fileContent = try:
-		await file.read()
-	catch e: err(e)
-
-print(await fileContent)
-
 
 #### Generic functions and multiple dispatch ####
 
@@ -744,21 +725,21 @@ add(num1, str1):
 
 #### Generators ####
 
-fun :: Generator(() -> String, Char -> Int)
-generate<yield>()
-	print(fun.sent) # 'a'
+fun :: Generator() -> String where (yield :: Char, payload :: Int)
+generate<yield, payload>()
+	print(payload) # 'a'
 	yield 10
 	
-	print(fun.sent) # 'b'
+	print(payload) # 'b'
 	yield 20
 	
-	print(fun.sent) # 'c'
+	print(payload) # 'c'
 	yield 30
 	
-	print(fun.sent) # 'd'
+	print(payload) # 'd'
 	yield 40
 	
-	print(fun.sent) # 'e'
+	print(payload) # 'e'
 	return "string value"
 end
 
@@ -778,9 +759,9 @@ for n in generate():	print(n)
 
 #### Constructor Functions ####
 
-type Person = Object(Human, Mammal, Student)
+type Person = { ...Human, ...Mammal, ...Student }
 
-fun :: Constructor((String, String, String) -> Person)
+fun :: Constructor(String, String, String) -> Person
 
 Person<self>(var name, var age, var address)
 
@@ -788,15 +769,10 @@ Person<self>(var name, var age, var address)
 	
 	var date := Time.now()
 	var id := 123ffce!x
-	# same as
-	# self.date = Time.now()
-	# self.id = 123ffce!x
 	
 	Person.mindset = "neutral"
 	
 	@@where
-	
-	# var date, id
 	
 	var job = "programmer"
 	
@@ -809,19 +785,18 @@ Person<self>(var name, var age, var address)
 	fun farewell(word)
 		print(f"$word from {self.name}")
 	end
+
+	var _salary = 3000
 	
-	fun salary<accessor>(default := 3000)
-		@@where
-		fun get(value)
-			value -= 5
-		end
-		fun set(value)
-			if value < 50 ^ 10
-				value
-			else
-				throw BoundError("")
-			end
-		end
+	fun salary<getter>()
+		self.value
+	end
+
+	fun salary<setter>(value)
+		if value < 50 ^ 10:
+			value
+		else:
+			throw BoundError("")
 	end
 	
 	onevent@(\delete)
@@ -853,8 +828,8 @@ end
 
 #### AsyncFunction ####
 
-fun :: AsyncFunction(String -> String)
-@async sayHello(word)
+fun :: AsyncFunction(a -> a) where a :: Printable
+sayHello<await>(word)
 	var name = FileSys.File("/file.txt").read()
 	var greet = await name + word
 	return await greet
@@ -924,16 +899,16 @@ end
 var sign = if num >= 0: 1 else: -1
 
 var x = 7
-var y = if case x:
-	1 := "sunday"
-	2 := "monday"
-	3 := "tuesday"
-	4 := "wednesday"
-	5 := "thursday"
-	6 := "friday"
-	7 := "saturday"
-	8 | 9 | 10 := "hello Martian!"
-else: "invalid"
+var y = match x
+case 1: "sunday"
+case 2: "monday"
+case 3: "tuesday"
+case 4: "wednesday"
+case 5: "thursday"
+case 6: "friday"
+case 7: "saturday"
+case 8 | 9 | 10: "hello Martian!"
+case _: "invalid"
 
 
 print(y) # "saturday"
@@ -952,12 +927,12 @@ done s
 	print(x ^ 2)
 end
 
-for(x := 1; x < 10; x += 1)
+for(x = 1; x < 10; x += 1)
 	print(x)
 end
 
 arr = [1, 2, 3, 4, 5, 6, 7]
-for (k: v) in arr.pairs
+for (k: v) in arr
 	print(v)
 end
 
@@ -992,7 +967,7 @@ else
 end
 
 var a = []
-try
+do
 	a.drop!()
 catch ex :: DomainError
 	print(type.of(ex))
@@ -1062,21 +1037,21 @@ type.subs(type :: Int64)
 type ImAbstractType :: DataType
 
 # Concrete types have no subtypes and might only have abstract types as their supertypes.
-type ImConcreteType(a) :: ImAbstractType =>
+type ImConcreteType(a) :: ImAbstractType =
 	ImConcreteType(Int, a)
 
 
 #### User-defined and composite types ####
 
 type Cardinal :: DataType
-type Point :: Cardinal =>
-	Point(Float64, Float64, Float64),
-	Point(x := Float64, y := Float64, z := Float64)
+type Point :: Cardinal =
+	Point(Float64, Float64, Float64) |
+	Point(x: Float64, y: Float64, z: Float64)
 
 var p1 = Point(1, 2, 3)
 # (p1.1, p1.2, p1.3) == (1, 2, 3)
 
-var p2 = Point(x := 1, y := 2, z := 3)
+var p2 = Point(x: 1, y: 2, z: 3)
 # (p2.x, p2.y, p2.z) == (1, 2, 3)
 
 #### Constrained Types ####
@@ -1084,12 +1059,8 @@ var p2 = Point(x := 1, y := 2, z := 3)
 # a type constrain must evaluate to a boolean
 
 # compile time constrains - must be immutable and pure
-val :: String .x -> x in ["hello", "hi", "howdy"]
+val :: String.{ x -> x in ["hello", "hi", "howdy"] }
 consT1 = "hi"
-
-# runtime constrains - may be mutable and impure
-val :: Array(Int) .{ x -> x.every(e -> isPrime(e)) }!
-consT2 = [1, 2, 3, 4]
 
 #### When are two values or objects equal or identical?
 ####
@@ -1201,7 +1172,7 @@ await channeler2(chan2)
 
 for True
     var res = ~chan1
-	if res is (end)
+	if res == (end)
 		print("Channel Closed")
 		break
 	end

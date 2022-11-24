@@ -45,10 +45,10 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
         ];
 
         const collPunches = { '(': ')', '[': ']', '{': '}' };
-        const punctuators = ['(', ')', '[', ']', '{', '}', ',', ';', '\'', '"', '`'];
+        const punctuators = ['(', ')', '[', ']', '{', '}', ',', ';', '\'', '"', '`', ":", "\\", "$"];
         const operators = [
-            "=", ":", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
-            "%", "<", ">", "\\"
+            "=", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
+            "%", "<", ">"
         ];
         const unicodeOpr = /[\u0021\u0025\u0026\u002A\u002B\u002D\u002E\u002F\u003A\u005C\u005E\u0060\u007C\u007E\u00D7\u00F7\u003C-\u0040\u00A1-\u00AC\u00AE-\u00BF\u2100-\u215F\u2180-\u21FF\u2500-\u25FF\u2200-\u22FF]/u;
 
@@ -216,7 +216,6 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                         ({ res, i, pos, char, line, type } = parseInlineStringLiteral(char, i, pos));
                     }
                 }
-
 
                 const token = {
                     value: res,
