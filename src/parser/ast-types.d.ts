@@ -8,7 +8,7 @@ type Program = {
 type MismatchToken = {
     type: "MismatchToken",
     error: string,
-    value: Token,
+    value: import("../lexer/token").Token,
     start: number,
     end: number
 }
@@ -46,7 +46,7 @@ type Identifier = {
     end: number
 }
 
-type KeywordKind = "do" | "done" | "end" | "fun" | "var" | "val" | "type" | "data" | "ref" | "case" | "if" | "elseif" | "else" | "for" | "catch" | "throw" | "in" | "in!" | "of" | "use" | "use!" | "import" | "export" | "from" | "to" | "is" | "is!" | "as" | "match"
+type KeywordKind = "do" | "done" | "end" | "fun" | "var" | "val" | "type" | "ref" | "case" | "if" | "elseif" | "else" | "for" | "catch" | "throw" | "in" | "in!" | "of" | "use" | "import" | "export" | "from" | "to" | "is" | "is!" | "as" | "match"
 
 type Keyword = {
     type: "Keyword",
@@ -366,7 +366,7 @@ type ForBlock = {
 
 type DoneBlock = {
     type: "DoneBlock",
-    status: string,
+    status: Identifier,
     body: Array<Inline | Block>,
     start: number,
     end: number
@@ -413,7 +413,7 @@ type Literal = {
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication,
+    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess,
     start: number,
     end: number
 }
@@ -443,7 +443,7 @@ type TypeAssertion = {
 type LabelDeclaration = {
     type: "LabelDeclaration",
     name: Identifier,
-    body: IfBlock | ForBlock | DoCatchBlock,
+    body: IfBlock | ForBlock | DoCatchBlock | MatchInline | AnonFunction | UnitFunction,
     start: number,
     end: number
 }

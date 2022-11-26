@@ -3,30 +3,47 @@ import { generateBlock } from "./block/block"
 import { generateInline } from "./inline/inline"
 import { type Node } from "./utility"
 
-export function generateProgram(context: Node, tokens: TokenStream): Array<Inline | Block> | MismatchToken {
-
+export type ProgramGenerator = Generator<Inline | Block | MismatchToken, Array<Inline | Block> | MismatchToken>
+export function* generateProgram(context: Node, tokens: TokenStream): ProgramGenerator {
     const values: Array<Block | Inline> = []
-    let mismatch: MismatchToken | null = null
-
+    const baseContext = context
+    
     while (!tokens.isFinished) {
         const block = generateBlock(context, tokens)
-        const inline = generateInline(context, tokens)
-        let value: Block | Inline
+        let value: Block | Inline | MismatchToken = block
 
-        const allMismatch = [block, inline].every(x => {
-            const isMismatch = x.type == "MismatchToken"
-            if (!isMismatch)
-                value = x
-            else
-                mismatch ??= isMismatch ? x : null
-            return isMismatch
-        })
+        // is not block
+        if(value.type == "MismatchToken") {
+            const inline = generateInline(context, tokens)
+            value = inline
+        }
+        else { // is macro-block
+            const block = value.value
+            if(block.type == "BlockMacroApplication") {
+                block.left = [...values]
+                values.length = 0
+                values.push(value)
+                context = block
+            }
+        }
 
-        if (allMismatch)
-            return mismatch!
+        // is not inline
+        if (value.type == "MismatchToken")
+            yield value
         
-        values.push(value!)
+        // is macro-block
+        if(context.type == "BlockMacroApplication")
+            (context as BlockMacroApplication).right.push(value as Block | Inline)
+        else {// is block or inline
+            values.push(value as Block | Inline)
+            yield value
+        }
     }
+
+    if(context.type == "BlockMacroApplication")
+        yield values.at(-1) as Block
+    
+    context = baseContext // Program
 
     return values
 }

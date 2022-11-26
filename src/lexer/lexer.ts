@@ -36,12 +36,10 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
 
         const keywords = [
             "done", "do", "fun", "var", "val", "type",
-            "data", "expr", "end", "ref", "stmt", "static",
-            "return", "yield", "break", "continue", "case",
-            "if", "elseif", "else", "for", "try", "catch",
-            "throw", "in!", "in", "self", "meta", "payload",
-            "of", "use!", "use", "import", "export", "from",
-            "getter", "setter", "to", "is!", "is", "as", "await"
+            "end", "ref", "break", "continue", "case",
+            "if", "elseif", "else", "for", "catch",
+            "throw", "in!", "in", "of", "use", "import", "export", "from",
+            "to", "is!", "is", "as"
         ];
 
         const collPunches = { '(': ')', '[': ']', '{': '}' };

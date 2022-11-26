@@ -69,6 +69,12 @@ export class TokenStream {
         return null;
     }
 
+    set cursor(idx: number) {
+        if(idx >= this.#length)
+            throw new RangeError(`Index out of bound: must be less than ${this.#length}`)
+        this.#index = idx
+    }
+
     advance(): boolean {
         if (this.#index < this.#length - 1) {
             this.#index++;
