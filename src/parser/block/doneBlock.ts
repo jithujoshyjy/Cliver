@@ -12,11 +12,13 @@ export function generateDoneBlock(context: Node, tokens: TokenStream): DoneBlock
         end: 0
     }
 
+    const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken // done
     currentToken = skip(tokens, _skipables)
 
     const status = generateIdentifier(doneBlock, tokens)
     if (status.type == "MismatchToken") {
+        tokens.cursor = initialCursor
         return status
     }
 
@@ -29,8 +31,10 @@ export function generateDoneBlock(context: Node, tokens: TokenStream): DoneBlock
 
         if (node.type == "MismatchToken" && isKeyword(currentToken, "end"))
             break
-        else if (node.type == "MismatchToken")
+        else if (node.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return node
+        }
 
         doneBlock.body.push(node)
     }

@@ -2,13 +2,15 @@ import { Token, TokenStream, TokenType } from "../../../lexer/token.js"
 import { skipables, type Node } from "../../utility"
 
 export function generateObjectExtendNotation(context: Node, tokens: TokenStream): ObjectExtendNotation | MismatchToken {
-    const objectExtendNotation = {
+    const objectExtendNotation: ObjectExtendNotation = {
         type: "ObjectExtendNotation",
-        head: null,
+        head: null!,
         body: [],
         start: 0,
         end: 0
     }
 
-    return objectExtendNotation as unknown as ObjectExtendNotation
+    const initialCursor = tokens.cursor
+
+    return objectExtendNotation
 }

@@ -11,5 +11,7 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return inlineMacroApplication as unknown as InlineMacroApplication
 }

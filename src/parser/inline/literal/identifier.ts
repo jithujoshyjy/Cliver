@@ -9,13 +9,17 @@ export function generateIdentifier(context: Node, tokens: TokenStream): Identifi
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     let currentToken = tokens.currentToken
-    if(currentToken.type != TokenType.Identifier)
+    if (currentToken.type != TokenType.Identifier) {
+        tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
+    }
 
     identifier.name = currentToken.value as string
     identifier.start = currentToken.line
     identifier.end = currentToken.column
 
-    return identifier as Identifier
+    return identifier
 }

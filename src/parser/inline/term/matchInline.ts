@@ -10,5 +10,7 @@ export function generateMatchInline(context: Node, tokens: TokenStream): MatchIn
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return matchInline as unknown as MatchInline
 }

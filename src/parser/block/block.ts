@@ -26,11 +26,14 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
     }
 
     const startToken = skip(tokens, skipables)
+    const initialCursor = tokens.cursor
 
     if (startToken.type == TokenType.Identifier) { // label-declaration
         const value = generateLabelDeclaration(block, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
 
         block.value = value
         block.start = value.start
@@ -39,8 +42,10 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
     }
     else if (isOperator(startToken, "@@")) { // block-macro
         const value = generateBlockMacroApplication(block, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
 
         block.value = value
         block.start = value.start
@@ -49,8 +54,10 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
     }
     else if (isKeyword(startToken, "use")) { // use-declaration
         const value = generateUseDeclaration(block, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
 
         block.value = value
         block.start = value.start
@@ -78,34 +85,61 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
             block.end = value.end
             return block
         }
-        
+
+        tokens.cursor = initialCursor
         return value // mismatch-token
     }
     else if (isKeyword(startToken, "for")) { // for-block
         const value = generateForBlock(block, tokens)
-        if (value.type == "MismatchToken")
-            null
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return value
+        }
+
+        block.value = value
+        block.start = value.start
+        block.end = value.end
+        return block
     }
     else if (isKeyword(startToken, "if")) { // if-block
         const value = generateIfBlock(block, tokens)
-        if (value.type == "MismatchToken")
-            null
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return value
+        }
+
+        block.value = value
+        block.start = value.start
+        block.end = value.end
+        return block
     }
     else if (isKeyword(startToken, "fun")) { // fun-declaration
         const value = generateNamedFunction(block, tokens)
-        if (value.type == "MismatchToken")
-            null
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return value
+        }
+
+        /* block.value = value
+        block.start = value.start
+        block.end = value.end
+        return block */
     }
     else if (isKeyword(startToken, "import")) { // import-declaration
         const value = generateImportDeclaration(block, tokens)
-        if (value.type == "MismatchToken")
-            null
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return value
+        }
     }
     else if ((["var", "val"] as KeywordKind[]).some(x => isKeyword(startToken, x))) { // variable-declaration
         const value = generateVariableDeclaration(block, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
     }
 
+    tokens.cursor = initialCursor
     return createMismatchToken(startToken)
 }

@@ -10,5 +10,7 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return implicitMultiplication as unknown as ImplicitMultiplication
 }

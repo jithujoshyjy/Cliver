@@ -75,6 +75,10 @@ export class TokenStream {
         this.#index = idx
     }
 
+    get cursor() {
+        return this.#index
+    }
+
     advance(): boolean {
         if (this.#index < this.#length - 1) {
             this.#index++;

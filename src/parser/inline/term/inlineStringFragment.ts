@@ -9,5 +9,7 @@ export function generateInlineStringFragment(context: Node, tokens: TokenStream)
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return taggedString as unknown as InlineStringFragment
 }

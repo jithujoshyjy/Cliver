@@ -11,5 +11,7 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return unitFunction as unknown as UnitFunction
 }

@@ -46,7 +46,7 @@ type Identifier = {
     end: number
 }
 
-type KeywordKind = "do" | "done" | "end" | "fun" | "var" | "val" | "type" | "ref" | "case" | "if" | "elseif" | "else" | "for" | "catch" | "throw" | "in" | "in!" | "of" | "use" | "import" | "export" | "from" | "to" | "is" | "is!" | "as" | "match"
+type KeywordKind = "do" | "done" | "end" | "fun" | "var" | "val" | "type" | "ref" | "case" | "if" | "elseif" | "else" | "for" | "catch" | "throw" | "in" | "in!" | "of" | "use" | "import" | "export" | "from" | "to" | "is" | "is!" | "as" | "match" | "where"
 
 type Keyword = {
     type: "Keyword",
@@ -116,8 +116,8 @@ type BlockAnonFunction = {
 type NamedFunction = {
     type: "NamedFunction",
     name: Identifier,
-    kind: FunctionKind,
-    params: Array<Pattern>,
+    kind: FunctionKind[],
+    params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Array<Inline | Block>,
     start: number,
@@ -286,7 +286,8 @@ type ObjectRegularCascade = {
 type AssignExpr = {
     type: "AssignExpr",
     left: Pattern,
-    right: Expression, 
+    right: Expression,
+    signature: TypeExpression | null,
     start: number,
     end: number
 }
@@ -623,16 +624,16 @@ type TypeName = {
 
 type UnionType = {
     type: "UnionType",
-    left: Array<TypeExpression>,
-    right: Array<TypeExpression>,
+    left: TypeName | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType,
+    right: TypeExpression,
     start: number,
     end: number
 }
 
 type IntersectionType = {
     type: "IntersectionType",
-    left: Array<TypeExpression>,
-    right: Array<TypeExpression>,
+    left: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType,
+    right: TypeExpression,
     start: number,
     end: number
 }
@@ -646,15 +647,15 @@ type NegateType = {
 
 type DifferenceType = {
     type: "DifferenceType",
-    left: Array<TypeExpression>,
-    right: Array<TypeExpression>,
+    left: TypeName | UnionType | IntersectionType | NegateType | FunctionType | FunctionCallType | StructureType,
+    right: TypeExpression,
     start: number,
     end: number
 }
 
 type FunctionType = {
     type: "FunctionType",
-    params: Array<TypeExpression>,
+    head: FunctionCallType | TypeName | TupleType,
     body: TypeExpression,
     start: number,
     end: number
@@ -662,7 +663,7 @@ type FunctionType = {
 
 type TypeExpression = {
     type: "TypeExpression",
-    body: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | StructureType,
+    body: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | StructureType,
     constraint: TypeConstraint | null,
     start: number,
     end: number
@@ -670,9 +671,9 @@ type TypeExpression = {
 
 type TypeConstraint = {
     type: "TypeConstraint",
-    assert: UnitFunction | null,
+    assert: FunctionType | null,
     structure: StructureType | null,
-    body: object,
+    body: TupleType | null,
     start: number,
     end: number
 }
@@ -680,6 +681,21 @@ type TypeConstraint = {
 type StructureType = {
     type: "StructureType",
     fields: Array<TypeAssertion>,
+    start: number,
+    end: number
+}
+
+type TupleType = {
+    type: "TupleType",
+    values: Array<TypeExpression>,
+    start: number,
+    end: number
+}
+
+type FunctionCallType = {
+    type: "FunctionCallType",
+    args: TupleType,
+    caller: TypeName,
     start: number,
     end: number
 }

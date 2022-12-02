@@ -11,5 +11,7 @@ export function generateStringLiteral(context: Node, tokens: TokenStream): Strin
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return stringLiteral as StringLiteral
 }

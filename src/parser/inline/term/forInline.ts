@@ -10,5 +10,7 @@ export function generateForInline(context: Node, tokens: TokenStream): ForInline
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return forInline as unknown as ForInline
 }

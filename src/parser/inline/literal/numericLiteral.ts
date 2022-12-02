@@ -9,5 +9,7 @@ export function generateNumericLiteral(context: Node, tokens: TokenStream): Nume
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return numericLiteral as unknown as NumericLiteral
 }

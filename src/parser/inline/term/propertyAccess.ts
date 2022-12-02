@@ -11,5 +11,7 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return propertyAccess
 }

@@ -11,6 +11,7 @@ export function generateUseDeclaration(context: Node, tokens: TokenStream): UseD
     }
 
     let currentToken = tokens.currentToken // use
+    const initialCursor = tokens.cursor
 
     const captureRule = () => {
         currentToken = skip(tokens, skipables)
@@ -33,8 +34,10 @@ export function generateUseDeclaration(context: Node, tokens: TokenStream): UseD
     }
 
     const firstRule = captureRule()
-    if (firstRule.type == "MismatchToken")
+    if (firstRule.type == "MismatchToken") {
+        tokens.cursor = initialCursor
         return firstRule
+    }
 
     useDeclar.rules.push(firstRule)
 
@@ -43,8 +46,10 @@ export function generateUseDeclaration(context: Node, tokens: TokenStream): UseD
         if (comma.type == "MismatchToken")
             break
         const rule = captureRule()
-        if (rule.type == "MismatchToken")
+        if (rule.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return rule
+        }
 
         useDeclar.rules.push(rule)
     }

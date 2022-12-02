@@ -1,0 +1,41 @@
+import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility"
+import { generateTupleType } from "./tuple-type.js"
+import { generateTypeName } from "./type-name.js"
+
+export function generateFunctionCallType(context: Node, tokens: TokenStream): FunctionCallType | MismatchToken {
+    const functionCallType: FunctionCallType = {
+        type: "FunctionCallType",
+        args: null!,
+        caller: null!,
+        start: 0,
+        end: 0
+    }
+
+    const initialCursor = tokens.cursor
+    let currentToken = tokens.currentToken
+
+    const caller = generateTypeName(functionCallType, tokens)
+    if (caller.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return caller
+    }
+
+    functionCallType.caller = caller
+    currentToken = skip(tokens, _skipables)
+
+    if (currentToken.type != TokenType.ParenEnclosed) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+
+    const args = generateTupleType(functionCallType, tokens)
+    if(args.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return args
+    }
+
+    functionCallType.args = args
+
+    return functionCallType
+}

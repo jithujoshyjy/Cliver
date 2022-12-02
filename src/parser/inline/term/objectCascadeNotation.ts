@@ -9,5 +9,7 @@ export function generateObjectCascadeNotation(context: Node, tokens: TokenStream
         end: 0
     }
 
-    return objectCascadeNotation as ObjectCascadeNotation
+    const initialCursor = tokens.cursor
+
+    return objectCascadeNotation
 }

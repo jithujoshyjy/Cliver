@@ -13,13 +13,18 @@ export function generateAST(tokens: TokenStream): Program {
     const program = context as Program
 
     skip(tokens, skipables)
-    const value = generateProgram(context, tokens)
+    const nodeGenerator = generateProgram(context, tokens)
 
-    const isMismatchToken = !Array.isArray(value)
-    if (isMismatchToken)
-        throw new Error(value.error);
+    while (true) {
+        const { done, value } = nodeGenerator.next()
 
-    program.value = value
+        if (Array.isArray(value))
+            program.value = value
+        else if (value.type == "MismatchToken")
+            throw new Error(value.error)
+
+        if (done) break
+    }
 
     return program
 }

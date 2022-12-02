@@ -9,5 +9,7 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return doExpr as unknown as DoExpr
 }

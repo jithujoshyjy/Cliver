@@ -2,12 +2,14 @@ import { TokenStream } from "../../lexer/token.js"
 import { type Node } from "../utility"
 
 export function generateInline(context: Node, tokens: TokenStream): Inline | MismatchToken {
-    const inline = {
+    const inline: Inline = {
         type: "Inline",
-        value: null,
+        value: null!,
         start: 0,
         end: 0
     }
+
+    const initialCursor = tokens.cursor
     // if (token.type == TokenType.Keyword) {
     //     const keyword = token.value as string;
     //     if (keyword == "import") {
@@ -27,5 +29,5 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
     //     const stringLiteral = generateStringLiteral(ast, tokens);
     //     currentContext.value.push(stringLiteral);
     // }
-    return inline as unknown as Inline
+    return inline
 }

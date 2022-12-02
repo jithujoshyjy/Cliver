@@ -15,10 +15,13 @@ export function generateLabelDeclaration(context: Node, tokens: TokenStream): La
     }
 
     let currentToken = tokens.currentToken
+    const initialCursor = tokens.cursor
     const labelName = generateIdentifier(labelDeclar, tokens)
 
-    if (labelName.type == "MismatchToken")
+    if (labelName.type == "MismatchToken") {
+        tokens.cursor = initialCursor
         return labelName
+    }
 
     labelDeclar.name = labelName
     labelDeclar.start = labelName.start
@@ -26,6 +29,7 @@ export function generateLabelDeclaration(context: Node, tokens: TokenStream): La
     currentToken = skip(tokens, _skipables) // as
 
     if (!isKeyword(currentToken, "as")) {
+        tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
@@ -33,36 +37,50 @@ export function generateLabelDeclaration(context: Node, tokens: TokenStream): La
 
     if (isKeyword(currentToken, "do")) { // do-catch block
         const value = generateDoCatchBlock(labelDeclar, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
     }
     else if (isKeyword(currentToken, "for")) { // for-block
         const value = generateForBlock(labelDeclar, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
     }
     else if (isKeyword(currentToken, "if")) { // if-block
         const value = generateIfBlock(labelDeclar, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
     }
     else if (isKeyword(currentToken, "match")) { // match-inline
         const value = generateIfBlock(labelDeclar, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
     }
     else if (isKeyword(currentToken, "fun")) { // anon-function
         const value = generateIfBlock(labelDeclar, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
     }
     else if (currentToken.type == TokenType.Identifier || TokenType.ParenEnclosed) { // unit-function
         const value = generateIfBlock(labelDeclar, tokens)
-        if (value.type == "MismatchToken")
+        if (value.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return value
+        }
     }
-    else
+    else {
+        tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
+    }
 
     return labelDeclar
 }

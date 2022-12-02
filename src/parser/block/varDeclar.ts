@@ -11,5 +11,7 @@ export function generateVariableDeclaration(context: Node, tokens: TokenStream):
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return variableDeclaration as VariableDeclaration
 }

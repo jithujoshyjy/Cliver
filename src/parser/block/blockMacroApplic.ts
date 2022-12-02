@@ -13,16 +13,21 @@ export function generateBlockMacroApplication(context: Node, tokens: TokenStream
         end: 0
     }
 
+    const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken // @@
     const nextToken = tokens.nextToken
 
-    if (nextToken == null)
+    if (nextToken == null) {
+        tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
+    }
 
     currentToken = nextToken
 
-    if (currentToken.type != TokenType.Identifier)
+    if (currentToken.type != TokenType.Identifier) {
+        tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
+    }
 
     type CallerKind = Identifier | PropertyAccess | MismatchToken
     let caller: CallerKind = generatePropertyAccess(blockMacroApplication, tokens)
@@ -30,8 +35,10 @@ export function generateBlockMacroApplication(context: Node, tokens: TokenStream
     if (caller.type == "MismatchToken")
         caller = generateIdentifier(blockMacroApplication, tokens)
 
-    if (caller.type == "MismatchToken")
+    if (caller.type == "MismatchToken") {
+        tokens.cursor = initialCursor
         return caller
+    }
 
     blockMacroApplication.caller = caller
 

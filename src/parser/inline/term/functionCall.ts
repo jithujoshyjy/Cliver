@@ -10,5 +10,7 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return functionCall as unknown as FunctionCall
 }

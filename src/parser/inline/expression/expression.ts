@@ -9,5 +9,7 @@ export function generateExpression(context: Node, tokens: TokenStream): Expressi
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return expression
 }

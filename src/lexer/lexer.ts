@@ -39,7 +39,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
             "end", "ref", "break", "continue", "case",
             "if", "elseif", "else", "for", "catch",
             "throw", "in!", "in", "of", "use", "import", "export", "from",
-            "to", "is!", "is", "as"
+            "to", "is!", "is", "as", "where"
         ];
 
         const collPunches = { '(': ')', '[': ']', '{': '}' };

@@ -9,5 +9,7 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return arrayLiteral as ArrayLiteral
 }

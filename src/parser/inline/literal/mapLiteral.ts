@@ -1,5 +1,5 @@
 import { Token, TokenStream, TokenType } from "../../../lexer/token.js"
-import { skipables, type Node } from "../../utility"
+import { createMismatchToken, skipables, type Node } from "../../utility"
 import { generatePair } from "../term/pair.js"
 
 export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiteral | MismatchToken {
@@ -9,8 +9,10 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
         start: 0,
         end: 0
     }
-    const token = tokens.currentToken
-    const values = token.value as Token[]
+
+    const initialCursor = tokens.cursor
+    const currentToken = tokens.currentToken
+    const values = currentToken.value as Token[]
     const invalidStartTokens = [
         TokenType.Keyword,
         TokenType.Operator,
@@ -23,14 +25,8 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
             continue
 
         if (invalidStartTokens.includes(value.type)) {
-            let mismatchToken: MismatchToken = {
-                type: "MismatchToken",
-                error: `Unexpected token ${token.type} on ${token.line}:${token.column}`,
-                value: token,
-                start: 0,
-                end: 0
-            }
-            return mismatchToken
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken)
         }
 
         generatePair(context, tokens)

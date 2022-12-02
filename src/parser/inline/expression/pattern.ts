@@ -12,6 +12,7 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
     }
 
     let currentToken = tokens.currentToken
+    const initialCursor = tokens.cursor
     let value: Term | Literal | MismatchToken = generateTerm(context, tokens)
 
     // is not term
@@ -32,12 +33,14 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
 
         if(invalidPatternNodes.includes(term.type)) {
             const error = `SynatxError: Invalid pattern on ${currentToken.line}:${currentToken.column}`
+            tokens.cursor = initialCursor
             return createMismatchToken(currentToken, error)
         }
     }
 
     // is not literal
     if (value.type == "MismatchToken") {
+        tokens.cursor = initialCursor
         return value
     }
     else { // is literal
@@ -49,6 +52,7 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
         const literal = value.value as Literal["value"]
 
         if(invalidPatternNodes.includes(literal.type)) {
+            tokens.cursor = initialCursor
             const error = `SynatxError: Invalid pattern on ${currentToken.line}:${currentToken.column}`
             return createMismatchToken(currentToken, error)
         }

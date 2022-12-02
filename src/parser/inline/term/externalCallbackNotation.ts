@@ -10,5 +10,7 @@ export function generateExternalCallbackNotation(context: Node, tokens: TokenStr
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return externalCallbackNotation as unknown as ExternalCallbackNotation
 }

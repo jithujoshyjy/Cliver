@@ -1,28 +1,23 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { type Node } from "../../utility"
+import { createMismatchToken, type Node } from "../../utility"
 
 export function generateMetaDataInterpolation(context: Node, tokens: TokenStream): MetaDataInterpolation | MismatchToken {
-    const metaDataInterpolation = {
+    const metaDataInterpolation: MetaDataInterpolation = {
         type: "MetaDataInterpolation",
         body: [],
         start: 0,
         end: 0
     }
 
-    metaDataInterpolation.start = tokens.currentToken.i
-    tokens.advance()
-    let token = tokens.currentToken
+    const initialCursor = tokens.cursor
+    
+    tokens.advance() // skip $
+    let currentToken = tokens.currentToken
 
-    if (token.type != TokenType.BraceEnclosed) {
-        let mismatchToken: MismatchToken = {
-            type: "MismatchToken",
-            error: `Unexpected token ${token.type} on ${token.line}:${token.column}`,
-            value: token,
-            start: 0,
-            end: 0
-        }
-        return mismatchToken
+    if (currentToken.type != TokenType.BraceEnclosed) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
     }
 
-    return metaDataInterpolation as MetaDataInterpolation
+    return metaDataInterpolation
 }

@@ -11,5 +11,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return ifInline as unknown as IfInline
 }

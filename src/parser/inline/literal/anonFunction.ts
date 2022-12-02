@@ -9,5 +9,7 @@ export function generateAnonFunction(context: Node, tokens: TokenStream): AnonFu
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     return anonFunction as unknown as AnonFunction
 }

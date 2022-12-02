@@ -18,16 +18,20 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     const generateNodes = [
         generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
         generateNumericLiteral, generateDoExpr, generateAnonFunction, generateUnitFunction, generateIdentifier
     ]
-    
-    for(let [i, generateNode] of generateNodes.entries()) {
+
+    for (let [i, generateNode] of generateNodes.entries()) {
         const node = generateNode(literal, tokens)
-        if(node.type == "MismatchToken") {
-            if(i < generateNodes.length)
+        if (node.type == "MismatchToken") {
+            if (i < generateNodes.length)
                 continue
+            
+            tokens.cursor = initialCursor
             return node
         }
 

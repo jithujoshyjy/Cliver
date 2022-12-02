@@ -25,19 +25,23 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
         end: 0
     }
 
+    const initialCursor = tokens.cursor
+
     const generateNodes = [
-        generatePipelineNotation, generateObjectCascadeNotation, generateObjectExtendNotation, 
+        generatePipelineNotation, generateObjectCascadeNotation, generateObjectExtendNotation,
         generateExternalCallbackNotation, generateMetaDataInterpolation, generateTaggedSymbol,
         generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
         generateTaggedNumber, generateForInline, generateMatchInline, generateIfInline,
         generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess
     ]
-    
-    for(let [i, generateNode] of generateNodes.entries()) {
+
+    for (let [i, generateNode] of generateNodes.entries()) {
         const node = generateNode(term, tokens)
-        if(node.type == "MismatchToken") {
-            if(i < generateNodes.length)
+        if (node.type == "MismatchToken") {
+            if (i < generateNodes.length)
                 continue
+
+            tokens.cursor = initialCursor
             return node
         }
 
