@@ -15,8 +15,8 @@ type MismatchToken = {
 
 type ImportDeclaration = {
     type: "ImportDeclaration",
-    specifiers: Array<AsExpression | Identifier | ObjectExtendNotation> | PrefixOperation | NonVerbalOperator,
-    source: StringLiteral | TaggedSymbol | FunctionCall | Identifier | PropertyAccess,
+    specifiers: Array<AsExpression | Identifier | ObjectExtendNotation | PrefixOperation | NonVerbalOperator>,
+    sources: Array<StringLiteral | TaggedSymbol | FunctionCall | Identifier | PropertyAccess>,
     start: number,
     end: number
 }
@@ -34,7 +34,7 @@ type VariableDeclarator = {
     type: "VariableDeclarator",
     signature: TypeExpression | null,
     left: Pattern,
-    right: Expression,
+    right: Expression | null,
     start: number,
     end: number
 }
@@ -603,7 +603,7 @@ type MetaDataInterpolation = {
 
 type Inline = {
     type: "Inline",
-    value: Term | Literal,
+    value: Expression,
     start: number,
     end: number
 }

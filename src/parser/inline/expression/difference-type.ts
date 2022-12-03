@@ -1,15 +1,14 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
-import { generateLiteral } from "../literal/literal.js"
-import { generateTerm } from "../term/term.js"
-import { generateFunctionCallType } from "./function-call-type.js"
-import { generateFunctionType } from "./function-type.js"
-import { generateIntersectionType } from "./intersection-type.js"
-import { generateNegateType } from "./negate-type.js"
-import { generateStructureType } from "./structure-type.js"
-import { generateTypeExpression } from "./type-expression.js"
-import { generateTypeName } from "./type-name.js"
-import { generateUnionType } from "./union-type.js"
+import { generateFunctionCallType } from "../type/function-call-type.js"
+import { generateFunctionType } from "../type/function-type.js"
+import { generateIntersectionType } from "../type/intersection-type.js"
+import { generateNegateType } from "../type/negate-type.js"
+import { generateStructureType } from "../type/structure-type.js"
+import { generateTypeExpression } from "../type/type-expression.js"
+import { generateTypeName } from "../type/type-name.js"
+import { generateUnionType } from "../type/union-type.js"
+
 
 export function generateDifferenceType(context: Node, tokens: TokenStream): DifferenceType | MismatchToken {
     const differenceType: DifferenceType = {

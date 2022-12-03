@@ -1279,3 +1279,7 @@ math.sin(math.pi / 2) # 1.0
 FFI.JavaScript.eval("10*10") # 100
 FFI.JavaScript.eval("Math.PI * 2") # 6.2857
  
+
+fun yield<meta, control>(x :: Infer)
+	control.resume(x)
+end

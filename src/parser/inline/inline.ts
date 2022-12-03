@@ -1,5 +1,6 @@
-import { TokenStream } from "../../lexer/token.js"
-import { type Node } from "../utility"
+import { TokenStream, TokenType } from "../../lexer/token.js"
+import { createMismatchToken, skip, skipables, stringLiterals, _skipables, type Node } from "../utility"
+import { generateExpression } from "./expression/expression.js"
 
 export function generateInline(context: Node, tokens: TokenStream): Inline | MismatchToken {
     const inline: Inline = {
@@ -10,24 +11,36 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
     }
 
     const initialCursor = tokens.cursor
-    // if (token.type == TokenType.Keyword) {
-    //     const keyword = token.value as string;
-    //     if (keyword == "import") {
-    //         generateImport(ast, tokens);
-    //     }
-    // }
-    // else if (token.type == TokenType.Punctuator) {
-    //     const punctuator = token.value as string;
-    //     if (punctuator == "$") {
-    //         generateMetaDataInterpolation(ast, tokens);
-    //     }
-    // }
-    // else if (token.type == TokenType.BraceEnclosed) {
-    //     generateMapLiteral(ast, tokens);
-    // }
-    // else if (stringLiterals.includes(token.type)) {
-    //     const stringLiteral = generateStringLiteral(ast, tokens);
-    //     currentContext.value.push(stringLiteral);
-    // }
+    let currentToken = skip(tokens, skipables)
+
+    const captureDelimiter = () => {
+        currentToken = skip(tokens, _skipables)
+        const isDelimited = currentToken.type == TokenType.Newline
+            || (currentToken.type == TokenType.Punctuator && currentToken.value == ";")
+            || tokens.isFinished
+
+        if (!isDelimited) {
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken)
+        }
+
+        return currentToken
+    }
+
+    const expression = generateExpression(inline, tokens)
+    if (expression.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return expression
+    }
+
+    inline.value = expression
+
+    const delimiter = captureDelimiter()
+
+    if (delimiter.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return delimiter
+    }
+
     return inline
 }

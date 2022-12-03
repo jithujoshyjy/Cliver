@@ -1,9 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isKeyword, skip, _skipables, type Node } from "../../utility"
-import { generateIdentifier } from "../literal/identifier.js"
-import { generateCaseExpr } from "./case-expression.js"
-import { generateExpression } from "./expression.js"
-
 
 export function generateAssignExpr(context: Node, tokens: TokenStream): AssignExpr | MismatchToken {
     const assignExpr: AssignExpr = {

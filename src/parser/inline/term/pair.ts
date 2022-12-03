@@ -1,5 +1,5 @@
-import { Token, TokenStream, TokenType } from "../../../lexer/token.js"
-import { skipables, type Node } from "../../utility"
+import { TokenStream } from "../../../lexer/token.js"
+import { type Node } from "../../utility"
 
 export function generatePair(context: Node, tokens: TokenStream): Pair | MismatchToken {
     const pair: Pair = {

@@ -1,14 +1,14 @@
-import { Token, TokenStream, TokenType } from "../../lexer/token.js"
-import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../utility.js"
-import { generateBlockMacroApplication } from "./blockMacroApplic.js"
-import { generateDoCatchBlock } from "./doCatchBlock/doCatchBlock.js"
-import { generateForBlock } from "./forBlock.js"
-import { generateIfBlock } from "./ifBlock.js"
-import { generateImportDeclaration } from "./importDeclar.js"
-import { generateLabelDeclaration } from "./labelDeclar.js"
-import { generateNamedFunction } from "./namedFunction.js"
-import { generateUseDeclaration } from "./useDeclar.js"
-import { generateVariableDeclaration } from "./varDeclar.js"
+import { TokenStream, TokenType } from "../../lexer/token.js"
+import { createMismatchToken, isKeyword, isOperator, skip, skipables, _skipables, type Node } from "../utility.js"
+import { generateBlockMacroApplication } from "./block-macro-application.js"
+import { generateDoCatchBlock } from "./do-catch-block/do-catch-block.js"
+import { generateForBlock } from "./for-block.js"
+import { generateIfBlock } from "./if-block.js"
+import { generateImportDeclaration } from "./import-declaration.js"
+import { generateLabelDeclaration } from "./label-declaration.js"
+import { generateNamedFunction } from "./named-function.js"
+import { generateUseDeclaration } from "./use-declaration.js"
+import { generateVariableDeclaration } from "./variable-declaration/variable-declaration.js"
 
 export function generateBlock(context: Node, tokens: TokenStream): Inline | Block | MismatchToken {
     const block: Block = {
@@ -25,121 +25,114 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
         end: 0
     }
 
-    const startToken = skip(tokens, skipables)
+    let currentToken = skip(tokens, skipables)
     const initialCursor = tokens.cursor
 
-    if (startToken.type == TokenType.Identifier) { // label-declaration
-        const value = generateLabelDeclaration(block, tokens)
-        if (value.type == "MismatchToken") {
+    let value: LabelDeclaration
+        | BlockMacroApplication
+        | UseDeclaration
+        | DoCatchBlock
+        | DoExpr
+        | ForBlock
+        | IfBlock
+        | NamedFunction
+        | ImportDeclaration
+        | VariableDeclaration
+        | MismatchToken = null!
+
+    const captureDelimiter = () => {
+        currentToken = skip(tokens, _skipables)
+        const isDelimited = currentToken.type == TokenType.Newline
+            || (currentToken.type == TokenType.Punctuator && currentToken.value == ";")
+            || tokens.isFinished
+
+        if (!isDelimited) {
             tokens.cursor = initialCursor
-            return value
+            return createMismatchToken(currentToken)
         }
 
-        block.value = value
-        block.start = value.start
-        block.end = value.end
-        return block
+        return currentToken
     }
-    else if (isOperator(startToken, "@@")) { // block-macro
-        const value = generateBlockMacroApplication(block, tokens)
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
 
-        block.value = value
-        block.start = value.start
-        block.end = value.end
-        return block
+    if (currentToken.type == TokenType.Identifier) { // label-declaration
+        value = generateLabelDeclaration(block, tokens)
     }
-    else if (isKeyword(startToken, "use")) { // use-declaration
-        const value = generateUseDeclaration(block, tokens)
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
+    else if (isOperator(currentToken, "@@")) { // block-macro
+        value = generateBlockMacroApplication(block, tokens)
+    }
+    else if (isKeyword(currentToken, "use")) { // use-declaration
+        value = generateUseDeclaration(block, tokens)
 
-        block.value = value
-        block.start = value.start
-        block.end = value.end
-        return block
+        const delimiter = captureDelimiter()
+
+        if(delimiter.type == "MismatchToken") {
+            return delimiter
+        }
     }
-    else if (isKeyword(startToken, "do")) { // do-catch block
+    else if (isKeyword(currentToken, "do")) { // do-catch block
         const literal: Literal = {
             type: "Literal",
             value: null!,
             start: 0,
             end: 0
         }
-        const value = generateDoCatchBlock(block, tokens)
+
+        const expression: Expression = {
+            type: "Expression",
+            value: literal,
+            start: 0,
+            end: 0
+        }
+
+        value = generateDoCatchBlock(block, tokens)
         if (value.type == "DoExpr") {
             inline.start = literal.start = value.start
             inline.end = literal.end = value.end
             literal.value = value
-            inline.value = literal
+            inline.value = expression
             return inline
         }
-        else if (value.type == "DoCatchBlock") {
-            block.value = value
-            block.start = value.start
-            block.end = value.end
-            return block
-        }
+    }
+    else if (isKeyword(currentToken, "for")) { // for-block
+        value = generateForBlock(block, tokens)
+    }
+    else if (isKeyword(currentToken, "if")) { // if-block
+        value = generateIfBlock(block, tokens)
+    }
+    else if (isKeyword(currentToken, "fun")) { // fun-declaration
+        value = generateNamedFunction(block, tokens)
+    }
+    else if (isKeyword(currentToken, "import")) { // import-declaration
+        value = generateImportDeclaration(block, tokens)
 
+        const delimiter = captureDelimiter()
+
+        if(delimiter.type == "MismatchToken") {
+            return delimiter
+        }
+    }
+    else if ((["var", "val"] as KeywordKind[]).some(x => isKeyword(currentToken, x))) { // variable-declaration
+        value = generateVariableDeclaration(block, tokens)
+
+        const delimiter = captureDelimiter()
+
+        if(delimiter.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return delimiter
+        }
+    }
+    else {
         tokens.cursor = initialCursor
-        return value // mismatch-token
-    }
-    else if (isKeyword(startToken, "for")) { // for-block
-        const value = generateForBlock(block, tokens)
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
-
-        block.value = value
-        block.start = value.start
-        block.end = value.end
-        return block
-    }
-    else if (isKeyword(startToken, "if")) { // if-block
-        const value = generateIfBlock(block, tokens)
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
-
-        block.value = value
-        block.start = value.start
-        block.end = value.end
-        return block
-    }
-    else if (isKeyword(startToken, "fun")) { // fun-declaration
-        const value = generateNamedFunction(block, tokens)
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
-
-        /* block.value = value
-        block.start = value.start
-        block.end = value.end
-        return block */
-    }
-    else if (isKeyword(startToken, "import")) { // import-declaration
-        const value = generateImportDeclaration(block, tokens)
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
-    }
-    else if ((["var", "val"] as KeywordKind[]).some(x => isKeyword(startToken, x))) { // variable-declaration
-        const value = generateVariableDeclaration(block, tokens)
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
+        return createMismatchToken(currentToken)
     }
 
-    tokens.cursor = initialCursor
-    return createMismatchToken(startToken)
+    if (value.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return value
+    }
+
+    block.value = value
+    block.start = value.start
+    block.end = value.end
+    return block
 }

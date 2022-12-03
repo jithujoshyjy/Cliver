@@ -1,0 +1,16 @@
+import { TokenStream } from "../../../lexer/token.js"
+import { type Node } from "../../utility"
+
+export function generateForInline(context: Node, tokens: TokenStream): ForInline | MismatchToken {
+    const forInline = {
+        type: "ForInline",
+        body: null,
+        condition: null,
+        start: 0,
+        end: 0
+    }
+
+    const initialCursor = tokens.cursor
+
+    return forInline as unknown as ForInline
+}

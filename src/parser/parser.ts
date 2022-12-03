@@ -1,6 +1,7 @@
 import { type TokenStream } from "../lexer/token.js";
 import { skip, skipables, type Node } from "./utility.js";
 import { generateProgram } from "./program.js";
+import chalk from "chalk";
 
 let context: Node = {
     type: "Program",
@@ -20,11 +21,17 @@ export function generateAST(tokens: TokenStream): Program {
 
         if (Array.isArray(value))
             program.value = value
-        else if (value.type == "MismatchToken")
-            throw new Error(value.error)
+        else if (value.type == "MismatchToken") {
+            console.error(chalk.bgRed.white(value.error))
+            process.exit(1)
+        }
 
         if (done) break
     }
 
     return program
 }
+
+// guards in pattern matching
+// .. extensible type constructors
+// with blocks
