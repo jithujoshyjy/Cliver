@@ -2517,7 +2517,7 @@ LogicalOperator "logical-operator"
     }
 
 CompoundAssignOperator "compound-assignment-operator"
-	= compoundAssignOperator: (("+=" / "-=" / "*=" / "/=" / "%=" / "%=" / "&&=" / "||=") !CustomInfixOperator)
+	= compoundAssignOperator: (("+=" / "-=" / "*=" / "/=" / "^=" / "%=" / "&&=" / "||=") !CustomInfixOperator)
     {
         return createCompoundAssignOperator(compoundAssignOperator)
     }

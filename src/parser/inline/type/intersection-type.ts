@@ -1,6 +1,6 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
-import { generateDifferenceType } from "../expression/difference-type.js"
+import { generateDifferenceType } from "./difference-type.js"
 
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateFunctionType } from "./function-type.js"
@@ -26,7 +26,7 @@ export function generateIntersectionType(context: Node, tokens: TokenStream): In
         generateFunctionType, generateFunctionCallType, generateStructureType, generateTypeName
     ]
 
-    let typeMember: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken
+    let typeMember: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
 
     for (let typeGenerator of typeGenerators) {
         typeMember = typeGenerator(intersectionType, tokens)
@@ -35,12 +35,12 @@ export function generateIntersectionType(context: Node, tokens: TokenStream): In
             break
     }
 
-    if (typeMember!.type == "MismatchToken") {
+    if (typeMember.type == "MismatchToken") {
         tokens.cursor = initialCursor
-        return typeMember!
+        return typeMember
     }
 
-    intersectionType.left = typeMember!
+    intersectionType.left = typeMember
     currentToken = skip(tokens, skipables)
 
     if(!isOperator(currentToken, "&")) {
@@ -50,7 +50,7 @@ export function generateIntersectionType(context: Node, tokens: TokenStream): In
 
     currentToken = skip(tokens, skipables) // skip &
 
-    const right = generateTypeExpression(intersectionType, tokens)
+    const right = generateTypeExpression(intersectionType, tokens) // buggy :(
 
     if(right.type == "MismatchToken")
         return right

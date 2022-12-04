@@ -1,8 +1,8 @@
-import { TokenStream } from "../../lexer/token.js"
-import { generateAsExpression } from "../inline/expression/as-expression.js"
-import { generateExpression } from "../inline/expression/expression.js"
-import { generateProgram } from "../program.js"
-import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../utility"
+import { TokenStream } from "../../../lexer/token.js"
+import { generateAsExpression } from "../../inline/expression/as-expression.js"
+import { generateExpression } from "../../inline/expression/expression.js"
+import { generateProgram } from "../../program.js"
+import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility"
 import { generateElseBlock } from "./else-block.js"
 
 export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | MismatchToken {

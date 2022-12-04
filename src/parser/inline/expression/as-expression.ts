@@ -30,8 +30,8 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
         return createMismatchToken(currentToken)
     }
 
-    currentToken = skip(tokens, _skipables)
-    let right: Identifier | CaseExpr | MismatchToken
+    currentToken = skip(tokens, _skipables) // skip as
+    let right: Identifier | CaseExpr | MismatchToken = null!
 
     if (isKeyword(currentToken, "case"))
         right = generateCaseExpr(asExpression, tokens)

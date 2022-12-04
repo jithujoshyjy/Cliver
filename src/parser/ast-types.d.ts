@@ -78,7 +78,7 @@ type TypeDeclarator = {
 
 type UnitFunction = {
     type: "UnitFunction",
-    params: Array<Pattern>,
+    params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Expression,
     start: number,
@@ -94,7 +94,7 @@ type AnonFunction = {
 
 type InlineAnonFunction = {
     type: "InlineAnonFunction",
-    params: Array<Pattern>,
+    params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Expression,
     start: number,
@@ -105,8 +105,8 @@ type FunctionKind = "self" | "trait" | "macro" | "yield" | "payload" | "return" 
 
 type BlockAnonFunction = {
     type: "BlockAnonFunction",
-    kind: FunctionKind,
-    params: Array<Pattern>,
+    kind: FunctionKind[],
+    params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Array<Inline | Block>,
     start: number,
@@ -127,6 +127,7 @@ type NamedFunction = {
 type NonVerbalOperator = {
     type: "NonVerbalOperator",
     kind: "infix" | "prefix" | "postfix",
+    precedence: number,
     name: string,
     start: number,
     end: number
@@ -137,6 +138,7 @@ type VerbalOperatorKind = "ref" | "case" | "throw" | "in" | "in!" | "of" | "to" 
 type VerbalOperator = {
     type: "VerbalOperator",
     kind: "infix" | "prefix" | "postfix",
+    precedence: number,
     name: VerbalOperatorKind,
     start: number,
     end: number
@@ -144,8 +146,8 @@ type VerbalOperator = {
 
 type InfixOperation = {
     type: "InfixOperation",
-    left: Literal | Term | Expression,
-    right: Literal | Term | InfixOperation | Expression,
+    left: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression | InfixOperation,
+    right: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression | InfixOperation,
     operator: InfixCallOperator | NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -153,7 +155,7 @@ type InfixOperation = {
 
 type PrefixOperation = {
     type: "PrefixOperation",
-    operand: Literal | Term | Expression,
+    operand: Literal | Term | GroupExpression,
     operator: NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -231,8 +233,9 @@ type TransformPipeline = {
 }
 
 type InfixCallOperator = {
-    type: "InfixCallNotation",
+    type: "InfixCallOperator",
     caller: Identifier | PropertyAccess,
+    precedence: 9,
     start: number,
     end: number
 }
@@ -351,7 +354,6 @@ type MatchCaseExpr = {
 type CaseExpr = {
     type: "CaseExpr",
     pattern: Pattern,
-    body: Inline,
     start: number,
     end: number
 }
@@ -407,20 +409,27 @@ type Pattern = {
 
 type Literal = {
     type: "Literal",
-    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | NumericLiteral | DoExpr | AnonFunction | UnitFunction | Identifier,
+    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | NumericLiteral | DoExpr | AnonFunction | UnitFunction | Identifier | GroupExpression,
     start: number,
     end: number
 }
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess,
+    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion |GroupExpression,
     start: number,
     end: number
 }
 
 type Expression = {
     type: "Expression",
+    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal,
+    start: number,
+    end: number
+}
+
+type GroupExpression = {
+    type: "GroupExpression",
     value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal,
     start: number,
     end: number
@@ -490,7 +499,7 @@ type StringLiteral = {
     type: "StringLiteral",
     text: string,
     kind: "inline" | "multiline",
-    format: "ascii" | "unicode",
+    charset: "ascii" | "unicode",
     start: number,
     end: number
 }
@@ -567,21 +576,21 @@ type TaggedSymbol = {
 
 type ArrayLiteral = {
     type: "ArrayLiteral",
-    elements: Array<Expression>,
+    values: Array<Expression>,
     start: number,
     end: number
 }
 
 type TupleLiteral = {
     type: "TupleLiteral",
-    elements: Array<Expression>,
+    values: Array<Expression>,
     start: number,
     end: number
 }
 
 type MapLiteral = {
     type: "MapLiteral",
-    elements: Pair[],
+    pairs: Pair[],
     start: number,
     end: number
 }
@@ -624,7 +633,7 @@ type TypeName = {
 
 type UnionType = {
     type: "UnionType",
-    left: TypeName | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType,
+    left: TypeName | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | TupleType | GroupTypeExpression,
     right: TypeExpression,
     start: number,
     end: number
@@ -632,7 +641,7 @@ type UnionType = {
 
 type IntersectionType = {
     type: "IntersectionType",
-    left: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType,
+    left: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | TupleType | GroupTypeExpression,
     right: TypeExpression,
     start: number,
     end: number
@@ -640,14 +649,14 @@ type IntersectionType = {
 
 type NegateType = {
     type: "NegateType",
-    operand: TypeExpression,
+    operand: TypeExpression | GroupTypeExpression,
     start: number,
     end: number
 }
 
 type DifferenceType = {
     type: "DifferenceType",
-    left: TypeName | UnionType | IntersectionType | NegateType | FunctionType | FunctionCallType | StructureType,
+    left: TypeName | UnionType | IntersectionType | NegateType | FunctionType | FunctionCallType | StructureType | TupleType | GroupTypeExpression,
     right: TypeExpression,
     start: number,
     end: number
@@ -663,7 +672,15 @@ type FunctionType = {
 
 type TypeExpression = {
     type: "TypeExpression",
-    body: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | StructureType,
+    body: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | GroupTypeExpression | StructureType,
+    constraint: TypeConstraint | null,
+    start: number,
+    end: number
+}
+
+type GroupTypeExpression = {
+    type: "GroupTypeExpression",
+    body: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | GroupTypeExpression | StructureType,
     constraint: TypeConstraint | null,
     start: number,
     end: number
@@ -673,7 +690,7 @@ type TypeConstraint = {
     type: "TypeConstraint",
     assert: FunctionType | null,
     structure: StructureType | null,
-    body: TupleType | null,
+    body: TupleLiteral | null,
     start: number,
     end: number
 }

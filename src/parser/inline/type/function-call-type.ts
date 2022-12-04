@@ -35,7 +35,7 @@ export function generateFunctionCallType(context: Node, tokens: TokenStream): Fu
         return args
     }
 
-    functionCallType.args = args
+    functionCallType.args = args as TupleType
 
     return functionCallType
 }

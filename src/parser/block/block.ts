@@ -3,7 +3,7 @@ import { createMismatchToken, isKeyword, isOperator, skip, skipables, _skipables
 import { generateBlockMacroApplication } from "./block-macro-application.js"
 import { generateDoCatchBlock } from "./do-catch-block/do-catch-block.js"
 import { generateForBlock } from "./for-block.js"
-import { generateIfBlock } from "./if-block.js"
+import { generateIfBlock } from "./if-block/if-block.js"
 import { generateImportDeclaration } from "./import-declaration.js"
 import { generateLabelDeclaration } from "./label-declaration.js"
 import { generateNamedFunction } from "./named-function.js"
@@ -66,6 +66,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
         const delimiter = captureDelimiter()
 
         if(delimiter.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return delimiter
         }
     }
@@ -108,6 +109,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
         const delimiter = captureDelimiter()
 
         if(delimiter.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return delimiter
         }
     }

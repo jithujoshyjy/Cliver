@@ -19,7 +19,7 @@ export function generateNegateType(context: Node, tokens: TokenStream): NegateTy
     }
 
     currentToken = skip(tokens, _skipables)
-    const typeMember = generateTypeExpression(negateType, tokens)
+    const typeMember = generateTypeExpression(negateType, tokens) // buggy :(
 
     if(typeMember.type == "MismatchToken") {
         tokens.cursor = initialCursor

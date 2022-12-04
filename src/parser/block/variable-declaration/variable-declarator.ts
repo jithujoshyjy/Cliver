@@ -1,13 +1,14 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateExpression } from "../../inline/expression/expression.js"
 import { generatePattern } from "../../inline/expression/pattern.js"
+import { generateTypeExpression } from "../../inline/type/type-expression.js"
 import { isOperator, skip, skipables, type Node } from "../../utility"
 
 export function generateVariableDeclarator(context: Node, tokens: TokenStream): VariableDeclarator | MismatchToken {
     const variableDeclarator: VariableDeclarator = {
         type: "VariableDeclarator",
         left: null!,
-        right: null!,
+        right: null,
         signature: null,
         start: 0,
         end: 0
@@ -23,10 +24,24 @@ export function generateVariableDeclarator(context: Node, tokens: TokenStream): 
     }
 
     variableDeclarator.left = pattern
-
     
-    const prevCursor = initialCursor
-    currentToken = skip(tokens, skipables) // =
+    let prevCursor = tokens.cursor
+    currentToken = skip(tokens, skipables) // :: | =
+
+    if(isOperator(currentToken, "::")) {
+        currentToken = skip(tokens, skipables) // skip ::
+        const typeExpr = generateTypeExpression(variableDeclarator, tokens)
+
+        if (typeExpr.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return typeExpr
+        }
+
+        variableDeclarator.signature = typeExpr
+
+        prevCursor = tokens.cursor
+        currentToken = skip(tokens, skipables) // =
+    }
     
     if(isOperator(currentToken, "=")) {
 
@@ -37,6 +52,8 @@ export function generateVariableDeclarator(context: Node, tokens: TokenStream): 
             tokens.cursor = initialCursor
             return expression
         }
+
+        variableDeclarator.right = expression
     }
     else
         tokens.cursor = prevCursor

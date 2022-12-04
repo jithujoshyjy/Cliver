@@ -1,17 +1,17 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
-import { generateTypeAssertion } from "./type-assertion.js"
+import { generatePair } from "../term/pair.js"
 
-export function generateStructureType(context: Node, tokens: TokenStream): StructureType | MismatchToken {
-    const structureType: StructureType = {
-        type: "StructureType",
-        fields: [],
+export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiteral | MismatchToken {
+    const mapLiteral: MapLiteral = {
+        type: "MapLiteral",
+        pairs: [],
         start: 0,
         end: 0
     }
 
-    const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
+    const initialCursor = tokens.cursor
 
     if(currentToken.type != TokenType.BraceEnclosed) {
         tokens.cursor = initialCursor
@@ -24,30 +24,32 @@ export function generateStructureType(context: Node, tokens: TokenStream): Struc
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }
+
         return currentToken
     }
 
     const braceTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    const parseTypeMember = () => {
+
+    const parsePair = () => {
         currentToken = braceTokens.currentToken
 
         if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
             currentToken = skip(braceTokens, skipables)
 
-        let typeMember: TypeAssertion | MismatchToken = generateTypeAssertion(structureType, braceTokens)
+        let pair: Pair | MismatchToken = generatePair(mapLiteral, tokens)
 
-        return typeMember
+        return pair
     }
 
     while (!braceTokens.isFinished) {
-        const typeMember = parseTypeMember()
+        const pair = parsePair()
 
-        if (typeMember.type == "MismatchToken") {
+        if (pair.type == "MismatchToken") {
             tokens.cursor = initialCursor
-            return typeMember
+            return pair
         }
 
-        structureType.fields.push(typeMember)
+        mapLiteral.pairs.push(pair)
         const comma = captureComma()
 
         if (comma.type == "MismatchToken") {
@@ -56,5 +58,5 @@ export function generateStructureType(context: Node, tokens: TokenStream): Struc
         }
     }
 
-    return structureType
+    return mapLiteral
 }

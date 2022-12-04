@@ -3,7 +3,7 @@ import { generateIdentifier } from "../inline/literal/identifier.js"
 import { createMismatchToken, isKeyword, skip, skipables, _skipables, type Node } from "../utility"
 import { generateDoCatchBlock } from "./do-catch-block/do-catch-block.js"
 import { generateForBlock } from "./for-block.js"
-import { generateIfBlock } from "./if-block.js"
+import { generateIfBlock } from "./if-block/if-block.js"
 
 export function generateLabelDeclaration(context: Node, tokens: TokenStream): LabelDeclaration | MismatchToken {
     const labelDeclar: LabelDeclaration = {

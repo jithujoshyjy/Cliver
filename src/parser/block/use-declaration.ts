@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../lexer/token.js"
-import { generateStringLiteral } from "../inline/literal/stringLiteral.js"
+import { generateStringLiteral } from "../inline/literal/string-literal.js"
 import { createMismatchToken, skip, skipables, _skipables, type Node } from "../utility"
 
 export function generateUseDeclaration(context: Node, tokens: TokenStream): UseDeclaration | MismatchToken {

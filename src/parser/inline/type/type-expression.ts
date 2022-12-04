@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { isKeyword, skip, skipables, type Node } from "../../utility"
-import { generateDifferenceType } from "../expression/difference-type.js"
+import { generateDifferenceType } from "./difference-type.js"
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateFunctionType } from "./function-type.js"
 import { generateIntersectionType } from "./intersection-type.js"
@@ -27,27 +27,31 @@ export function generateTypeExpression(context: Node, tokens: TokenStream): Type
         generateNegateType, generateFunctionType, generateFunctionCallType, generateTupleType, generateStructureType, generateTypeName
     ]
 
-    let typeMember: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | StructureType | MismatchToken
+    let typeMember: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | GroupTypeExpression | StructureType | MismatchToken = null!
 
     for (let typeGenerator of typeGenerators) {
         typeMember = typeGenerator(typeExpression, tokens)
         if (typeMember.type != "MismatchToken")
             break
-
-        currentToken = tokens.currentToken
-        tokens.cursor = initialCursor
     }
 
-    if (typeMember!.type == "MismatchToken")
-        return typeMember!
+    if (typeMember.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return typeMember
+    }
 
-    typeExpression.body = typeMember!
+    typeExpression.body = typeMember
     currentToken = skip(tokens, skipables)
 
-    if(isKeyword(currentToken, "where")) {
+    if (isKeyword(currentToken, "where")) {
+        currentToken = skip(tokens, skipables) // skip where
         const typeConstraint = generateTypeConstraint(typeExpression, tokens)
-        if(typeConstraint.type == "MismatchToken")
+
+        if (typeConstraint.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return typeConstraint
+        }
+        
         typeExpression.constraint = typeConstraint
     }
 

@@ -1,14 +1,14 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { type Node } from "../../utility"
-import { generateAnonFunction } from "./anonFunction.js"
-import { generateArrayLiteral } from "./arrayLiteral.js"
-import { generateDoExpr } from "./doExpr.js"
+import { generateAnonFunction } from "./anon-function/anon-function.js"
+import { generateArrayLiteral } from "./array-literal.js"
+import { generateDoExpr } from "./do-expr.js"
 import { generateIdentifier } from "./identifier.js"
-import { generateMapLiteral } from "./mapLiteral.js"
-import { generateNumericLiteral } from "./numericLiteral.js"
-import { generateStringLiteral } from "./stringLiteral.js"
-import { generateTupleLiteral } from "./tupleLiteral.js"
-import { generateUnitFunction } from "./unitFunction.js"
+import { generateMapLiteral } from "./map-literal.js"
+import { generateNumericLiteral } from "./numeric-literal/numericLiteral.js"
+import { generateStringLiteral } from "./string-literal.js"
+import { generateTupleLiteral } from "./tuple-literal.js"
+import { generateUnitFunction } from "./unit-function.js"
 
 export function generateLiteral(context: Node, tokens: TokenStream): Literal | MismatchToken {
     const literal: Literal = {
@@ -18,28 +18,29 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
         end: 0
     }
 
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const generateNodes = [
+    const nodeGenerators = [
         generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
         generateNumericLiteral, generateDoExpr, generateAnonFunction, generateUnitFunction, generateIdentifier
     ]
 
-    for (let [i, generateNode] of generateNodes.entries()) {
-        const node = generateNode(literal, tokens)
-        if (node.type == "MismatchToken") {
-            if (i < generateNodes.length)
-                continue
-            
-            tokens.cursor = initialCursor
-            return node
+    let node: typeof literal.value | MismatchToken = null!
+    for (let nodeGenerator of nodeGenerators) {
+        node = nodeGenerator(literal, tokens)
+        currentToken = tokens.currentToken
+        if (node.type != "MismatchToken") {
+            break
         }
-
-        literal.value = node
-        literal.start = node.start
-        literal.end = node.end
-        break
     }
+
+    if (node.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return node
+    }
+
+    literal.value = node
 
     return literal
 }

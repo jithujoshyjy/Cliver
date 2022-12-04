@@ -1,8 +1,8 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, skip, skipables, type Node } from "../../utility"
+import { generateTupleLiteral } from "../literal/tuple-literal.js"
 import { generateFunctionType } from "./function-type.js"
 import { generateStructureType } from "./structure-type.js"
-import { generateTupleType } from "./tuple-type.js"
 
 export function generateTypeConstraint(context: Node, tokens: TokenStream): TypeConstraint | MismatchToken {
     const typeConstraint: TypeConstraint = {
@@ -18,27 +18,55 @@ export function generateTypeConstraint(context: Node, tokens: TokenStream): Type
     let currentToken = tokens.currentToken
 
     const typeGenerators = [
-        generateFunctionType, generateTupleType, generateStructureType
+        generateFunctionType, generateTupleLiteral, generateStructureType
     ]
 
-    let typeMember: FunctionType | TupleType | StructureType | MismatchToken = null!
+    let typeMember: FunctionType | TupleLiteral | StructureType | MismatchToken = null!
 
     for (let typeGenerator of typeGenerators) {
-        typeMember = typeGenerator(typeConstraint, tokens)
+        typeMember = typeGenerator(typeConstraint, tokens) as FunctionType | TupleLiteral | StructureType | MismatchToken
         if (typeMember.type != "MismatchToken")
             break
 
         currentToken = tokens.currentToken
-        tokens.cursor = initialCursor
     }
 
-    if (typeMember.type == "MismatchToken")
+    if (typeMember.type == "MismatchToken") {
+        tokens.cursor = initialCursor
         return typeMember
+    }
 
     if (typeMember.type == "FunctionType") {
         typeConstraint.assert = typeMember
     }
-    else if (typeMember.type == "TupleType") {
+    else if (typeMember.type == "TupleLiteral") {
+
+        const areAssertions = typeMember.values.every(x => {
+            const maybeTerm = x.value
+            if (maybeTerm.type != "Term")
+                return false
+            
+            const maybeAssertion = maybeTerm.value
+            if (maybeAssertion.type != "TypeAssertion")
+                return false
+            
+            const maybeLiteral = maybeAssertion.left.value
+            if(maybeLiteral.type != "Literal")
+                return false
+            
+            const maybeIdentifier = maybeLiteral.value
+            if(maybeIdentifier.type != "Identifier")
+                return false
+            
+            return true
+        })
+
+        if(!areAssertions) {
+            const error = `Expected valid type assertions on ${currentToken.line}:${currentToken.column}`
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken, error)
+        }
+
         typeConstraint.body = typeMember
         currentToken = skip(tokens, skipables)
 

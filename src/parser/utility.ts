@@ -52,3 +52,33 @@ export const stringLiterals = [
     TokenType.MultilineASCIIStringLiteral,
     TokenType.MultilineUnicodeStringLiteral,
 ]
+
+type PrecidenceType = {
+    infix: { [key: string]: number },
+    prefix: { [key: string]: number },
+}
+
+export const operatorPrecedence: PrecidenceType = {
+    infix: {
+        "..": 1, "..?": 1,
+        ":": 2, "=": 2, ":=": 2, "::": 2,
+        "+=": 2, "-=": 2, "*=": 2, "/=": 2, "^=": 2, "%=": 2,
+        "&&=": 2, "||=": 2, ".&&=": 2, ".||=": 2,
+        ".+=": 2, ".-=": 2, ".*=": 2, "./=": 2, ".%=": 2, ".^=": 2,
+        "||": 3, "??": 3, ".||": 3,
+        "&&": 4, ".&&": 4,
+        "|": 5,
+        "&": 7,
+        "==": 8, "!=": 8,
+        "in": 9, "<=": 9, ">=": 9, "<": 9, ">": 9,
+        "+": 11, "-": 11, ".+": 11, ".-": 11,
+        "*": 12, "/": 12, "%": 12, ".*": 12, "./": 12, ".%": 12,
+        "^": 13, ".^": 13,
+        "<~": 17, ".": 17, "?.": 17,
+    },
+    prefix: {
+        "...": 2,
+        "~": 6,
+        "!": 14, "+": 14, "-": 14,
+    }
+}

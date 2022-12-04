@@ -1,7 +1,6 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
-import { generateIdentifier } from "../inline/literal/identifier.js"
-import { generateProgram } from "../program.js"
-import { isKeyword, skip, skipables, _skipables, type Node } from "../utility.js"
+import { TokenStream } from "../../../lexer/token.js"
+import { generateProgram } from "../../program.js"
+import { isKeyword, skip, skipables, _skipables, type Node } from "../../utility.js"
 
 export function generateElseBlock(context: Node, tokens: TokenStream): ElseBlock | MismatchToken {
 

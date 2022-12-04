@@ -1,17 +1,16 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
-import { generateAssignExpr } from "../inline/expression/assign-expression.js"
-import { generatePattern } from "../inline/expression/pattern.js"
-import { generateIdentifier } from "../inline/literal/identifier.js"
-import { generateTypeExpression } from "../inline/type/type-expression.js"
-import { generateProgram } from "../program.js"
-import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../utility"
+import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { generateProgram } from "../../../program.js"
+import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../../utility"
+import { generateAssignExpr } from "../../expression/assign-expression.js"
+import { generatePattern } from "../../expression/pattern.js"
+import { generateTypeExpression } from "../../type/type-expression.js"
+import { generateIdentifier } from "../identifier.js"
 
-export function generateNamedFunction(context: Node, tokens: TokenStream): NamedFunction | MismatchToken {
-    const namedFunction: NamedFunction = {
-        type: "NamedFunction",
+export function generateBlockAnonFunction(context: Node, tokens: TokenStream): BlockAnonFunction | MismatchToken {
+    const blockAnonFunction: BlockAnonFunction = {
+        type: "BlockAnonFunction",
         body: [],
         kind: ["return"],
-        name: null!,
         params: [],
         signature: null,
         start: 0,
@@ -23,7 +22,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
 
     const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
-        const signature = generateTypeExpression(namedFunction, tokens)
+        const signature = generateTypeExpression(blockAnonFunction, tokens)
         return signature
     }
 
@@ -33,17 +32,9 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
             tokens.cursor = initialCursor
             return signature
         }
-        namedFunction.signature = signature
+        blockAnonFunction.signature = signature
+        currentToken = skip(tokens, skipables)
     }
-    const name = generateIdentifier(namedFunction, tokens)
-
-    if (name.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return name
-    }
-
-    namedFunction.name = name
-    currentToken = skip(tokens, skipables)
 
     const captureComma = () => {
         currentToken = skip(tokens, skipables)
@@ -57,7 +48,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
 
     const captureFunctionKind = () => {
         currentToken = skip(tokens, skipables)
-        const name = generateIdentifier(namedFunction, tokens)
+        const name = generateIdentifier(blockAnonFunction, tokens)
         return name
     }
 
@@ -70,7 +61,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
                 return kind
             }
 
-            namedFunction.kind.push(kind.name as FunctionKind)
+            blockAnonFunction.kind.push(kind.name as FunctionKind)
 
             const comma = captureComma()
             if (comma.type == "MismatchToken" && isOperator(currentToken, ">")) {
@@ -96,10 +87,10 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
         if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
             currentToken = skip(parenTokens, skipables)
 
-        let param: AssignExpr | Pattern | MismatchToken = generateAssignExpr(namedFunction, parenTokens)
+        let param: AssignExpr | Pattern | MismatchToken = generateAssignExpr(blockAnonFunction, parenTokens)
 
         if (param.type == "MismatchToken")
-            param = generatePattern(namedFunction, parenTokens)
+            param = generatePattern(blockAnonFunction, parenTokens)
 
         return param
     }
@@ -112,7 +103,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
             return param
         }
 
-        namedFunction.params.push(param)
+        blockAnonFunction.params.push(param)
         const comma = captureComma()
 
         if (comma.type == "MismatchToken") {
@@ -129,13 +120,13 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
         if (signature.type == "MismatchToken")
             return signature
 
-        if (namedFunction.signature !== null)
+        if (blockAnonFunction.signature !== null)
             return createMismatchToken(currentToken)
 
-        namedFunction.signature = signature
+        blockAnonFunction.signature = signature
     }
 
-    const nodes = generateProgram(namedFunction, tokens)
+    const nodes = generateProgram(blockAnonFunction, tokens)
 
     for (let node of nodes) {
 
@@ -148,8 +139,8 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
             return node
         }
 
-        namedFunction.body.push(node)
+        blockAnonFunction.body.push(node)
     }
 
-    return namedFunction
+    return blockAnonFunction
 }

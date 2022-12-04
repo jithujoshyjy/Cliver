@@ -1,5 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { type Node } from "../../utility"
+import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateExternalCallbackNotation } from "./external-callback-notation.js"
 import { generateForInline } from "./for-inline.js"
 import { generateFunctionCall } from "./function-call.js"
@@ -25,9 +26,11 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
         end: 0
     }
 
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const generateNodes = [
+    const nodeGenerators = [
+        generateTypeAssertion,
         generatePipelineNotation, generateObjectCascadeNotation, generateObjectExtendNotation,
         generateExternalCallbackNotation, generateMetaDataInterpolation, generateTaggedSymbol,
         generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
@@ -35,21 +38,21 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
         generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess
     ]
 
-    for (let [i, generateNode] of generateNodes.entries()) {
-        const node = generateNode(term, tokens)
-        if (node.type == "MismatchToken") {
-            if (i < generateNodes.length)
-                continue
-
-            tokens.cursor = initialCursor
-            return node
+    let node: typeof term.value | MismatchToken = null!
+    for (let nodeGenerator of nodeGenerators) {
+        node = nodeGenerator(term, tokens)
+        currentToken = tokens.currentToken
+        if (node.type != "MismatchToken") {
+            break
         }
-
-        term.value = node
-        term.start = node.start
-        term.end = node.end
-        break
     }
+
+    if (node.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return node
+    }
+
+    term.value = node
 
     return term
 }

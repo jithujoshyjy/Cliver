@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { generateProgram, type ProgramGenerator } from "../../program.js"
 import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility"
 import { generateDoneBlock } from "../done-block.js"
@@ -14,12 +14,12 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
         end: 0
     }
 
-    let currentToken = tokens.currentToken // do
-    doCatchBlock.start = currentToken.line
-    const nodeGenerator = generateProgram(doCatchBlock, tokens)
+    let currentToken = skip(tokens, skipables) // skip do
+    const initialCursor = tokens.cursor
 
-    for (let node of nodeGenerator) {
+    const nodes = generateProgram(doCatchBlock, tokens)
 
+    for (let node of nodes) {
         currentToken = tokens.currentToken
         const isBlockStartKw = isKeyword(currentToken, "catch")
             || isKeyword(currentToken, "done")
@@ -27,21 +27,28 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
 
         if (node.type == "MismatchToken" && isBlockStartKw)
             break
-        else if (node.type == "MismatchToken")
+        else if (node.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return node
+        }
 
         doCatchBlock.body.push(node)
     }
 
     if (doCatchBlock.body.length === 0) {
         const error = `SyntaxError: Empty DoExpression on ${currentToken.line}:${currentToken.column}`
+        tokens.cursor = initialCursor
         return createMismatchToken(tokens.currentToken, error)
     }
 
     const captureCatch = () => {
         const catchHandler = generateCatchBlock(doCatchBlock, tokens)
-        if (catchHandler.type == "MismatchToken")
+
+        if (catchHandler.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return catchHandler
+        }
+
         return catchHandler
     }
 
@@ -49,19 +56,26 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
         currentToken = tokens.currentToken
         if (isKeyword(currentToken, "catch")) {
             const catchHandler = captureCatch()
-            if (catchHandler.type == "MismatchToken")
+
+            if (catchHandler.type == "MismatchToken") {
+                tokens.cursor = initialCursor
                 return catchHandler
+            }
+
             doCatchBlock.handlers.push(catchHandler)
         }
         else if (isKeyword(currentToken, "done")) {
             if (doCatchBlock.done != null) {
+                tokens.cursor = initialCursor
                 const error = `SyntaxError: Unexpected done block on ${currentToken.line}:${currentToken.column}`
                 return createMismatchToken(tokens.currentToken, error)
             }
 
             const doneBlock = generateDoneBlock(doCatchBlock, tokens)
-            if (doneBlock.type == "MismatchToken")
+            if (doneBlock.type == "MismatchToken") {
+                tokens.cursor = initialCursor
                 return doneBlock
+            }
 
             doCatchBlock.done = doneBlock
         }
@@ -69,8 +83,10 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
             doCatchBlock.end = currentToken.line
             break
         }
-        else
+        else {
+            tokens.cursor = initialCursor
             return createMismatchToken(tokens.currentToken)
+        }
     }
 
     if (doCatchBlock.handlers.length === 0 && doCatchBlock.done === null) {

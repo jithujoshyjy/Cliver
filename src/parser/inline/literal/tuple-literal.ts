@@ -1,26 +1,24 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
-import { generateTypeExpression } from "./type-expression.js"
+import { generateExpression } from "../expression/expression.js"
 
-export function generateTupleType(context: Node, tokens: TokenStream): TupleType | GroupTypeExpression | MismatchToken {
-
-    const tupleType: TupleType = {
-        type: "TupleType",
+export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleLiteral | GroupExpression | MismatchToken {
+    const tupleLiteral: TupleLiteral = {
+        type: "TupleLiteral",
         values: [],
         start: 0,
         end: 0
     }
 
-    const groupTypeExpr: GroupTypeExpression = {
-        type: "GroupTypeExpression",
-        body: null!,
-        constraint: null,
+    const groupExpr: GroupExpression = {
+        type: "GroupExpression",
+        value: null!,
         start: 0,
         end: 0
     }
 
-    const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
+    const initialCursor = tokens.cursor
 
     if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
@@ -45,7 +43,7 @@ export function generateTupleType(context: Node, tokens: TokenStream): TupleType
         if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
             currentToken = skip(parenTokens, skipables)
 
-        let value: TypeExpression | MismatchToken = generateTypeExpression(tupleType, parenTokens)
+        let value: Expression | MismatchToken = generateExpression(tupleLiteral, parenTokens)
 
         return value
     }
@@ -58,7 +56,7 @@ export function generateTupleType(context: Node, tokens: TokenStream): TupleType
             return value
         }
 
-        tupleType.values.push(value)
+        tupleLiteral.values.push(value)
         const comma = captureComma()
 
         if (comma.type == "MismatchToken") {
@@ -67,20 +65,16 @@ export function generateTupleType(context: Node, tokens: TokenStream): TupleType
         }
     }
 
-    if (!["FunctionCallType", "FunctionType"].includes(context.type))
-        if (tupleType.values.length < 1) {
-            tokens.cursor = initialCursor
-            const error = `A tuple cannot be empty on ${currentToken.line}:${currentToken.column}`
-            return createMismatchToken(currentToken, error)
-        }
-        else if (tupleType.values.length == 1) {
-            const [{ body, constraint }] = tupleType.values
+    if (tupleLiteral.values.length < 1) {
+        tokens.cursor = initialCursor
+        const error = `A tuple cannot be empty on ${currentToken.line}:${currentToken.column}`
+        return createMismatchToken(currentToken, error)
+    }
+    else if (tupleLiteral.values.length == 1 && context.type != "TypeConstraint") {
+        const [{ value }] = tupleLiteral.values
+        groupExpr.value = value
+        return groupExpr
+    }
 
-            groupTypeExpr.body = body
-            groupTypeExpr.constraint = constraint
-
-            return groupTypeExpr
-        }
-
-    return tupleType
+    return tupleLiteral
 }
