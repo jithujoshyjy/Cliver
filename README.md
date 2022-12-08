@@ -140,19 +140,16 @@ type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: T
 ```
 
 ```julia
-@typestruct
-fun<self>() :: Maybe(x)
+@impl
+fun Just<self>(a) :: Maybe(a)
     @@where
+    fun unwrap(): a
+end
 
-    fun Just<self>(a)
-        @@where
-        fun add(b): a + b
-    end
-    
-    fun None<self>()
-        @@where
-        fun add(b): b
-    end
+@impl
+fun None<self>() :: Maybe(a)
+    @@where
+    fun unwrap(b): throw PatternError("attempt to unwarp a None value")
 end
 ```
 
