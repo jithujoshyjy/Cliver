@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { type Node } from "../../utility"
+import { type Node } from "../../utility.js"
 
 export function generateObjectCascadeNotation(context: Node, tokens: TokenStream): ObjectCascadeNotation | MismatchToken {
     const objectCascadeNotation: ObjectCascadeNotation = {

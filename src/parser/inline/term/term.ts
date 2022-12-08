@@ -1,21 +1,23 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { type Node } from "../../utility"
+import { type Node } from "../../utility.js"
+import { generateAnonFunction } from "../literal/anon-function/anon-function.js"
+import { generateUnitFunction } from "../literal/unit-function.js"
 import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateExternalCallbackNotation } from "./external-callback-notation.js"
 import { generateForInline } from "./for-inline.js"
 import { generateFunctionCall } from "./function-call.js"
-import { generateIfInline } from "./if-inline.js"
+import { generateIfInline } from "./if-inline/if-inline.js"
 import { generateImplicitMultiplication } from "./implicit-multiplication.js"
 import { generateInlineMacroApplication } from "./inline-macro-application.js"
 import { generateInlineStringFragment } from "./inline-string-fragment.js"
-import { generateMatchInline } from "./match-inline.js"
+import { generateMatchInline } from "./match-inline/match-inline.js"
 import { generateMetaDataInterpolation } from "./meta-data-interpolation.js"
 import { generateObjectCascadeNotation } from "./object-cascade-notation.js"
 import { generateObjectExtendNotation } from "./object-extend-notation.js"
-import { generatePipelineNotation } from "./pipeline-notation.js"
+import { generatePipelineNotation } from "./pipeline-notation/pipeline-notation.js"
 import { generatePropertyAccess } from "./property-access.js"
 import { generateTaggedNumber } from "./tagged-number.js"
-import { generateTaggedString } from "./tagged-string.js"
+import { generateTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol } from "./tagged-symbol.js"
 
 export function generateTerm(context: Node, tokens: TokenStream): Term | MismatchToken {
@@ -31,8 +33,8 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
 
     const nodeGenerators = [
         generateTypeAssertion,
-        generatePipelineNotation, generateObjectCascadeNotation, generateObjectExtendNotation,
-        generateExternalCallbackNotation, generateMetaDataInterpolation, generateTaggedSymbol,
+        /* generatePipelineNotation, generateObjectCascadeNotation, */ generateObjectExtendNotation,
+        generateExternalCallbackNotation, generateAnonFunction, generateUnitFunction,generateMetaDataInterpolation, generateTaggedSymbol,
         generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
         generateTaggedNumber, generateForInline, generateMatchInline, generateIfInline,
         generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess

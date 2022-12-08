@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateFunctionType } from "./function-type.js"
 import { generateIntersectionType } from "./intersection-type.js"

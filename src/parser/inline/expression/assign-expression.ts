@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateVariableDeclarator } from "../../block/variable-declaration/variable-declarator.js"
-import { createMismatchToken, type Node } from "../../utility"
+import { createMismatchToken, type Node } from "../../utility.js"
 
 export function generateAssignExpr(context: Node, tokens: TokenStream): AssignExpr | MismatchToken {
     const assignExpr: AssignExpr = {

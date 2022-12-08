@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, skipables, operatorPrecedence, type Node, createMismatchToken } from "../../../utility"
+import { skip, skipables, operatorPrecedence, type Node, createMismatchToken } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTerm } from "../../term/term.js"
 import { generateInfixCallOperator } from "./infix-call-operator.js"

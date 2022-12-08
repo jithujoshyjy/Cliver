@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
 
 export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleLiteral | GroupExpression | MismatchToken {

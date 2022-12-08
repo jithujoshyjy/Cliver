@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { isKeyword, skip, skipables, type Node } from "../../utility"
+import { isKeyword, skip, skipables, type Node } from "../../utility.js"
 import { generateDifferenceType } from "./difference-type.js"
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateFunctionType } from "./function-type.js"

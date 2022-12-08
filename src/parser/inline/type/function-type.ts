@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility.js"
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateTupleType } from "./tuple-type.js"
 import { generateTypeExpression } from "./type-expression.js"

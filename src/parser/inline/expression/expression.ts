@@ -1,9 +1,9 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { type Node } from "../../utility"
+import { type Node } from "../../utility.js"
 import { generateLiteral } from "../literal/literal.js"
 import { generateTerm } from "../term/term.js"
 import { generateInfixOperation } from "./operation.ts/infix-operation.js"
-import { generatePostfixOperation } from "./operation.ts/postfix-operation.js"
+// import { generatePostfixOperation } from "./operation.ts/postfix-operation.js"
 import { generatePrefixOperation } from "./operation.ts/prefix-operation.js"
 
 export function generateExpression(context: Node, tokens: TokenStream): Expression | MismatchToken {

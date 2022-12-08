@@ -1,5 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { type Node } from "../../utility"
+import { type Node } from "../../utility.js"
+import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateAnonFunction } from "./anon-function/anon-function.js"
 import { generateArrayLiteral } from "./array-literal.js"
 import { generateDoExpr } from "./do-expr.js"
@@ -23,7 +24,7 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
 
     const nodeGenerators = [
         generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
-        generateNumericLiteral, generateDoExpr, generateAnonFunction, generateUnitFunction, generateIdentifier
+        generateNumericLiteral, generateDoExpr, generateIdentifier, generateGroupExpression
     ]
 
     let node: typeof literal.value | MismatchToken = null!

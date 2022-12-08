@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isKeyword, skip, _skipables, type Node } from "../../utility"
+import { createMismatchToken, isKeyword, skip, _skipables, type Node } from "../../utility.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateCaseExpr } from "./case-expression.js"
 import { generateExpression } from "./expression.js"

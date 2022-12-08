@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateTypeExpression } from "../../inline/type/type-expression.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateVariableDeclarator } from "./variable-declarator.js"
 
 export function generateVariableDeclaration(context: Node, tokens: TokenStream): VariableDeclaration | MismatchToken {
@@ -46,7 +46,7 @@ export function generateVariableDeclaration(context: Node, tokens: TokenStream):
 
     const captureComma = () => {
         currentToken = skip(tokens, skipables)
-        if (!isOperator(currentToken, ",")) {
+        if (!isPunctuator(currentToken, ",")) {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }

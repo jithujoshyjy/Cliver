@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { type Node } from "../../../utility"
+import { type Node } from "../../../utility.js"
 import { generateBlockAnonFunction } from "./block-anon-function.js"
 import { generateInlineAnonFunction } from "./inline-anon-function.js"
 

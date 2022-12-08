@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, _skipables, type Node } from "../../../utility"
+import { skip, _skipables, type Node } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTerm } from "../../term/term.js"
 import { generateGroupExpression } from "../group-expression.js"

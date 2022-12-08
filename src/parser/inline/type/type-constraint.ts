@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, skip, skipables, type Node } from "../../utility.js"
 import { generateTupleLiteral } from "../literal/tuple-literal.js"
 import { generateFunctionType } from "./function-type.js"
 import { generateStructureType } from "./structure-type.js"

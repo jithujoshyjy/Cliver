@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, type Node } from "../../../utility"
+import { createMismatchToken, isOperator, type Node } from "../../../utility.js"
 
 export function generateNonVerbalOperator(context: Node, tokens: TokenStream): NonVerbalOperator | MismatchToken {
     const nonVerbalOperator: NonVerbalOperator = {
@@ -14,7 +14,13 @@ export function generateNonVerbalOperator(context: Node, tokens: TokenStream): N
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if(currentToken.type !== TokenType.Operator) {
+    const excludedOperators = [
+        "``", ".``", "??", "..", ".", "?.", "?", "..?", "->", "@", "@@"
+    ]
+
+    const isExcludedOperator = (y: any) => excludedOperators.some(x => isOperator(y, x))
+    
+    if(currentToken.type != TokenType.Operator || isExcludedOperator(currentToken)) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

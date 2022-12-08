@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { type Node } from "../../../utility"
+import { type Node } from "../../../utility.js"
 
 export function generatePostfixOperation(context: Node, tokens: TokenStream): PostfixOperation | MismatchToken {
     const postfixOperation: PostfixOperation = {

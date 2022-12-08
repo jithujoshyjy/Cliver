@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, _skipables, type Node } from "../../../utility"
+import { createMismatchToken, isPunctuator, skip, _skipables, type Node } from "../../../utility.js"
 import { generateIdentifier } from "../../literal/identifier.js"
 import { generatePropertyAccess } from "../../term/property-access.js"
 

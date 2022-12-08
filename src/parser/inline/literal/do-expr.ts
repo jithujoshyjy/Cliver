@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateProgram } from "../../program.js"
-import { isKeyword, skip, skipables, type Node } from "../../utility"
+import { isKeyword, skip, skipables, type Node } from "../../utility.js"
 
 export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | MismatchToken {
     const doExpr: DoExpr = {

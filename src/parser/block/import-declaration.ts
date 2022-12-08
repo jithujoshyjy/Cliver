@@ -6,7 +6,7 @@ import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
 import { generateObjectExtendNotation } from "../inline/term/object-extend-notation.js"
 import { generateTaggedSymbol } from "../inline/term/tagged-symbol.js"
-import { createMismatchToken, isKeyword, isOperator, skip, skipables, _skipables, type Node } from "../utility"
+import { createMismatchToken, isKeyword, isOperator, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 
 export function generateImportDeclaration(context: Node, tokens: TokenStream): ImportDeclaration | MismatchToken {
     const importDeclr: ImportDeclaration = {
@@ -22,7 +22,7 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
 
     const captureComma = () => {
         currentToken = skip(tokens, skipables)
-        if (!isOperator(currentToken, ",")) {
+        if (!isPunctuator(currentToken, ",")) {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }

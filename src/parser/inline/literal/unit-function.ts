@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern.js"

@@ -4,7 +4,7 @@ import { generatePattern } from "../inline/expression/pattern.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateTypeExpression } from "../inline/type/type-expression.js"
 import { generateProgram } from "../program.js"
-import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../utility"
+import { createMismatchToken, isKeyword, isOperator, isPunctuator, skip, skipables, type Node } from "../utility.js"
 
 export function generateNamedFunction(context: Node, tokens: TokenStream): NamedFunction | MismatchToken {
     const namedFunction: NamedFunction = {
@@ -47,7 +47,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
 
     const captureComma = () => {
         currentToken = skip(tokens, skipables)
-        if (!isOperator(currentToken, ",")) {
+        if (!isPunctuator(currentToken, ",")) {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }
@@ -72,14 +72,17 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
 
             namedFunction.kind.push(kind.name as FunctionKind)
 
-            const comma = captureComma()
-            if (comma.type == "MismatchToken" && isOperator(currentToken, ">")) {
-                currentToken = skip(tokens, skipables)
-                break
-            }
-            else if (comma.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return comma
+            if (!tokens.isFinished) {
+                const comma = captureComma()
+                if (comma.type == "MismatchToken" && isOperator(currentToken, ">")) {
+                    currentToken = skip(tokens, skipables)
+                    break
+                }
+
+                if (comma.type == "MismatchToken") {
+                    tokens.cursor = initialCursor
+                    return comma
+                }
             }
         }
 
@@ -113,11 +116,13 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
         }
 
         namedFunction.params.push(param)
-        const comma = captureComma()
+        if(!parenTokens.isFinished) {
+            const comma = captureComma()
 
-        if (comma.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return comma
+            if (comma.type == "MismatchToken") {
+                tokens.cursor = initialCursor
+                return comma
+            }
         }
     }
 

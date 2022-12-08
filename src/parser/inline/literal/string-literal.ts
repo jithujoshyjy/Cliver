@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, type Node } from "../../utility"
+import { createMismatchToken, type Node } from "../../utility.js"
 
 export function generateStringLiteral(context: Node, tokens: TokenStream): StringLiteral | MismatchToken {
     const stringLiteral: StringLiteral = {

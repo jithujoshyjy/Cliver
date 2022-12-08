@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, type Node } from "../../../utility"
+import { createMismatchToken, type Node } from "../../../utility.js"
 
 export function generateVerbalOperator(context: Node, tokens: TokenStream): VerbalOperator | MismatchToken {
     const verbalOperator: VerbalOperator = {

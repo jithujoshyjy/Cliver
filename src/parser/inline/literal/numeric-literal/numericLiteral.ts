@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { type Node } from "../../../utility"
+import { type Node } from "../../../utility.js"
 import { generateFloatLiteral } from "./float-literal.js"
 import { generateIntegerLiteral } from "./integer-literal.js"
 

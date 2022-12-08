@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { skip, _skipables, type Node } from "../../utility"
+import { skip, _skipables, type Node } from "../../utility.js"
 import { generatePattern } from "./pattern.js"
 
 export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr | MismatchToken {

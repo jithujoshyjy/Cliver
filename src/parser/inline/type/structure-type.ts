@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateTypeAssertion } from "./type-assertion.js"
 
 export function generateStructureType(context: Node, tokens: TokenStream): StructureType | MismatchToken {

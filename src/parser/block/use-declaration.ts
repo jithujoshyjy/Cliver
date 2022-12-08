@@ -1,6 +1,6 @@
 import { TokenStream, TokenType } from "../../lexer/token.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
-import { createMismatchToken, skip, skipables, _skipables, type Node } from "../utility"
+import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 
 export function generateUseDeclaration(context: Node, tokens: TokenStream): UseDeclaration | MismatchToken {
     const useDeclar: UseDeclaration = {
@@ -25,10 +25,10 @@ export function generateUseDeclaration(context: Node, tokens: TokenStream): UseD
 
     const captureComma = () => {
         currentToken = skip(tokens, _skipables)
-        const isComma = currentToken.type == TokenType.Punctuator && (currentToken.value as string) == ","
-
-        if (!isComma)
+        if (!isPunctuator(currentToken, ",")) {
+            tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
+        }
 
         return currentToken
     }

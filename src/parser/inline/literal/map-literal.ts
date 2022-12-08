@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generatePair } from "../term/pair.js"
 
 export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiteral | MismatchToken {

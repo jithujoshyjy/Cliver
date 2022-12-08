@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, _skipables, type Node } from "../../utility"
+import { createMismatchToken, isOperator, skip, _skipables, type Node } from "../../utility.js"
 import { generateTypeExpression } from "./type-expression.js"
 
 export function generateNegateType(context: Node, tokens: TokenStream): NegateType | MismatchToken {

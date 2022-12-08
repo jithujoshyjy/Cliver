@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../lexer/token.js"
-import { createMismatchToken, skip, skipables, stringLiterals, _skipables, type Node } from "../utility"
+import { createMismatchToken, skip, skipables, _skipables, type Node } from "../utility.js"
 import { generateExpression } from "./expression/expression.js"
 
 export function generateInline(context: Node, tokens: TokenStream): Inline | MismatchToken {

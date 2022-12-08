@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { type Node } from "../../utility"
+import { type Node } from "../../utility.js"
 import { generateIdentifier } from "../literal/identifier.js"
 
 export function generateTypeName(context: Node, tokens: TokenStream): TypeName | MismatchToken {

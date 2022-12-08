@@ -124,6 +124,15 @@ type NamedFunction = {
     end: number
 }
 
+type FunctionPrototype = {
+    type: "FunctionPrototype",
+    kind: FunctionKind[],
+    params: Array<AssignExpr | Pattern>,
+    signature: TypeExpression | null,
+    start: number,
+    end: number
+}
+
 type NonVerbalOperator = {
     type: "NonVerbalOperator",
     kind: "infix" | "prefix" | "postfix",
@@ -172,8 +181,8 @@ type PostfixOperation = {
 type InlineMacroApplication = {
     type: "InlineMacroApplication",
     caller: Identifier | PropertyAccess,
-    arguments: CallSiteArgsList,
-    body: Inline,
+    arguments: CallSiteArgsList | null,
+    body: PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     start: number,
     end: number
 }
@@ -181,22 +190,23 @@ type InlineMacroApplication = {
 type FunctionCall = {
     type: "FunctionCall",
     arguments: CallSiteArgsList,
-    caller: Identifier | PropertyAccess | OperatorRef | Expression,
+    caller: Identifier | PropertyAccess | OperatorRef | GroupExpression,
+    externcallback: boolean,
     start: number,
     end: number
 }
 
 type OperatorRef = {
     type: "OperatorRef",
-    operator: string,
+    operator: VerbalOperator | NonVerbalOperator,
     start: number,
     end: number
 }
 
 type CallSiteArgsList = {
     type: "CallSiteArgsList",
-    positional: Array<Expression>,
-    keyword: Array<Expression>,
+    positional: Array<Pair | Expression | FunctionPrototype>,
+    keyword: Array<Pair | Identifier>,
     start: number,
     end: number
 }
@@ -212,6 +222,7 @@ type PipelineNotation = {
     type: "PipelineNotation",
     expression: AsExpression | Expression,
     pipes: Array<ErrorPipeline | TransformPipeline>,
+    kind: "pointed" | "pointfree",
     start: number,
     end: number
 }
@@ -337,7 +348,7 @@ type ElseInline = {
 
 type MatchInline = {
     type: "MatchInline",
-    condition: Expression,
+    head: Expression,
     cases: MatchCaseExpr[],
     start: number,
     end: number
@@ -345,7 +356,7 @@ type MatchInline = {
 
 type MatchCaseExpr = {
     type: "MatchCaseExpr",
-    pattern: Pattern,
+    patterns: Pattern[],
     body: Array<Inline | Block>,
     start: number,
     end: number
@@ -409,14 +420,14 @@ type Pattern = {
 
 type Literal = {
     type: "Literal",
-    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | NumericLiteral | DoExpr | AnonFunction | UnitFunction | Identifier | GroupExpression,
+    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | NumericLiteral | DoExpr | Identifier | GroupExpression,
     start: number,
     end: number
 }
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion |GroupExpression,
+    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | GroupExpression,
     start: number,
     end: number
 }
@@ -460,7 +471,7 @@ type LabelDeclaration = {
 
 type TaggedNumber = {
     type: "TaggedNumber",
-    tag: Identifier | PropertyAccess | FunctionCall,
+    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     number: NumericLiteral,
     start: number,
     end: number
@@ -469,7 +480,7 @@ type TaggedNumber = {
 type ImplicitMultiplication = {
     type: "ImplicitMultiplication",
     left: NumericLiteral,
-    right: Identifier | PropertyAccess | Expression,
+    right: Identifier | PropertyAccess | GroupExpression,
     start: number,
     end: number
 }
@@ -509,8 +520,8 @@ type MultilineStringLiteral = StringLiteral & {kind: "multiline"}
 
 type InlineTaggedString = {
     type: "InlineTaggedString",
-    tag: Identifier | PropertyAccess | FunctionCall | Expression,
-    fragments: Array<InlineStringLiteral | InstringExpr | InstringId>,
+    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+    fragments: InlineFString[],
     start: number,
     end: number
 }
@@ -525,6 +536,13 @@ type InstringExpr = {
 type InstringId = {
     type: "InstringId",
     value: Identifier,
+    start: number,
+    end: number
+}
+
+type InlineFString = {
+    type: "InlineFString",
+    fragments: Array<InlineStringLiteral | InstringExpr | InstringId>,
     start: number,
     end: number
 }
@@ -552,15 +570,15 @@ type MultilineUnicodeString = {
 
 type MultilineTaggedString = {
     type: "MultilineTaggedString",
-    tag: Identifier | PropertyAccess | FunctionCall | Expression,
-    fragments: Array<InlineStringLiteral | InstringExpr | InstringId>,
+    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+    fragments: Array<MultilineStringLiteral | InstringExpr | InstringId>,
     start: number,
     end: number
 }
 
 type TaggedString = {
     type: "TaggedString",
-    tag: Identifier | PropertyAccess | FunctionCall | Expression,
+    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     value: InlineTaggedString | MultilineTaggedString,
     start: number,
     end: number
@@ -568,8 +586,25 @@ type TaggedString = {
     
 type TaggedSymbol = {
     type: "TaggedSymbol",
-    tag: Identifier | PropertyAccess | FunctionCall | Expression,
-    fragments: Array<SymASCIICharLiteral | SymUnicodeCharLiteral | SymASCIIStringLiteral | SymUnicodeStringLiteral>,
+    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+    fragments: Array<SymbolLiteral>,
+    start: number,
+    end: number
+}
+
+type SymbolLiteral = {
+    type: "SymbolLiteral",
+    text: string,
+    kind: "string" | "char",
+    charset: "ascii" | "unicode",
+    start: number,
+    end: number
+}
+
+type CharLiteral = {
+    type: "CharLiteral",
+    text: string,
+    charset: "ascii" | "unicode",
     start: number,
     end: number
 }
@@ -597,7 +632,7 @@ type MapLiteral = {
 
 type Pair = {
     type: "Pair",
-    key: Expression,
+    key: PrefixOperation | PostfixOperation | GroupExpression | Term | Literal,
     value: Expression,
     start: number,
     end: number
@@ -719,8 +754,9 @@ type FunctionCallType = {
 
 type PropertyAccess = {
     type: "PropertyAccess",
-    accessor: Literal | TaggedSymbol | TaggedString | ImplicitMultiplication | TaggedNumber | FunctionCall,
-    field: Identifier,
+    accessor: Literal | TaggedSymbol | TaggedString | ImplicitMultiplication | TaggedNumber | FunctionCall | GroupExpression | PropertyAccess,
+    field: NumericLiteral | Identifier | ArrayLiteral,
+    optional: boolean,
     computed: boolean,
     start: number,
     end: number

@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, type Node } from "../../../utility"
+import { createMismatchToken, type Node } from "../../../utility.js"
 
 export function generateFloatLiteral(context: Node, tokens: TokenStream): FloatLiteral | MismatchToken {
     const floatLiteral: FloatLiteral = {

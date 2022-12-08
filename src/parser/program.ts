@@ -1,7 +1,7 @@
-import { TokenStream } from "../lexer/token"
-import { generateBlock } from "./block/block"
-import { generateInline } from "./inline/inline"
-import { type Node } from "./utility"
+import { TokenStream } from "../lexer/token.js"
+import { generateBlock } from "./block/block.js"
+import { generateInline } from "./inline/inline.js"
+import { type Node } from "./utility.js"
 
 export type ProgramGenerator = Generator<Inline | Block | MismatchToken, Array<Inline | Block> | MismatchToken>
 export function* generateProgram(context: Node, tokens: TokenStream): ProgramGenerator {

@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { generateAsExpression } from "../../inline/expression/as-expression.js"
 import { generateExpression } from "../../inline/expression/expression.js"
 import { generateProgram } from "../../program.js"
-import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility"
+import { createMismatchToken, isKeyword, skip, skipables, _skipables, type Node } from "../../utility.js"
 import { generateElseBlock } from "./else-block.js"
 
 export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | MismatchToken {
@@ -15,8 +15,16 @@ export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | M
         end: 0
     }
 
-    let currentToken = skip(tokens, skipables)
+    let currentToken = skip(tokens, skipables) // if
     const initialCursor = tokens.cursor
+
+    if(!isKeyword(currentToken, "if")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+
+    currentToken = skip(tokens, _skipables) // skip if
+
     let condition: AsExpression | Expression | MismatchToken = generateExpression(ifBlock, tokens)
 
     if (condition.type == "MismatchToken")
