@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { type Node } from "../../utility.js"
-import { generateAnonFunction } from "../literal/anon-function/anon-function.js"
-import { generateUnitFunction } from "../literal/unit-function.js"
+import { generateAnonFunction } from "./anon-function/anon-function.js"
+import { generateUnitFunction } from "./unit-function.js"
 import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateExternalCallbackNotation } from "./external-callback-notation.js"
 import { generateForInline } from "./for-inline.js"
@@ -32,9 +32,9 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        generateTypeAssertion,
-        /* generatePipelineNotation, generateObjectCascadeNotation, */ generateObjectExtendNotation,
-        generateExternalCallbackNotation, generateAnonFunction, generateUnitFunction,generateMetaDataInterpolation, generateTaggedSymbol,
+        // generateTypeAssertion,
+        /* generatePipelineNotation, generateObjectCascadeNotation, */ /* generateObjectExtendNotation *//* ,
+        generateExternalCallbackNotation, */ generateAnonFunction, /* generateUnitFunction, */generateMetaDataInterpolation, generateTaggedSymbol,
         generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
         generateTaggedNumber, generateForInline, generateMatchInline, generateIfInline,
         generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess

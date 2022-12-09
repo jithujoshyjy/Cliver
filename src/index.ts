@@ -15,13 +15,13 @@ void async function main() {
     const tokens = tokenize(code, filepath) as TokenStream;
     const ast = generateAST(tokens);
 
-    console.log("===Tokens===");
+    /* console.log("===Tokens===");
     
     for (let token of tokens) {
         console.log(token.toString());
-    }
+    } */
 
     console.log("===AST===");
-    console.log(ast);
+    console.dir(ast, { depth: null });
 
 }()

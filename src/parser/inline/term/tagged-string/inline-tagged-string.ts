@@ -33,6 +33,7 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
 
     for (let nodeGenerator of nodeGenerators) {
         tag = nodeGenerator(inlineTaggedString, tokens)
+        
         currentToken = tokens.currentToken
         if (tag.type != "MismatchToken")
             break
@@ -44,6 +45,7 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
     }
 
     inlineTaggedString.tag = tag
+
     while (!tokens.isFinished) {
 
         const fstring = parseFstring()
@@ -59,6 +61,11 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
         inlineTaggedString.fragments.push(fstring)
     }
 
+    if(inlineTaggedString.fragments.length == 0) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+    
     return inlineTaggedString
 
     function parseFstring() {

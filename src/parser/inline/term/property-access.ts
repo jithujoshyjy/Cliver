@@ -25,9 +25,9 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
     let propertyAccess: PropertyAccess | Accessor = null!
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-
+    
     const accessorGenerators = [
-        generateTaggedSymbol, generateTaggedString, generateImplicitMultiplication, generateTaggedNumber, generateFunctionCall, generateLiteral, generateGroupExpression
+        /* generateTaggedSymbol, generateTaggedString, generateImplicitMultiplication, generateTaggedNumber, */ /* generateFunctionCall,  */generateLiteral, generateGroupExpression
     ]
 
     let accessor: Accessor = null!

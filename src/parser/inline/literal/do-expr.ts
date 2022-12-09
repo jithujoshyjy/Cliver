@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateProgram } from "../../program.js"
-import { isKeyword, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility.js"
 
 export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | MismatchToken {
     const doExpr: DoExpr = {
@@ -10,8 +10,15 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         end: 0
     }
 
-    let currentToken = skip(tokens, skipables) // skip do
+    let currentToken = tokens.currentToken // do
     const initialCursor = tokens.cursor
+
+    if(!isKeyword(currentToken, "do")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+
+    currentToken = skip(tokens, skipables) // skip do
 
     const nodes = generateProgram(doExpr, tokens)
 
@@ -29,5 +36,6 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         doExpr.body.push(node)
     }
 
+    // tokens.advance()
     return doExpr
 }

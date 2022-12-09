@@ -76,5 +76,6 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         return groupExpr
     }
 
+    /* tokens.advance() */
     return tupleLiteral
 }

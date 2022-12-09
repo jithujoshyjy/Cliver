@@ -90,6 +90,10 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
 
         operands.unshift(operand)
 
+        if(tokens.isFinished) {
+            break
+        }
+
         const _operator = captureOperator()
         if (operators.length === 0 && _operator.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -118,6 +122,7 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
 
         operators.unshift(_operator)
         prevOprPrecedence = currentOprPrecedence
+        
         currentToken = skip(tokens, skipables) // skip operator
     }
 
@@ -125,6 +130,9 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
         tokens.cursor = initialCursor
         return createMismatchToken(tokens.currentToken)
     }
+
+    console.log(operators);
+    
 
     for (let _operator of operators) {
         const right = operands.shift()!
@@ -145,7 +153,7 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
     const _infixOperation = operands.shift()! as InfixOperation
     infixOperation.left = _infixOperation.left
     infixOperation.right = _infixOperation.right
-    infixOperation.operator = _infixOperation.operator
+    infixOperation.operator = _infixOperation.operator 
 
     return infixOperation
 }

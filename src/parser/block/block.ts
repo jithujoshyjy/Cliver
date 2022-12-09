@@ -25,8 +25,11 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
         end: 0
     }
 
-    let currentToken = skip(tokens, skipables)
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
+
+    if (skipables.includes(currentToken.type))
+        currentToken = skip(tokens, skipables)
 
     let value: LabelDeclaration
         | BlockMacroApplication
@@ -65,7 +68,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
 
         const delimiter = captureDelimiter()
 
-        if(delimiter.type == "MismatchToken") {
+        if (delimiter.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return delimiter
         }
@@ -108,7 +111,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
 
         const delimiter = captureDelimiter()
 
-        if(delimiter.type == "MismatchToken") {
+        if (delimiter.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return delimiter
         }
@@ -118,7 +121,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
 
         const delimiter = captureDelimiter()
 
-        if(delimiter.type == "MismatchToken") {
+        if (delimiter.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return delimiter
         }

@@ -28,5 +28,6 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
 
     charLiteral.text = currentToken.value as string
 
+    // tokens.advance()
     return charLiteral
 }

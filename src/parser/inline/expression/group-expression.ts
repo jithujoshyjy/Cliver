@@ -20,16 +20,6 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
         return createMismatchToken(currentToken)
     }
 
-    const captureComma = () => {
-        currentToken = skip(tokens, skipables)
-        if (!isPunctuator(currentToken, ",")) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
-
-        return currentToken
-    }
-
     const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
 
     const parseValue = () => {
@@ -55,7 +45,7 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
         currentToken = tokens.currentToken
     }
 
-    if (expression === null) {
+    if (expression === null || !parenTokens.isFinished) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

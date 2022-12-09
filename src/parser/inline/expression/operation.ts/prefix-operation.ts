@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, _skipables, type Node } from "../../../utility.js"
+import { createMismatchToken, skip, skipables, type Node } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTerm } from "../../term/term.js"
 import { generateGroupExpression } from "../group-expression.js"
@@ -32,10 +32,10 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     }
 
     prefixOperation.operator = operator
-    currentToken = skip(tokens, _skipables)
+    currentToken = skip(tokens, skipables)
 
     const operandGenerators = [
-        generateLiteral, generateTerm, generateGroupExpression
+        generateTerm, generateLiteral, generateGroupExpression
     ]
 
     let operand: Literal | Term | GroupExpression | MismatchToken = null!
@@ -50,6 +50,11 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     if(operand.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return operand
+    }
+
+    if(operand == null) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
     }
 
     prefixOperation.operand = operand

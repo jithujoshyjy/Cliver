@@ -4,7 +4,7 @@ import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern.js"
 import { generateTypeAssertion } from "../type/type-assertion.js"
-import { generateIdentifier } from "./identifier.js"
+import { generateIdentifier } from "../literal/identifier.js"
 
 export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFunction | MismatchToken {
     const unitFunction: UnitFunction = {

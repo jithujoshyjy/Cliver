@@ -19,5 +19,6 @@ export function generateIdentifier(context: Node, tokens: TokenStream): Identifi
 
     identifier.name = currentToken.value as string
 
+    // tokens.advance()
     return identifier
 }

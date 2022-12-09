@@ -58,5 +58,6 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
         }
     }
 
+    // tokens.advance()
     return arrayLiteral
 }

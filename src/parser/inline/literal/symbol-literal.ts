@@ -34,5 +34,6 @@ export function generateSymbolLiteral(context: Node, tokens: TokenStream): Symbo
 
     symbolLiteral.text = currentToken.value as string
 
+    // tokens.advance()
     return symbolLiteral
 }

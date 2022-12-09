@@ -420,7 +420,7 @@ type Pattern = {
 
 type Literal = {
     type: "Literal",
-    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | NumericLiteral | DoExpr | Identifier | GroupExpression,
+    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | CharLiteral | SymbolLiteral | NumericLiteral | DoExpr | Identifier | GroupExpression,
     start: number,
     end: number
 }

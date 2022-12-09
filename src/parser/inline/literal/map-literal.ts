@@ -58,5 +58,6 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
         }
     }
 
+    // tokens.advance()
     return mapLiteral
 }

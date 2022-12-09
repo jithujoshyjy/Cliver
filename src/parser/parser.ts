@@ -13,12 +13,15 @@ let context: Node = {
 export function generateAST(tokens: TokenStream): Program {
     const program = context as Program
 
-    skip(tokens, skipables)
+    let currentToken = tokens.currentToken
+    if (skipables.includes(currentToken.type))
+        currentToken = skip(tokens, skipables)
+
     const nodeGenerator = generateProgram(context, tokens)
 
     while (true) {
         const { done, value } = nodeGenerator.next()
-
+        
         if (Array.isArray(value))
             program.value = value
         else if (value.type == "MismatchToken") {

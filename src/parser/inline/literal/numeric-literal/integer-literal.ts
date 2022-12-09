@@ -19,5 +19,6 @@ export function generateIntegerLiteral(context: Node, tokens: TokenStream): Inte
 
     integerLiteral.value = currentToken.value as string
 
+    // tokens.advance()
     return integerLiteral
 }

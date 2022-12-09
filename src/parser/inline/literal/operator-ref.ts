@@ -46,5 +46,6 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
         return createMismatchToken(currentToken)
     }
 
+    // tokens.advance()
     return operatorRef
 }

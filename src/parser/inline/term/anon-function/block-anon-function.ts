@@ -4,7 +4,7 @@ import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node 
 import { generateAssignExpr } from "../../expression/assign-expression.js"
 import { generatePattern } from "../../expression/pattern.js"
 import { generateTypeExpression } from "../../type/type-expression.js"
-import { generateIdentifier } from "../identifier.js"
+import { generateIdentifier } from "../../literal/identifier.js"
 
 export function generateBlockAnonFunction(context: Node, tokens: TokenStream): BlockAnonFunction | MismatchToken {
     const blockAnonFunction: BlockAnonFunction = {
