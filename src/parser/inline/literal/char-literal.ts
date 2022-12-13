@@ -27,7 +27,8 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
     }
 
     charLiteral.text = currentToken.value as string
+    charLiteral.start = currentToken.start
+    charLiteral.end = currentToken.end
 
-    // tokens.advance()
     return charLiteral
 }

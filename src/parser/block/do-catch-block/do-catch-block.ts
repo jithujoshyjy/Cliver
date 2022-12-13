@@ -14,9 +14,15 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
         end: 0
     }
 
-    let currentToken = skip(tokens, skipables) // skip do
+    let currentToken = tokens.currentToken // do
     const initialCursor = tokens.cursor
 
+    if(!isKeyword(currentToken, "do")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+
+    currentToken = skip(tokens, skipables) // skip do
     const nodes = generateProgram(doCatchBlock, tokens)
 
     for (let node of nodes) {

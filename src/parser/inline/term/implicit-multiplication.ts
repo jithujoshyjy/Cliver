@@ -17,12 +17,6 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const isNumber = [TokenType.IntegerLiteral, TokenType.FloatLiteral].includes(currentToken.type)
-    if(!isNumber) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
-
     const number = generateNumericLiteral(implicitMultiplication, tokens)
     if(number.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -30,10 +24,11 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     }
 
     implicitMultiplication.left = number
+    tokens.advance()
     currentToken = tokens.currentToken
 
     const nodeGenerators = [
-        generateGroupExpression, generatePropertyAccess, generateIdentifier
+        generateGroupExpression, /* generatePropertyAccess,  */generateIdentifier
     ]
 
     let multiplier: Identifier | PropertyAccess | GroupExpression | MismatchToken = null!
@@ -51,6 +46,7 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     }
 
     implicitMultiplication.right = multiplier
+    tokens.advance()
 
     return implicitMultiplication
 }

@@ -164,7 +164,7 @@ type InfixOperation = {
 
 type PrefixOperation = {
     type: "PrefixOperation",
-    operand: Literal | Term | GroupExpression,
+    operand: Literal | Term | GroupExpression | InfixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -434,14 +434,14 @@ type Term = {
 
 type Expression = {
     type: "Expression",
-    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal,
+    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     start: number,
     end: number
 }
 
 type GroupExpression = {
     type: "GroupExpression",
-    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal,
+    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     start: number,
     end: number
 }

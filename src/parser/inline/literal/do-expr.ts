@@ -18,6 +18,7 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         return createMismatchToken(currentToken)
     }
 
+    doExpr.start = currentToken.start
     currentToken = skip(tokens, skipables) // skip do
 
     const nodes = generateProgram(doExpr, tokens)
@@ -26,6 +27,7 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         currentToken = tokens.currentToken
 
         if (node.type == "MismatchToken" && isKeyword(currentToken, "end")) {
+            doExpr.end = node.end
             break
         }
         else if (node.type == "MismatchToken") {
@@ -36,6 +38,5 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         doExpr.body.push(node)
     }
 
-    // tokens.advance()
     return doExpr
 }

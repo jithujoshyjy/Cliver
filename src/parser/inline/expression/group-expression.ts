@@ -13,39 +13,37 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    let expression: Expression = null!
+    let expression: Expression | MismatchToken = null!
 
     if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
+    groupExpression.start = currentToken.start
+    groupExpression.end = currentToken.end
     const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
 
     const parseValue = () => {
-        currentToken = parenTokens.currentToken
 
         if (skipables.includes(currentToken.type))
             currentToken = skip(parenTokens, skipables)
 
         let value: Expression | MismatchToken = generateExpression(groupExpression, parenTokens)
+        currentToken = parenTokens.currentToken
 
         return value
     }
 
-    while (!parenTokens.isFinished) {
-        const value = parseValue()
+    expression = parseValue()
+    currentToken = parenTokens.currentToken
 
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
-        }
-
-        expression = value
-        currentToken = tokens.currentToken
+    if (expression.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return expression
     }
 
-    if (expression === null || !parenTokens.isFinished) {
+    if (currentToken.type != TokenType.EOF) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

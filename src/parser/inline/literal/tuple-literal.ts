@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
 
 export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleLiteral | GroupExpression | MismatchToken {
@@ -25,25 +25,27 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         return createMismatchToken(currentToken)
     }
 
+    tupleLiteral.start = currentToken.start
+    tupleLiteral.end = currentToken.end
+    const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
+
     const captureComma = () => {
-        currentToken = skip(tokens, skipables)
-        if (!isOperator(currentToken, ",")) {
-            tokens.cursor = initialCursor
+        currentToken = parenTokens.currentToken
+        
+        if (!isPunctuator(currentToken, ",")) {
             return createMismatchToken(currentToken)
         }
 
         return currentToken
     }
 
-    const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-
     const parseValue = () => {
-        currentToken = parenTokens.currentToken
 
-        if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
+        if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
             currentToken = skip(parenTokens, skipables)
 
         let value: Expression | MismatchToken = generateExpression(tupleLiteral, parenTokens)
+        currentToken = parenTokens.currentToken
 
         return value
     }
@@ -57,12 +59,17 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         }
 
         tupleLiteral.values.push(value)
+        if (currentToken.type == TokenType.EOF)
+            break
+        
         const comma = captureComma()
 
         if (comma.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return comma
         }
+
+        currentToken = parenTokens.currentToken
     }
 
     if (tupleLiteral.values.length < 1) {
@@ -76,6 +83,5 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         return groupExpr
     }
 
-    /* tokens.advance() */
     return tupleLiteral
 }

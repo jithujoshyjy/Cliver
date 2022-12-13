@@ -74,7 +74,12 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         }
     }
 
-    return propertyAccess as PropertyAccess
+    if(propertyAccess.type != "PropertyAccess") {
+        tokens.cursor = initialCursor
+        return createMismatchToken(tokens.currentToken)
+    }
+
+    return propertyAccess
 
     function captureField(): MismatchToken | [boolean, NumericLiteral | Identifier | ArrayLiteral] {
         currentToken = skip(tokens, _skipables) // . | ?.

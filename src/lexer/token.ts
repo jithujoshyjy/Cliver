@@ -4,7 +4,8 @@ export interface Token {
     line: number;
     column: number;
     file: string;
-    i: number;
+    start: number;
+    end: number;
     toString: () => string;
 }
 
@@ -25,6 +26,7 @@ export enum TokenType {
     FloatLiteral = 'FloatLiteral',
     Identifier = 'Identifier',
     Newline = 'Newline',
+    EOF = 'EOF',
     Keyword = 'Keyword',
     Operator = 'Operator',
     Punctuator = 'Punctuator',
@@ -44,8 +46,19 @@ export class TokenStream {
     #tokens: Token[] = [];
 
     constructor(tokens: Token[]) {
+        const EOF: Token = {
+            value: "EOF",
+            type: TokenType.EOF,
+            line: tokens.at(-1)?.line ?? 0,
+            column: tokens.at(-1)?.column ?? 0,
+            file: tokens.at(-1)?.file ?? "",
+            start: tokens.at(-1)?.end ?? 0,
+            end: tokens.at(-1)?.end ?? 0,
+            toString: () => "EOF"
+        }
         
         this.#tokens = tokens;
+        this.#tokens.push(EOF)
         this.#length = tokens.length;
 
         if(tokens.length === 0)
@@ -73,6 +86,7 @@ export class TokenStream {
         if(idx >= this.#length)
             throw new RangeError(`Index out of bound: must be less than ${this.#length}`)
         this.#index = idx
+        this.isFinished = this.cursor >= this.#length
     }
 
     get cursor() {

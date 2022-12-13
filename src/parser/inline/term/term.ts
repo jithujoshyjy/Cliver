@@ -44,6 +44,7 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     for (let nodeGenerator of nodeGenerators) {
         node = nodeGenerator(term, tokens)
         currentToken = tokens.currentToken
+        
         if (node.type != "MismatchToken") {
             break
         }
@@ -54,6 +55,8 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
         return node
     }
 
+    term.start = node.start
+    term.end = node.end
     term.value = node
 
     return term

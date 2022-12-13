@@ -19,6 +19,8 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
         return createMismatchToken(currentToken)
     }
 
+    operatorRef.start = currentToken.start
+    operatorRef.end = currentToken.end
     const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
     currentToken = parenTokens.currentToken
 
@@ -46,6 +48,5 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
         return createMismatchToken(currentToken)
     }
 
-    // tokens.advance()
     return operatorRef
 }

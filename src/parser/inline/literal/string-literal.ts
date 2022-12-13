@@ -23,7 +23,7 @@ export function generateStringLiteral(context: Node, tokens: TokenStream): Strin
         return createMismatchToken(currentToken)
     }
 
-    stringLiteral.text = currentToken.value as string
+    stringLiteral.text = currentToken.value[0] as string ?? ""
 
     if(/multiline/ig.test(currentToken.type)) {
         stringLiteral.kind = "multiline"
@@ -33,5 +33,7 @@ export function generateStringLiteral(context: Node, tokens: TokenStream): Strin
         stringLiteral.charset = "unicode"
     }
 
+    stringLiteral.start = currentToken.start
+    stringLiteral.end = currentToken.end
     return stringLiteral
 }

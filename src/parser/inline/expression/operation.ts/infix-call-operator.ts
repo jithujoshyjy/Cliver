@@ -42,5 +42,6 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
         return createMismatchToken(currentToken)
     }
 
+    tokens.advance()
     return infixCallOperator
 }

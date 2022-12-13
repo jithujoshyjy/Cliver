@@ -1,4 +1,4 @@
-import { TokenStream } from "../../../lexer/token.js"
+import { TokenStream, TokenType } from "../../../lexer/token.js"
 import { type Node } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateArrayLiteral } from "./array-literal.js"
@@ -23,15 +23,15 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        /* generateMapLiteral,  generateTupleLiteral, generateArrayLiteral, */ generateStringLiteral,
+        generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
         generateCharLiteral, generateSymbolLiteral, generateNumericLiteral, generateDoExpr,
-        generateIdentifier, /* generateGroupExpression */
+        generateIdentifier, generateGroupExpression
     ]
 
     let node: typeof literal.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
         node = nodeGenerator(literal, tokens)
-        
+
         currentToken = tokens.currentToken
         if (node.type != "MismatchToken") {
             break
@@ -43,7 +43,10 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
         return node
     }
 
+    literal.start = node.start
+    literal.end = node.end
     literal.value = node
 
+    tokens.advance()
     return literal
 }

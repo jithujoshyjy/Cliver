@@ -18,7 +18,8 @@ export function generateFloatLiteral(context: Node, tokens: TokenStream): FloatL
     }
 
     floatLiteral.value = currentToken.value as string
+    floatLiteral.start = currentToken.start
+    floatLiteral.end = currentToken.end
 
-    // tokens.advance()
     return floatLiteral
 }

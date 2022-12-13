@@ -12,13 +12,14 @@ export function generateIntegerLiteral(context: Node, tokens: TokenStream): Inte
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if(currentToken.type != TokenType.FloatLiteral) {
+    if(currentToken.type != TokenType.IntegerLiteral) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
     integerLiteral.value = currentToken.value as string
-
-    // tokens.advance()
+    integerLiteral.start = currentToken.start
+    integerLiteral.end = currentToken.end
+    
     return integerLiteral
 }

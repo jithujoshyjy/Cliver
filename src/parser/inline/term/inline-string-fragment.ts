@@ -35,7 +35,7 @@ export function generateInlineStringFragment(context: Node, tokens: TokenStream)
         currentToken = skip(tokens, _skipables)
     }
 
-    if(inlineStringFragment.fragments.length == 0) {
+    if(inlineStringFragment.fragments.length < 2) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

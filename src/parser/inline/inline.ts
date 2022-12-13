@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
+import { createMismatchToken, isKeyword, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 import { generateExpression } from "./expression/expression.js"
 
 export function generateInline(context: Node, tokens: TokenStream): Inline | MismatchToken {
@@ -22,24 +22,42 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         return expression
     }
 
-    currentToken = tokens.currentToken
     const captureDelimiter = () => {
+        currentToken = tokens.currentToken
+
         if (_skipables.includes(currentToken.type))
             currentToken = skip(tokens, _skipables)
 
-        const isDelimited = currentToken.type == TokenType.Newline
-            || isPunctuator(currentToken, ";")
-            || tokens.isFinished
-
-        if (!isDelimited) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
+        const skipNpeek = () => {
+            let idx = 1
+            let nextToken = tokens.peek(idx)
+            while (!tokens.isFinished && nextToken && skipables.includes(nextToken.type)) {
+                idx++
+                nextToken = tokens.peek(idx)
+            }
+            return nextToken
         }
 
-        tokens.advance()
+        const isDelimKw = () => {
+            let skipPeekedToken = skipNpeek()
+            return skipPeekedToken && isKeyword(skipPeekedToken, "end")
+        }
+
+        const isDelimited = currentToken.type == TokenType.Newline
+            || isPunctuator(currentToken, ";")
+            || isDelimKw()
+            || currentToken.type == TokenType.EOF
+
+        if (!isDelimited)
+            return createMismatchToken(currentToken)
+
+        if(isPunctuator(currentToken, ";"))
+            tokens.advance()
+            
         return currentToken
     }
 
+    inline.start = expression.start
     inline.value = expression
     const delimiter = captureDelimiter()
 
@@ -47,6 +65,8 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         tokens.cursor = initialCursor
         return delimiter
     }
+
+    inline.end = delimiter.end
 
     return inline
 }

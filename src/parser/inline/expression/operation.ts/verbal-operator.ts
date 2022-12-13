@@ -20,6 +20,8 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
     }
 
     verbalOperator.name = currentToken.value as VerbalOperatorKind
+    verbalOperator.start = currentToken.start
+    verbalOperator.end = currentToken.end
 
     return verbalOperator
 }

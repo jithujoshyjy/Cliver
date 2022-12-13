@@ -51,7 +51,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
         const unicodeOpr = /[\u0021\u0025\u0026\u002A\u002B\u002D\u002E\u002F\u003A\u005C\u005E\u0060\u007C\u007E\u00D7\u00F7\u003C-\u0040\u00A1-\u00AC\u00AE-\u00BF\u2100-\u215F\u2180-\u21FF\u2500-\u25FF\u2200-\u22FF]/u;
 
         for (i = i; i < code.length; i++) {
-            let char = code[i];
+            let char = code[i], start = i;
             if (isAlpha(char)) { // identifier | keyword
                 let res = '';
                 const startPos = pos;
@@ -62,7 +62,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                         ? TokenType.Keyword
                         : TokenType.Identifier,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -86,7 +87,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -105,7 +107,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type: TokenType.Newline,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -125,7 +128,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type: TokenType.WhiteSpace,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -148,7 +152,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -219,7 +224,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -238,7 +244,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -257,7 +264,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -276,7 +284,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     value: res,
                     type: TokenType.Operator,
                     line,
-                    i,
+                    start,
+                    end: i,
                     column: startPos,
                     file: fileName,
                     toString() {
@@ -296,7 +305,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                         value: res,
                         type,
                         line,
-                        i,
+                        start,
+                        end: i,
                         column: startPos,
                         file: fileName,
                         toString() {
@@ -315,7 +325,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                         value: res,
                         type: TokenType.Punctuator,
                         line,
-                        i,
+                        start,
+                        end: i,
                         column: startPos,
                         file: fileName,
                         toString() {
@@ -836,7 +847,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 if (token.value === closingPunch) {
                     pos = token.column;
                     line = token.line;
-                    i = token.i - 1;
+                    i = token.end - 1;
                     char = token.value;
 
                     closingSigilFound = true;

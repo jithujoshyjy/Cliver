@@ -45,7 +45,7 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
     }
 
     inlineTaggedString.tag = tag
-
+    
     while (!tokens.isFinished) {
 
         const fstring = parseFstring()

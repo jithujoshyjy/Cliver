@@ -28,6 +28,8 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
         return currentToken
     }
 
+    mapLiteral.start = currentToken.start
+    mapLiteral.end = currentToken.end
     const braceTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
 
     const parsePair = () => {
@@ -58,6 +60,5 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
         }
     }
 
-    // tokens.advance()
     return mapLiteral
 }
