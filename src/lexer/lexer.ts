@@ -172,11 +172,6 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 let res: Array<string | object> = [''], type = TokenType.InlineASCIIStringLiteral;
                 const startPos = pos;
 
-                const skipables = [
-                    TokenType.MultiLineComment,
-                    TokenType.WhiteSpace,
-                ];
-
                 const strTagEndsWith = [
                     TokenType.ParenEnclosed,
                     TokenType.BracketEnclosed,
@@ -188,27 +183,24 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 for (let j = tokens.length - 1; j >= 0; j--) {
                     const token = tokens[j];
 
-                    if (!skipables.includes(token.type)) {
-
-                        if (isMultiStr) { // multiline string
-                            if (strTagEndsWith.includes(token.type)) { // format string
-                                ({ res, i, pos, char, line, type } = parseMultilineFormatString(char, i, pos));
-                            }
-                            else { // regular string
-                                ({ res, i, pos, char, line, type } = parseMultilineStringLiteral(char, i, pos));
-                            }
+                    if (isMultiStr) { // multiline string
+                        if (strTagEndsWith.includes(token.type)) { // format string
+                            ({ res, i, pos, char, line, type } = parseMultilineFormatString(char, i, pos));
                         }
-                        else { // inline string
-                            if ([TokenType.InlineFormatString, ...strTagEndsWith].includes(token.type)) {
-                                // format string
-                                ({ res, i, pos, char, line, type } = parseInlineFormatString(char, i, pos));
-                            }
-                            else { // regular string
-                                ({ res, i, pos, char, line, type } = parseInlineStringLiteral(char, i, pos));
-                            }
+                        else { // regular string
+                            ({ res, i, pos, char, line, type } = parseMultilineStringLiteral(char, i, pos));
                         }
-                        break;
                     }
+                    else { // inline string
+                        if ([TokenType.InlineFormatString, ...strTagEndsWith].includes(token.type)) {
+                            // format string
+                            ({ res, i, pos, char, line, type } = parseInlineFormatString(char, i, pos));
+                        }
+                        else { // regular string
+                            ({ res, i, pos, char, line, type } = parseInlineStringLiteral(char, i, pos));
+                        }
+                    }
+                    break;
                 }
 
                 if (tokens.length === 0) {
@@ -428,20 +420,25 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 type = TokenType.MultiLineComment
                 consumeChar(true);
                 void function parseMultilineComment() {
-                    while (char && char !== '=') {
+                    while (i < code.length) {
                         if (isNewline(char)) {
                             line++;
                             pos = 0;
                         }
-                        consumeChar();
-                    }
-                    if (char === '=') {
-                        consumeChar(true);
-                        // @ts-ignore
-                        if (char === '#' || i >= code.length - 1)
-                            consumeChar(true);
-                        else
-                            parseMultilineComment()
+                        else if (char === '=' && i + 1 < code.length && code[i + 1] === '#') {
+                            consumeChar(true); // =
+                            consumeChar(true); // #
+                            break;
+                        }
+                        else if (char === '#' && i + 1 < code.length && code[i + 1] === '=') {
+                            const nestedComment = parseComment(char, i, pos);
+                            ({ i, pos, char, line } = nestedComment);
+
+                            res += nestedComment.res;
+                        }
+                        if (char)
+                            consumeChar();
+                        else i++;
                     }
                 }()
             }
@@ -629,11 +626,11 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 quotesCount++;
             }
 
-            if(i < code.length && res.length == 0)
+            if (i < code.length && res.length == 0)
                 res.push('');
 
             while (i < code.length) {
-                
+
                 if (char == '\\') {
                     const j = i + 1;
                     const escSequence = parseEscapeSequence(char, i, pos);
@@ -650,7 +647,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     }
                     if (quotesCount !== _quotesCount) {
                         if (i >= code.length - 1) {
-                            throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+                            throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos - 1}`);
                         }
                         res[res.length - 1] += '"'.repeat(_quotesCount);
                         continue;
@@ -668,12 +665,12 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     consumeChar();
                 }
             }
-            
 
-            if(res.length === 0) {
-                throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+
+            if (res.length === 0) {
+                throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos - 1}`);
             }
-            
+
             return {
                 res, i: i - 1, pos, char, line,
                 type: containsUnicodeChar
@@ -699,7 +696,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 quotesCount++;
             }
 
-            if(i < code.length && res.length == 0)
+            if (i < code.length && res.length == 0)
                 res.push('');
 
             while (i < code.length) {
@@ -716,7 +713,7 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                     }
                     if (quotesCount !== _quotesCount) {
                         if (i >= code.length - 1) {
-                            throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+                            throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos - 1}`);
                         }
                         continue;
                     }
@@ -788,8 +785,8 @@ export function tokenize(codeStr: string | string[], fileName: string = ''): Tok
                 }
             }
 
-            if(res.length === 0) {
-                throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos-1}`);
+            if (res.length === 0) {
+                throw new Error(`Expected the multiline string to end with ${quotesCount} quotes on ${line}:${pos - 1}`);
             }
 
             return { res, i: i - 1, pos, char, line, type: TokenType.MultilineFormatString };

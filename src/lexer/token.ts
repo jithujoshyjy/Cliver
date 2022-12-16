@@ -57,7 +57,9 @@ export class TokenStream {
                 file: tokens.at(-1)?.file ?? "",
                 start: tokens.at(-1)?.end ?? 0,
                 end: tokens.at(-1)?.end ?? 0,
-                toString: () => "EOF"
+                toString() {
+                    return "EOF"
+                }
             }
             this.#tokens.push(EOF)
         }
