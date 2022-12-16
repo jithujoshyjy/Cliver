@@ -10,6 +10,7 @@ import { generateStringLiteral } from "./string-literal.js"
 import { generateTupleLiteral } from "./tuple-literal.js"
 import { generateCharLiteral } from "./char-literal.js"
 import { generateSymbolLiteral } from "./symbol-literal.js"
+import { generateOperatorRef } from "./operator-ref.js"
 
 export function generateLiteral(context: Node, tokens: TokenStream): Literal | MismatchToken {
     const literal: Literal = {
@@ -25,13 +26,12 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
     const nodeGenerators = [
         generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
         generateCharLiteral, generateSymbolLiteral, generateNumericLiteral, generateDoExpr,
-        generateIdentifier, generateGroupExpression
+        generateIdentifier, generateGroupExpression, generateOperatorRef,
     ]
 
     let node: typeof literal.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
         node = nodeGenerator(literal, tokens)
-
         currentToken = tokens.currentToken
         if (node.type != "MismatchToken") {
             break

@@ -54,10 +54,10 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
         operatorPrecedence.infix.right[op.value as string] ?? 10
 
     const isRightAssociative = (op: typeof currentToken) =>
-        Object.keys(operatorPrecedence.infix.right).includes(op.value as string)
+        op.value as string in operatorPrecedence.infix.right
 
     const _infixOperation = _generateInfixOperation(lhs)
-    
+
     if (_infixOperation.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return _infixOperation
@@ -73,16 +73,33 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
         if (skipables.includes(currentToken.type))
             currentToken = skip(tokens, skipables)
 
-        const currentOpPrecedence = currentToken.type == TokenType.Operator ? getPrecidence(currentToken) : 0
+        let currentOpPrecedence = 0
+        const isOpKind = (op: typeof currentToken) =>
+            op.type == TokenType.Operator || op.type == TokenType.Keyword
+        
+        const decidePreced = (op: typeof currentToken) => {
+            currentOpPrecedence = isOpKind(op) ? getPrecidence(op) : 0
+            return currentOpPrecedence
+        }
 
-        while (currentToken.type == TokenType.Operator && currentOpPrecedence >= minPrecedence) {
+        const operatorGenerators = [
+            generateInfixCallOperator, generateNonVerbalOperator, generateVerbalOperator
+        ]
 
-            let _operator: NonVerbalOperator
+        while (isOpKind(currentToken) && decidePreced(currentToken) >= minPrecedence) {
+            
+            let _operator: InfixCallOperator
+                | NonVerbalOperator
                 | VerbalOperator
-                | MismatchToken = generateNonVerbalOperator(infixOperation, tokens)
+                | MismatchToken = null!;
 
-            if (_operator.type == "MismatchToken")
-                _operator = generateVerbalOperator(infixOperation, tokens)
+            for (let operatorGenerator of operatorGenerators) {
+                _operator = operatorGenerator(infixOperation, tokens)
+                currentToken = tokens.currentToken
+                if (_operator.type != "MismatchToken")
+                    break
+            }
+
             if (_operator.type == "MismatchToken") {
                 tokens.cursor = initialCursor
                 return _operator
@@ -135,7 +152,7 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
                 nextOpPrecedence = currentOpPrecedence > nextOpPrecedence ? nextOpPrecedence : 0
                 rhs = _generateInfixOperation(rhs as Exclude<Operand, MismatchToken>, nextOpPrecedence)
 
-                if(rhs.type == "MismatchToken") {
+                if (rhs.type == "MismatchToken") {
                     tokens.cursor = initialCursor
                     return rhs
                 }
@@ -155,6 +172,11 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
                 : tokens.currentToken
         }
 
+        if(lhs.type != "InfixOperation") {
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken)
+        }
+        
         return lhs as InfixOperation
     }
 }

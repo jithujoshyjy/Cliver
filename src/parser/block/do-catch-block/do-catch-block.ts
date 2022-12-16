@@ -96,13 +96,15 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
     }
 
     if (doCatchBlock.handlers.length === 0 && doCatchBlock.done === null) {
-        const doExpr: DoExpr = {
+        /* const doExpr: DoExpr = {
             type: "DoExpr",
             body: doCatchBlock.body,
             start: doCatchBlock.start,
             end: doCatchBlock.end
         }
-        return doExpr
+        return doExpr */
+        tokens.cursor = initialCursor
+        return createMismatchToken(tokens.currentToken)
     }
 
     return doCatchBlock

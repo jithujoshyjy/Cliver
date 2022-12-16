@@ -34,6 +34,7 @@ export function generateExpression(context: Node, tokens: TokenStream): Expressi
     }
 
     currentToken = tokens.currentToken
+    
     if (node.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return node

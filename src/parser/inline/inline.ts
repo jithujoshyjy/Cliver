@@ -21,39 +21,21 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         tokens.cursor = initialCursor
         return expression
     }
-
+    
     const captureDelimiter = () => {
         currentToken = tokens.currentToken
 
         if (_skipables.includes(currentToken.type))
             currentToken = skip(tokens, _skipables)
 
-        const skipNpeek = () => {
-            let idx = 1
-            let nextToken = tokens.peek(idx)
-            while (!tokens.isFinished && nextToken && skipables.includes(nextToken.type)) {
-                idx++
-                nextToken = tokens.peek(idx)
-            }
-            return nextToken
-        }
-
-        const isDelimKw = () => {
-            let skipPeekedToken = skipNpeek()
-            return skipPeekedToken && isKeyword(skipPeekedToken, "end")
-        }
-
         const isDelimited = currentToken.type == TokenType.Newline
             || isPunctuator(currentToken, ";")
-            || isDelimKw()
+            || isKeyword(currentToken, "end")
             || currentToken.type == TokenType.EOF
 
         if (!isDelimited)
             return createMismatchToken(currentToken)
-
-        if(isPunctuator(currentToken, ";"))
-            tokens.advance()
-            
+        
         return currentToken
     }
 
@@ -66,7 +48,8 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         return delimiter
     }
 
+    currentToken = skip(tokens, skipables)
     inline.end = delimiter.end
-
+    
     return inline
 }

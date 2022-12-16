@@ -27,11 +27,13 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
 
     tupleLiteral.start = currentToken.start
     tupleLiteral.end = currentToken.end
+
     const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
+    currentToken = parenTokens.currentToken
 
     const captureComma = () => {
         currentToken = parenTokens.currentToken
-        
+
         if (!isPunctuator(currentToken, ",")) {
             return createMismatchToken(currentToken)
         }
@@ -50,8 +52,14 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         return value
     }
 
+    let hasTrailingComma = false
     while (!parenTokens.isFinished) {
         const value = parseValue()
+
+        if (value.type == "MismatchToken" && value.value.type == TokenType.EOF) {
+            hasTrailingComma = true
+            break
+        }
 
         if (value.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -59,9 +67,12 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         }
 
         tupleLiteral.values.push(value)
+        if (skipables.includes(currentToken.type))
+            currentToken = skip(parenTokens, skipables)
+
         if (currentToken.type == TokenType.EOF)
             break
-        
+
         const comma = captureComma()
 
         if (comma.type == "MismatchToken") {
@@ -77,7 +88,7 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         const error = `A tuple cannot be empty on ${currentToken.line}:${currentToken.column}`
         return createMismatchToken(currentToken, error)
     }
-    else if (tupleLiteral.values.length == 1 && context.type != "TypeConstraint") {
+    else if (tupleLiteral.values.length == 1 && context.type != "TypeConstraint" && !hasTrailingComma) {
         const [{ value }] = tupleLiteral.values
         groupExpr.value = value
         return groupExpr

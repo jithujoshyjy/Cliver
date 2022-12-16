@@ -20,7 +20,9 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
 
     arrayLiteral.start = currentToken.start
     arrayLiteral.end = currentToken.end
+
     const bracketTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
+    currentToken = bracketTokens.currentToken
 
     const captureComma = () => {
         currentToken = bracketTokens.currentToken
@@ -50,12 +52,18 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
         
         const value = parseValue()
 
+        if (value.type == "MismatchToken" && value.value.type == TokenType.EOF)
+            break
+
         if (value.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return value
         }
 
         arrayLiteral.values.push(value)
+        if (skipables.includes(currentToken.type))
+            currentToken = skip(bracketTokens, skipables)
+        
         if (currentToken.type == TokenType.EOF)
             break
 

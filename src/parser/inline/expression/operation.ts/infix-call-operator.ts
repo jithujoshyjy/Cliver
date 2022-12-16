@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, _skipables, type Node } from "../../../utility.js"
+import { createMismatchToken, isOperator, isPunctuator, skip, _skipables, type Node } from "../../../utility.js"
 import { generateIdentifier } from "../../literal/identifier.js"
 import { generatePropertyAccess } from "../../term/property-access.js"
 
@@ -15,21 +15,28 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
     let currentToken = tokens.currentToken // `
     const initialCursor = tokens.cursor
 
-    if(!isPunctuator(currentToken, "`")) {
+    if (!isOperator(currentToken, "`")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
     currentToken = skip(tokens, _skipables) // skip `
+    const nodeGenerators = [
+        /* generatePropertyAccess, */ generateIdentifier
+    ]
+
     let caller: Identifier
         | PropertyAccess
-        | MismatchToken = generatePropertyAccess(infixCallOperator, tokens)
+        | MismatchToken = null!
 
-    if(caller.type == "MismatchToken") {
-        caller = generateIdentifier(infixCallOperator, tokens)
+    for (let nodeGenerator of nodeGenerators) {
+        caller = nodeGenerator(infixCallOperator, tokens)
+        currentToken = tokens.currentToken
+        if (caller.type != "MismatchToken")
+            break
     }
 
-    if(caller.type == "MismatchToken") {
+    if (caller.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return caller
     }
@@ -37,11 +44,10 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
     infixCallOperator.caller = caller
     currentToken = skip(tokens, _skipables) // `
 
-    if(!isPunctuator(currentToken, "`")) {
+    if (!isOperator(currentToken, "`")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
-
-    tokens.advance()
+    
     return infixCallOperator
 }

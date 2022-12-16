@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "./expression.js"
 
 export function generateGroupExpression(context: Node, tokens: TokenStream): GroupExpression | MismatchToken {
@@ -22,7 +22,9 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
 
     groupExpression.start = currentToken.start
     groupExpression.end = currentToken.end
+
     const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
+    currentToken = parenTokens.currentToken
 
     const parseValue = () => {
 
@@ -49,7 +51,7 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
     }
 
     const { value } = expression
-    groupExpression.value = value
+    groupExpression.value = value    
 
     return groupExpression
 }

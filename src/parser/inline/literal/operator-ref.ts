@@ -14,7 +14,7 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if(currentToken.type != TokenType.ParenEnclosed) {
+    if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -24,25 +24,25 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
     const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
     currentToken = parenTokens.currentToken
 
-    if(skipables.includes(currentToken.type)) {
+    if (skipables.includes(currentToken.type))
         currentToken = skip(parenTokens, skipables)
-    }
 
-    let _operator: MismatchToken
-        | NonVerbalOperator
-        | VerbalOperator = generateNonVerbalOperator(operatorRef, parenTokens)
-    
-    if(_operator.type == "MismatchToken") {
+    let _operator: NonVerbalOperator
+        | VerbalOperator
+        | MismatchToken = generateNonVerbalOperator(operatorRef, parenTokens)
+
+    if (_operator.type == "MismatchToken")
         _operator = generateVerbalOperator(operatorRef, parenTokens)
-    }
-
-    if(_operator.type == "MismatchToken") {
+    
+    if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return _operator
     }
 
     operatorRef.operator = _operator
-    if(!parenTokens.isFinished) {
+    currentToken = skip(parenTokens, skipables)
+
+    if (currentToken.type != TokenType.EOF) {
         currentToken = parenTokens.currentToken
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)

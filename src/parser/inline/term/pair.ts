@@ -1,8 +1,9 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generatePrefixOperation } from "../expression/operation.ts/prefix-operation.js"
+// import { generatePrefixOperation } from "../expression/operation.ts/prefix-operation.js"
 import { generateLiteral } from "../literal/literal.js"
 import { generateTerm } from "./term.js"
 
@@ -23,7 +24,13 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
         generateLiteral, generateGroupExpression
     ]
 
-    let key: MismatchToken | PrefixOperation | PostfixOperation | GroupExpression | Term | Literal = null!
+    let key: PrefixOperation
+        | PostfixOperation
+        | GroupExpression
+        | Term
+        | Literal
+        | MismatchToken = null!
+    
     for(let nodeGenerator of nodeGenerators) {
         key = nodeGenerator(pair, tokens)
         currentToken = tokens.currentToken
@@ -38,9 +45,8 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
     }
 
     pair.key = key
-
-    currentToken = skip(tokens, _skipables) // :
-    if(!isPunctuator(currentToken, ":")) {
+    
+    if(!isOperator(currentToken, ":")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

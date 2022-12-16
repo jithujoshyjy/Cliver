@@ -13,13 +13,8 @@ void async function main() {
     const code = await readFile(filepath, "utf-8");
 
     const tokens = tokenize(code, filepath) as TokenStream;
-    const ast = generateAST(tokens);
-
-    /* console.log("===Tokens===");
     
-    for (let token of tokens) {
-        console.log(token.toString());
-    } */
+    const ast = generateAST(tokens);
 
     console.log("===AST===");
     console.dir(ast, { depth: null });
