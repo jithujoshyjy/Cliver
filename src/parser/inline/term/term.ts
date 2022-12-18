@@ -19,6 +19,7 @@ import { generatePropertyAccess } from "./property-access.js"
 import { generateTaggedNumber } from "./tagged-number.js"
 import { generateTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol } from "./tagged-symbol.js"
+import { generateAssignExpr } from "../expression/assign-expression.js"
 
 export function generateTerm(context: Node, tokens: TokenStream): Term | MismatchToken {
     const term: Term = {
@@ -34,7 +35,8 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     const nodeGenerators = [
         // generateTypeAssertion,
         /* generatePipelineNotation, generateObjectCascadeNotation, */ /* generateObjectExtendNotation *//* ,
-        generateExternalCallbackNotation, */ generateAnonFunction, /* generateUnitFunction, */generateMetaDataInterpolation, generateTaggedSymbol,
+        generateExternalCallbackNotation, */ /* generateAnonFunction, */ /* generateUnitFunction, */
+        /* generateAssignExpr, */ generateMetaDataInterpolation, generateTaggedSymbol,
         generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
         generateTaggedNumber, generateForInline, generateMatchInline, generateIfInline,
         generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess

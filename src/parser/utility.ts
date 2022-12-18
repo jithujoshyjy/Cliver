@@ -56,6 +56,7 @@ export const stringLiterals = [
 type PrecidenceType = {
     infix: { left: { [key: string]: number }, right: { [key: string]: number }, },
     prefix: { [key: string]: number },
+    postfix: { [key: string]: number },
 }
 
 export const operatorPrecedence: PrecidenceType = {
@@ -86,5 +87,8 @@ export const operatorPrecedence: PrecidenceType = {
         "...": 2, "ref": 2, "throw": 2,
         "~": 6,
         "!": 14, "+": 14, "-": 14,
+    },
+    postfix: {
+        "?": 2,
     }
 }

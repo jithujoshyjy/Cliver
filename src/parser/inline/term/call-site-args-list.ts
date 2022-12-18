@@ -1,7 +1,7 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
-import { generatePattern } from "../expression/pattern.js"
+import { generatePattern } from "../expression/pattern/pattern.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateFunctionPrototype } from "./function-prototype.js"
 import { generatePair } from "./pair.js"

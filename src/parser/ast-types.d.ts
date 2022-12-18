@@ -155,8 +155,8 @@ type VerbalOperator = {
 
 type InfixOperation = {
     type: "InfixOperation",
-    left: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression | InfixOperation,
-    right: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression | InfixOperation,
+    left: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression,
+    right: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression,
     operator: InfixCallOperator | NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -164,7 +164,7 @@ type InfixOperation = {
 
 type PrefixOperation = {
     type: "PrefixOperation",
-    operand: Literal | Term | GroupExpression | InfixOperation,
+    operand: Literal | Term | GroupExpression | InfixPattern | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -172,7 +172,7 @@ type PrefixOperation = {
 
 type PostfixOperation = {
     type: "PostfixOperation",
-    operand: Literal | Term | Expression,
+    operand: Literal | Term | GroupExpression | InfixPattern | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -413,7 +413,82 @@ type CatchBlock = {
 
 type Pattern = {
     type: "Pattern",
-    body: Literal | Term,
+    body: AsExpression
+    | BracePattern
+    | BracketPattern
+    | ParenPattern
+    | TypeAssertion
+    | InfixPattern
+    | PostfixPattern
+    | InterpPattern
+    | Identifier,
+    start: number,
+    end: number
+}
+
+type InterpPattern = {
+    type: "InterpPattern",
+    body: InlineFString | Expression,
+    start: number,
+    end: number
+}
+
+type PrefixPattern = {
+    type: "PrefixPattern",
+    operator: NonVerbalOperator,
+    operand: Identifier | BracePattern | BracketPattern | ParenPattern | InterpPattern | PrefixPattern | InfixPattern | PostfixPattern,
+    start: number,
+    end: number
+}
+
+type PostfixPattern = {
+    type: "PostfixPattern",
+    operator: NonVerbalOperator,
+    operand: Identifier | BracePattern | BracketPattern | ParenPattern | InterpPattern,
+    start: number,
+    end: number
+}
+
+type InfixPattern = {
+    type: "InfixPattern",
+    operator: NonVerbalOperator,
+    left: BracePattern
+    | BracketPattern
+    | ParenPattern
+    | InterpPattern
+    | InfixPattern
+    | PrefixPattern
+    | PostfixPattern
+    | Identifier,
+    right: BracePattern
+    | BracketPattern
+    | ParenPattern
+    | InterpPattern
+    | InfixPattern
+    | PrefixPattern
+    | PostfixPattern
+    | Identifier,
+    start: number,
+    end: number
+}
+
+type BracePattern = {
+    type: "BracePattern",
+    values: any[],
+    start: number,
+    end: number
+}
+
+type BracketPattern = {
+    type: "BracketPattern",
+    values: any[],
+    start: number,
+    end: number
+}
+
+type ParenPattern = {
+    type: "ParenPattern",
+    values: any[],
     start: number,
     end: number
 }
@@ -427,21 +502,21 @@ type Literal = {
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | GroupExpression,
+    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | AssignExpr | GroupExpression,
     start: number,
     end: number
 }
 
 type Expression = {
     type: "Expression",
-    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: InfixPattern | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     start: number,
     end: number
 }
 
 type GroupExpression = {
     type: "GroupExpression",
-    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: InfixPattern | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     start: number,
     end: number
 }
@@ -487,7 +562,7 @@ type ImplicitMultiplication = {
 
 type NumericLiteral = {
     type: "NumericLiteral",
-    value: IntegerLiteral |  FloatLiteral,
+    value: IntegerLiteral | FloatLiteral,
     start: number,
     end: number
 }
@@ -515,8 +590,8 @@ type StringLiteral = {
     end: number
 }
 
-type InlineStringLiteral = StringLiteral & {kind: "inline"}
-type MultilineStringLiteral = StringLiteral & {kind: "multiline"}
+type InlineStringLiteral = StringLiteral & { kind: "inline" }
+type MultilineStringLiteral = StringLiteral & { kind: "multiline" }
 
 type InlineTaggedString = {
     type: "InlineTaggedString",
@@ -583,7 +658,7 @@ type TaggedString = {
     start: number,
     end: number
 }
-    
+
 type TaggedSymbol = {
     type: "TaggedSymbol",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,

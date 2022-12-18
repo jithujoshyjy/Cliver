@@ -24,7 +24,6 @@ export function generateAssignExpr(context: Node, tokens: TokenStream): AssignEx
 
     currentToken = tokens.currentToken
     if(declarator.right == null) {
-
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { generatePattern } from "../../inline/expression/pattern.js"
+import { generatePattern } from "../../inline/expression/pattern/pattern.js"
 import { generateProgram } from "../../program.js"
 import { createMismatchToken, isKeyword, isPunctuator, skip, skipables, _skipables, type Node } from "../../utility.js"
 

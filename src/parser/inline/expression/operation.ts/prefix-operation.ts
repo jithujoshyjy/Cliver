@@ -52,10 +52,10 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     const resetCursorPoint = tokens.cursor
 
     const operandGenerators = [
-        generateTerm, generateLiteral, generateGroupExpression
+        generateTerm, generateLiteral, generateGroupExpression, generatePrefixOperation
     ]
 
-    let operand: InfixOperation | Literal | Term | GroupExpression | MismatchToken = null!
+    let operand: InfixPattern | Literal | Term | GroupExpression | PrefixOperation | MismatchToken = null!
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(prefixOperation, tokens)
         currentToken = tokens.currentToken

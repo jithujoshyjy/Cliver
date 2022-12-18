@@ -2,7 +2,7 @@ import { TokenStream, TokenType } from "../../../../lexer/token.js"
 import { generateProgram } from "../../../program.js"
 import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../../utility.js"
 import { generateAssignExpr } from "../../expression/assign-expression.js"
-import { generatePattern } from "../../expression/pattern.js"
+import { generatePattern } from "../../expression/pattern/pattern.js"
 import { generateTypeExpression } from "../../type/type-expression.js"
 import { generateIdentifier } from "../../literal/identifier.js"
 

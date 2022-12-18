@@ -1,8 +1,8 @@
 import { TokenStream, TokenType } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator } from "../../utility.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateExpression } from "../expression/expression.js"
-import { generatePattern } from "../expression/pattern.js"
+import { generatePattern } from "../expression/pattern/pattern.js"
 import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateIdentifier } from "../literal/identifier.js"
 
@@ -20,12 +20,13 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
     const initialCursor = tokens.cursor
 
     if (currentToken.type == TokenType.ParenEnclosed) {
+
         const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
+        currentToken = parenTokens.currentToken
 
         const parseParam = () => {
-            currentToken = parenTokens.currentToken
 
-            if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
+            if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
                 currentToken = skip(parenTokens, skipables)
 
             let param: AssignExpr | Pattern | MismatchToken = generateAssignExpr(unitFunction, parenTokens)
@@ -37,17 +38,23 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
         }
 
         const captureComma = () => {
-            currentToken = skip(tokens, skipables)
-            if (!isOperator(currentToken, ",")) {
-                tokens.cursor = initialCursor
+            currentToken = skip(parenTokens, skipables)
+
+            if (!isPunctuator(currentToken, ","))
                 return createMismatchToken(currentToken)
-            }
 
             return currentToken
         }
 
         while (!parenTokens.isFinished) {
+
+            if (parenTokens.currentToken.type == TokenType.EOF)
+                break
+
             const param = parseParam()
+
+            if (param.type == "MismatchToken" && param.value.type == TokenType.EOF)
+                break
 
             if (param.type == "MismatchToken") {
                 tokens.cursor = initialCursor
@@ -55,48 +62,55 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
             }
 
             unitFunction.params.push(param)
+            if (skipables.includes(currentToken.type))
+                currentToken = skip(parenTokens, skipables)
+
+            if (currentToken.type == TokenType.EOF)
+                break
+
             const comma = captureComma()
 
             if (comma.type == "MismatchToken") {
                 tokens.cursor = initialCursor
                 return comma
             }
+
+            currentToken = parenTokens.currentToken
         }
     }
-    else {
+    else if (currentToken.type == TokenType.Identifier) {
 
-        let pattern: TypeAssertion
-            | Identifier
-            | MismatchToken = generateTypeAssertion(unitFunction, tokens)
+        let identifier: Identifier
+            | MismatchToken = generateIdentifier(unitFunction, tokens)
 
-        if (pattern.type == "MismatchToken") {
-            pattern = generateIdentifier(unitFunction, tokens)
-            currentToken = tokens.currentToken
-        }
-
-        if (pattern.type == "MismatchToken") {
+        if (identifier.type == "MismatchToken") {
             tokens.cursor = initialCursor
-            return pattern
+            return identifier
         }
 
-        const inline = {
-            type: pattern.type == "Identifier" ? "Literal" : "Term",
-            value: pattern,
+        const literal: Literal = {
+            type: "Literal",
+            value: identifier,
             start: 0,
             end: 0
         }
 
         const _pattern: Pattern = {
             type: "Pattern",
-            body: inline as Literal | Term,
+            body: literal,
             start: 0,
             end: 0,
         }
 
         unitFunction.params.push(_pattern)
     }
-
+    else {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+    
     currentToken = skip(tokens, _skipables) // ->
+
     if (!isOperator(currentToken, "->")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)

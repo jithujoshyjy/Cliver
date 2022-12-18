@@ -1,6 +1,6 @@
 import { TokenStream, TokenType } from "../../lexer/token.js"
 import { generateAssignExpr } from "../inline/expression/assign-expression.js"
-import { generatePattern } from "../inline/expression/pattern.js"
+import { generatePattern } from "../inline/expression/pattern/pattern.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateTypeExpression } from "../inline/type/type-expression.js"
 import { generateProgram } from "../program.js"
