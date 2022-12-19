@@ -471,7 +471,7 @@ else:
 
 There's another variant which makes use of pattern matching.
 ```julia
-if expression as case pattern
+if expression as pattern
     # ...
 end
 ```
