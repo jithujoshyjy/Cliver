@@ -9,6 +9,7 @@ import { generateInfixPattern } from "./infix-pattern.js"
 import { generateInterpPattern } from "./interp-pattern.js"
 import { generateParenPattern } from "./paren-pattern.js"
 import { generatePostfixPattern } from "./postfix-pattern.js"
+import { generatePrefixPattern } from "./prefix-pattern.js"
 
 export function generatePattern(context: Node, tokens: TokenStream): Pattern | MismatchToken {
     const pattern: Pattern = {
@@ -22,31 +23,31 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        generateAsExpression, generateBracePattern, generateBracketPattern, generateParenPattern,
-        generateTypeAssertion, generateInfixPattern, generatePostfixPattern,
+        generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern,generateTypeAssertion, generateBracePattern,  generateParenPattern, generateBracketPattern,
         generateInterpPattern, generateIdentifier
     ]
 
     let patternNode: AsExpression
+        | TypeAssertion
         | BracePattern
         | BracketPattern
         | ParenPattern
-        | TypeAssertion
+        | PrefixPattern
         | InfixPattern
         | PostfixPattern
         | InterpPattern
         | Identifier
         | MismatchToken = null!
 
-    for(let nodeGenerator of nodeGenerators) {
+    for (let nodeGenerator of nodeGenerators) {
         patternNode = nodeGenerator(pattern, tokens)
         currentToken = tokens.currentToken
-        if(patternNode.type != "MismatchToken") {
+        if (patternNode.type != "MismatchToken") {
             break
         }
     }
 
-    if(patternNode.type == "MismatchToken") {
+    if (patternNode.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return patternNode
     }
@@ -56,7 +57,18 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
     return pattern
 }
 
-/* // chaining
+/*
+case pattern: expression
+
+case pattern &&
+case pattern: expression
+
+case pattern ||
+case pattern: expression
+
+case pattern &&
+expression: expression
+
 x
 x :: Type
 x && condition

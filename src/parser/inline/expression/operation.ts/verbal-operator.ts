@@ -1,5 +1,5 @@
 import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, operatorPrecedence, type Node } from "../../../utility.js"
+import { createMismatchToken, operatorPrecedence, type Node, isKeyword } from "../../../utility.js"
 
 export function generateVerbalOperator(context: Node, tokens: TokenStream): VerbalOperator | MismatchToken {
     const verbalOperator: VerbalOperator = {
@@ -14,6 +14,12 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
+    const excludedOperators: string[] = [
+        "as"
+    ]
+
+    const isExcludedOperator = (y: any) => excludedOperators.some(x => isKeyword(y, x as KeywordKind))
+
     const isOpKeword = (op: typeof currentToken) => {
         return op.type == TokenType.Keyword &&
             (
@@ -23,7 +29,7 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
             )
     }
 
-    if(!isOpKeword(currentToken)) {
+    if(!isOpKeword(currentToken) || isExcludedOperator(currentToken)) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

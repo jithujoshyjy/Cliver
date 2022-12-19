@@ -418,6 +418,7 @@ type Pattern = {
     | BracketPattern
     | ParenPattern
     | TypeAssertion
+    | PrefixPattern
     | InfixPattern
     | PostfixPattern
     | InterpPattern
@@ -426,9 +427,17 @@ type Pattern = {
     end: number
 }
 
+type PairPattern = {
+    type: "PairPattern",
+    key: any,
+    value: any,
+    start: number,
+    end: number
+}
+
 type InterpPattern = {
     type: "InterpPattern",
-    body: InlineFString | Expression,
+    body: TaggedString | MetaDataInterpolation,
     start: number,
     end: number
 }

@@ -1,6 +1,8 @@
 import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, operatorPrecedence, skip, skipables, type Node } from "../../../utility.js"
+import { createMismatchToken, operatorPrecedence, skip, skipables, type Node, isOperator } from "../../../utility.js"
 import { generateIdentifier } from "../../literal/identifier.js"
+import { generateCaseExpr } from "../case-expression.js"
+import { generateExpression } from "../expression.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
 import { generateBracePattern } from "./brace-pattern.js"
 import { generateBracketPattern } from "./bracket-pattern.js"
@@ -22,12 +24,6 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const nodeGenerators = [
-        generateBracePattern, generateBracketPattern, generateParenPattern,
-        generateInterpPattern, generatePrefixPattern, generatePostfixPattern,
-        generateIdentifier
-    ]
-
     type Operand = BracePattern
         | BracketPattern
         | ParenPattern
@@ -38,9 +34,15 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
         | Identifier
         | MismatchToken
 
+    const nodeGenerators: Array<(context: Node, tokens: TokenStream) => Operand | CaseExpr | Expression> = [
+        generatePrefixPattern, generatePostfixPattern,
+        generateBracePattern, generateBracketPattern, generateParenPattern,
+        generateInterpPattern, generateIdentifier
+    ]
+
     let lhs: Operand = null!
     for (let nodeGenerator of nodeGenerators) {
-        lhs = nodeGenerator(infixPattern, tokens)
+        lhs = nodeGenerator(infixPattern, tokens) as Operand
         currentToken = tokens.currentToken
         if (lhs.type != "MismatchToken")
             break
@@ -88,7 +90,15 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
         }
 
         while (isOpKind(currentToken) && decidePreced(currentToken) >= minPrecedence) {
-            
+
+            const andConditionalExprs = [
+                generateCaseExpr, generateExpression
+            ]
+
+            const orConditionalExprs = [
+                generateCaseExpr
+            ]
+
             let _operator: NonVerbalOperator | MismatchToken = generateNonVerbalOperator(infixPattern, tokens)
 
             if (_operator.type == "MismatchToken") {
@@ -97,11 +107,22 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
             }
 
             const validInfixOp = [
-                "&&", "&", "|", "-"
+                "&", "|", "-"
             ]
 
             currentToken = tokens.currentToken
-            if (!validInfixOp.includes(currentToken.value as string)) {
+            const isInvalidOp = !validInfixOp.includes(currentToken.value as string)
+
+            let conditionalExprType: "and" | "or" | "none" = "none"
+            if(isInvalidOp && isOperator(currentToken, "&&")) {
+                conditionalExprType = "and"
+                nodeGenerators.unshift(...andConditionalExprs)
+            }
+            else if(isInvalidOp && isOperator(currentToken, "||")) {
+                conditionalExprType = "or"
+                nodeGenerators.unshift(...orConditionalExprs)
+            }
+            else if (isInvalidOp) {
                 tokens.cursor = initialCursor
                 return createMismatchToken(currentToken)
             }
@@ -110,7 +131,7 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
 
             currentToken = skip(tokens, skipables) // skip operator
 
-            let rhs: Operand = null!
+            let rhs: Operand | CaseExpr | Expression = null!
 
             for (let nodeGenerator of nodeGenerators) {
                 rhs = nodeGenerator(infixPattern, tokens)
@@ -121,6 +142,15 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
             if (rhs.type == "MismatchToken") {
                 tokens.cursor = initialCursor
                 return rhs
+            }
+
+            if(conditionalExprType == "and") {
+                andConditionalExprs.forEach(_ =>
+                    nodeGenerators.shift())
+            }
+            else if(conditionalExprType == "or") {
+                orConditionalExprs.forEach(_ =>
+                    nodeGenerators.shift())
             }
 
             let nextOpPrecedence = 0

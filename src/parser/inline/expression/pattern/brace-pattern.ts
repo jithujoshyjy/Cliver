@@ -1,5 +1,15 @@
 import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, type Node } from "../../../utility.js"
+import { createMismatchToken, isPunctuator, skipables, type Node, skip } from "../../../utility.js"
+import { generateIdentifier } from "../../literal/identifier.js"
+import { generateTypeAssertion } from "../../type/type-assertion.js"
+import { generateAsExpression } from "../as-expression.js"
+import { generateBracketPattern } from "./bracket-pattern.js"
+import { generateInfixPattern } from "./infix-pattern.js"
+import { generateInterpPattern } from "./interp-pattern.js"
+import { generatePairPattern } from "./pair-pattern.js"
+import { generateParenPattern } from "./paren-pattern.js"
+import { generatePostfixPattern } from "./postfix-pattern.js"
+import { generatePrefixPattern } from "./prefix-pattern.js"
 
 export function generateBracePattern(context: Node, tokens: TokenStream): BracePattern | MismatchToken {
     const bracePattern: BracePattern = {
@@ -12,7 +22,7 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if(currentToken.type != TokenType.BraceEnclosed) {
+    if (currentToken.type != TokenType.BraceEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -24,7 +34,7 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
     currentToken = braceTokens.currentToken
 
     const captureComma = () => {
-        currentToken = braceTokens.currentToken
+        currentToken = skip(tokens, skipables)
 
         if (!isPunctuator(currentToken, ",")) {
             return createMismatchToken(currentToken)
@@ -33,7 +43,64 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
         return currentToken
     }
 
-    
+    const nodeGenerators = [
+        generateTypeAssertion, generateAsExpression, generatePairPattern,
+        generatePrefixPattern, generateIdentifier,
+    ]
+
+    const parsePattern = () => {
+        let patternNode: TypeAssertion
+            | AsExpression
+            | PairPattern
+            | PrefixPattern
+            | Identifier
+            | MismatchToken = null!
+        
+        if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
+            currentToken = skip(braceTokens, skipables)
+
+        for (let nodeGenerator of nodeGenerators) {
+            patternNode = nodeGenerator(bracePattern, tokens)
+            currentToken = tokens.currentToken
+            if (patternNode.type != "MismatchToken")
+                break
+        }
+
+        currentToken = tokens.currentToken
+        return patternNode
+    }
+
+    while (!braceTokens.isFinished) {
+
+        if (braceTokens.currentToken.type == TokenType.EOF)
+            break
+
+        const patternNode = parsePattern()
+
+        if (patternNode.type == "MismatchToken" && patternNode.value.type == TokenType.EOF)
+            break
+
+        if (patternNode.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return patternNode
+        }
+
+        bracePattern.values.push(patternNode)
+        if (skipables.includes(currentToken.type))
+            currentToken = skip(braceTokens, skipables)
+
+        if (currentToken.type == TokenType.EOF)
+            break
+
+        const comma = captureComma()
+
+        if (comma.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return comma
+        }
+
+        currentToken = braceTokens.currentToken
+    }
 
     return bracePattern
 }

@@ -57,9 +57,9 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     const resetCursorPoint = tokens.cursor
 
     const operandGenerators = [
-        generateBracePattern, generateBracketPattern, generateParenPattern,
-        generateInterpPattern, generatePrefixPattern, generatePostfixPattern,
-        generateIdentifier
+        generatePrefixPattern, generatePostfixPattern, generateBracePattern,
+        generateBracketPattern, generateParenPattern,
+        generateInterpPattern, generateIdentifier
     ]
 
     let operand: Identifier
