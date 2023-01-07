@@ -25,10 +25,18 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
     currentToken = tokens.currentToken
     if(isPunctuator(currentToken, '\\')) {
         const escapeSequence = generateEscapeSequence(charLiteral, tokens)
+        
         if(escapeSequence.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return escapeSequence
         }
+
+        if(escapeSequence.trailing) {
+            tokens.cursor = initialCursor
+            const error = `SyntaxError: Multiple characters in character literal on ${currentToken.line}:${escapeSequence.end + escapeSequence.trailing.length}`
+            return createMismatchToken(currentToken, error)
+        }
+
         charLiteral.text = escapeSequence
         charLiteral.charset =  escapeSequence.value.codePointAt(0)! > 127 ? "unicode" : "ascii"
     }

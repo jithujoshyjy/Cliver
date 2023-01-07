@@ -29,9 +29,8 @@ export const keywords = [
 export const isKeyword = (token: LexicalToken, keyword: KeywordKind) =>
     token.type == "Word" && keywords.includes(token.value)
 
-export const isOperator = (token: LexicalToken, opr: VerbalOperatorKind | string) =>
-    (token.type == "Word" && keywords.includes(token.value) || token.type == "Operator")
-    && token.value == opr
+export const isOperator = (token: LexicalToken, opr: string) =>
+    token.type == "Operator" && token.value == opr
 
 export const isPunctuator = (token: LexicalToken, punctuator: string) =>
     token.type == "Punctuator" && token.value == punctuator
