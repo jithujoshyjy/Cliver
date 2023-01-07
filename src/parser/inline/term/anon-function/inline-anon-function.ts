@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../../utility.js"
 import { generateAssignExpr } from "../../expression/assign-expression.js"
 import { generateExpression } from "../../expression/expression.js"
@@ -18,7 +18,7 @@ export function generateInlineAnonFunction(context: Node, tokens: TokenStream): 
     let currentToken = skip(tokens, skipables) // skip fun
     const initialCursor = tokens.cursor
 
-    const captureSignature = () => {
+    /* const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
         const signature = generateTypeExpression(inlineAnonFunction, tokens)
         return signature
@@ -97,7 +97,7 @@ export function generateInlineAnonFunction(context: Node, tokens: TokenStream): 
         return expression
     }
 
-    inlineAnonFunction.body = expression
+    inlineAnonFunction.body = expression */
 
     return inlineAnonFunction
 }

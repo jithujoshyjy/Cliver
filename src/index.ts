@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises";
-import { tokenize } from "./lexer/lexer.js";
 import { TokenStream } from "./lexer/token.js";
 import { generateAST } from "./parser/parser.js";
+import { tokenize } from "./lexer/lexer.js";
 
 void async function main() {
     const [_, __, ...args] = process.argv;
@@ -11,9 +11,8 @@ void async function main() {
     }
     const filepath = args[0];
     const code = await readFile(filepath, "utf-8");
-
-    const tokens = tokenize(code, filepath) as TokenStream;
     
+    const tokens = tokenize(code, filepath);
     const ast = generateAST(tokens);
 
     console.log("===AST===");

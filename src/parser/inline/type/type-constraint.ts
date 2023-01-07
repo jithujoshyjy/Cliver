@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, skip, skipables, type Node } from "../../utility.js"
 import { generateTupleLiteral } from "../literal/tuple-literal.js"
 import { generateFunctionType } from "./function-type.js"
@@ -17,7 +17,7 @@ export function generateTypeConstraint(context: Node, tokens: TokenStream): Type
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    const typeGenerators = [
+    /* const typeGenerators = [
         generateFunctionType, generateTupleLiteral, generateStructureType
     ]
 
@@ -81,7 +81,7 @@ export function generateTypeConstraint(context: Node, tokens: TokenStream): Type
     }
     else {
         typeConstraint.structure = typeMember
-    }
+    } */
 
     return typeConstraint
 }

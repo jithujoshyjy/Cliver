@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, operatorPrecedence, skip, skipables, type Node } from "../../utility.js"
 import { generateLiteral } from "../literal/literal.js"
 import { generateTerm } from "../term/term.js"

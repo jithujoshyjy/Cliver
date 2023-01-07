@@ -8,7 +8,11 @@ type Program = {
 type MismatchToken = {
     type: "MismatchToken",
     error: string,
-    value: import("../lexer/token").Token,
+    value: LexicalToken,
+    partialParse?: {
+        result: any,
+        cursor: number
+    },
     start: number,
     end: number
 }
@@ -155,8 +159,8 @@ type VerbalOperator = {
 
 type InfixOperation = {
     type: "InfixOperation",
-    left: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression,
-    right: PrefixOperation | PostfixOperation | Literal | Term | GroupExpression,
+    left: PrefixOperation | GroupExpression | Term | Literal | PostfixOperation | InfixOperation,
+    right: PrefixOperation | GroupExpression | Term | Literal | PostfixOperation | InfixOperation,
     operator: InfixCallOperator | NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -164,7 +168,7 @@ type InfixOperation = {
 
 type PrefixOperation = {
     type: "PrefixOperation",
-    operand: Literal | Term | GroupExpression | InfixPattern | PrefixOperation,
+    operand: Literal | Term | GroupExpression | InfixOperation | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -172,7 +176,7 @@ type PrefixOperation = {
 
 type PostfixOperation = {
     type: "PostfixOperation",
-    operand: Literal | Term | GroupExpression | InfixPattern | PrefixOperation,
+    operand: Literal | Term | GroupExpression | InfixOperation | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     start: number,
     end: number
@@ -422,7 +426,7 @@ type Pattern = {
     | InfixPattern
     | PostfixPattern
     | InterpPattern
-    | Identifier,
+    | Literal,
     start: number,
     end: number
 }
@@ -445,7 +449,7 @@ type InterpPattern = {
 type PrefixPattern = {
     type: "PrefixPattern",
     operator: NonVerbalOperator,
-    operand: Identifier | BracePattern | BracketPattern | ParenPattern | InterpPattern | PrefixPattern | InfixPattern | PostfixPattern,
+    operand: Literal | BracePattern | BracketPattern | ParenPattern | InterpPattern | PrefixPattern | InfixPattern | PostfixPattern,
     start: number,
     end: number
 }
@@ -453,7 +457,7 @@ type PrefixPattern = {
 type PostfixPattern = {
     type: "PostfixPattern",
     operator: NonVerbalOperator,
-    operand: Identifier | BracePattern | BracketPattern | ParenPattern | InterpPattern,
+    operand: Literal | BracePattern | BracketPattern | ParenPattern | InterpPattern,
     start: number,
     end: number
 }
@@ -468,7 +472,7 @@ type InfixPattern = {
     | InfixPattern
     | PrefixPattern
     | PostfixPattern
-    | Identifier,
+    | Literal,
     right: BracePattern
     | BracketPattern
     | ParenPattern
@@ -476,7 +480,7 @@ type InfixPattern = {
     | InfixPattern
     | PrefixPattern
     | PostfixPattern
-    | Identifier,
+    | Literal,
     start: number,
     end: number
 }
@@ -518,14 +522,14 @@ type Term = {
 
 type Expression = {
     type: "Expression",
-    value: InfixPattern | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     start: number,
     end: number
 }
 
 type GroupExpression = {
     type: "GroupExpression",
-    value: InfixPattern | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     start: number,
     end: number
 }
@@ -687,7 +691,7 @@ type SymbolLiteral = {
 
 type CharLiteral = {
     type: "CharLiteral",
-    text: string,
+    text: string | EscapeSequence,
     charset: "ascii" | "unicode",
     start: number,
     end: number

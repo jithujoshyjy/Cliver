@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, _skipables, type Node } from "../../../utility.js"
 import { generateExpression } from "../../expression/expression.js"
 import { generateGroupExpression } from "../../expression/group-expression.js"
@@ -19,8 +19,8 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-
-    const nodeGenerators = [
+    return inlineTaggedString
+    /* const nodeGenerators = [
         generateFunctionCall, generatePropertyAccess,
         generateIdentifier, generateGroupExpression
     ]
@@ -185,5 +185,5 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
             }
         }
         return fstring
-    }
+    } */
 }

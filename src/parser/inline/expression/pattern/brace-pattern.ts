@@ -1,6 +1,6 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isPunctuator, skipables, type Node, skip } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
 import { generateBracketPattern } from "./bracket-pattern.js"
@@ -22,7 +22,7 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (currentToken.type != TokenType.BraceEnclosed) {
+    /* if (currentToken.type != TokenType.BraceEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -45,7 +45,7 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
 
     const nodeGenerators = [
         generateTypeAssertion, generateAsExpression, generatePairPattern,
-        generatePrefixPattern, generateIdentifier,
+        generatePrefixPattern, generateLiteral,
     ]
 
     const parsePattern = () => {
@@ -53,7 +53,7 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
             | AsExpression
             | PairPattern
             | PrefixPattern
-            | Identifier
+            | Literal
             | MismatchToken = null!
         
         if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
@@ -100,7 +100,7 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
         }
 
         currentToken = braceTokens.currentToken
-    }
+    } */
 
     return bracePattern
 }

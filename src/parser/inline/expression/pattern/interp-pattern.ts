@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isPunctuator, skip, type Node } from "../../../utility.js"
 import { generateMetaDataInterpolation } from "../../term/meta-data-interpolation.js"
 import { generateTaggedString } from "../../term/tagged-string/tagged-string.js"

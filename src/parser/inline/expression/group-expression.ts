@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "./expression.js"
 
@@ -13,7 +13,7 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    let expression: Expression | MismatchToken = null!
+    /* let expression: Expression | MismatchToken = null!
 
     if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
@@ -51,7 +51,7 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
     }
 
     const { value } = expression
-    groupExpression.value = value    
-
+    groupExpression.value = value  */   
+    return createMismatchToken(currentToken)
     return groupExpression
 }

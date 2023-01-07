@@ -1,5 +1,5 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, operatorPrecedence, skip, skipables, type Node } from "../../../utility.js"
+import { TokenStream } from "../../../../lexer/token.js"
+import { operatorPrecedence, skip, skipables, type Node, createMismatchToken } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTerm } from "../../term/term.js"
 import { generateGroupExpression } from "../group-expression.js"
@@ -18,8 +18,8 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-
-    let _operator: NonVerbalOperator
+    return createMismatchToken(currentToken)
+    /* let _operator: NonVerbalOperator
         | VerbalOperator
         | MismatchToken = generateNonVerbalOperator(prefixOperation, tokens)
 
@@ -55,7 +55,7 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
         generateTerm, generateLiteral, generateGroupExpression, generatePrefixOperation
     ]
 
-    let operand: InfixPattern | Literal | Term | GroupExpression | PrefixOperation | MismatchToken = null!
+    let operand: InfixOperation | Literal | Term | GroupExpression | PrefixOperation | MismatchToken = null!
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(prefixOperation, tokens)
         currentToken = tokens.currentToken
@@ -72,7 +72,7 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     const skipNpeek = () => {
         let idx = 1
         let nextToken = tokens.peek(idx)
-        while (nextToken && nextToken.type != TokenType.EOF && skipables.includes(nextToken.type)) {
+        while (nextToken && nextToken.type != "EOF" && skipables.includes(nextToken.type)) {
             idx++
             nextToken = tokens.peek(idx)
         }
@@ -80,7 +80,7 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     }
 
     const nextToken = skipables.includes(currentToken.type) ? skipNpeek() : currentToken
-    if (nextToken && nextToken.type == TokenType.Operator) {
+    if (nextToken && nextToken.type == "Operator") {
 
         const getPrecidence = (op: typeof currentToken) =>
             operatorPrecedence.infix.left[op.value as string] ??
@@ -108,5 +108,5 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     prefixOperation.operand = operand
     prefixOperation.end = operand.end
 
-    return prefixOperation
+    return prefixOperation */
 }

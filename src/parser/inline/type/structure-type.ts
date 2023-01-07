@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateTypeAssertion } from "./type-assertion.js"
 
@@ -13,7 +13,7 @@ export function generateStructureType(context: Node, tokens: TokenStream): Struc
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    if(currentToken.type != TokenType.BraceEnclosed) {
+    /* if(currentToken.type != TokenType.BraceEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -54,7 +54,7 @@ export function generateStructureType(context: Node, tokens: TokenStream): Struc
             tokens.cursor = initialCursor
             return comma
         }
-    }
+    } */
 
     return structureType
 }

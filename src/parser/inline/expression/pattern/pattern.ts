@@ -1,6 +1,6 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
-import { createMismatchToken, type Node } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { TokenStream } from "../../../../lexer/token.js"
+import { type Node } from "../../../utility.js"
+import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
 import { generateBracePattern } from "./brace-pattern.js"
@@ -24,7 +24,7 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
 
     const nodeGenerators = [
         generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern,generateTypeAssertion, generateBracePattern,  generateParenPattern, generateBracketPattern,
-        generateInterpPattern, generateIdentifier
+        generateInterpPattern, generateLiteral
     ]
 
     let patternNode: AsExpression
@@ -36,7 +36,7 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
         | InfixPattern
         | PostfixPattern
         | InterpPattern
-        | Identifier
+        | Literal
         | MismatchToken = null!
 
     for (let nodeGenerator of nodeGenerators) {

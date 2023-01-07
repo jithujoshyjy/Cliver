@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
+import { TokenStream } from "../../lexer/token.js"
 import { createMismatchToken, isKeyword, isOperator, skip, skipables, _skipables, type Node } from "../utility.js"
 import { generateBlockMacroApplication } from "./block-macro-application.js"
 import { generateDoCatchBlock } from "./do-catch-block/do-catch-block.js"
@@ -45,8 +45,8 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
 
     const captureDelimiter = () => {
         currentToken = skip(tokens, _skipables)
-        const isDelimited = currentToken.type == TokenType.Newline
-            || (currentToken.type == TokenType.Punctuator && currentToken.value == ";")
+        const isDelimited = currentToken.type == "Newline"
+            || (currentToken.type == "Punctuator" && currentToken.value == ";")
             || tokens.isFinished
 
         if (!isDelimited) {
@@ -57,7 +57,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
         return currentToken
     }
 
-    if (currentToken.type == TokenType.Identifier) { // label-declaration
+    if (currentToken.type == "Word") { // label-declaration
         value = generateLabelDeclaration(block, tokens)
     }
     else if (isOperator(currentToken, "@@")) { // block-macro

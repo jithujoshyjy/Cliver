@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateTypeExpression } from "./type-expression.js"
 
@@ -22,7 +22,7 @@ export function generateTupleType(context: Node, tokens: TokenStream): TupleType
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    if (currentToken.type != TokenType.ParenEnclosed) {
+    /* if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -80,7 +80,7 @@ export function generateTupleType(context: Node, tokens: TokenStream): TupleType
             groupTypeExpr.constraint = constraint
 
             return groupTypeExpr
-        }
+        } */
 
     return tupleType
 }

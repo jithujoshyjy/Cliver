@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, skip, _skipables, type Node } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier } from "../literal/identifier.js"
@@ -19,7 +19,7 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const nodeGenerators = [
+    /* const nodeGenerators = [
         generatePropertyAccess, generateIdentifier,
         generateGroupExpression, generateOperatorRef
     ]
@@ -57,7 +57,7 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
     }
 
     functionCall.arguments = args
-    functionCall.externcallback = args.positional.some(x => x.type == "FunctionPrototype")
+    functionCall.externcallback = args.positional.some(x => x.type == "FunctionPrototype") */
 
     return functionCall
 }

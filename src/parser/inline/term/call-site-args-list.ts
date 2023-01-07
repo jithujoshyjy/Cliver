@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
@@ -18,7 +18,7 @@ export function generateCallSiteArgsList(context: Node, tokens: TokenStream): Ca
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const captureComma = () => {
+    /* const captureComma = () => {
         currentToken = skip(tokens, skipables)
         if (!isPunctuator(currentToken, ",")) {
             tokens.cursor = initialCursor
@@ -139,7 +139,7 @@ export function generateCallSiteArgsList(context: Node, tokens: TokenStream): Ca
         }
 
         callSiteArgsList.keyword = keywordArgs as Array<Pair | Identifier>
-    }
+    } */
 
     return callSiteArgsList
 }

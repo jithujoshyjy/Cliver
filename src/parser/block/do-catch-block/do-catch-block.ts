@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { generateProgram, type ProgramGenerator } from "../../program.js"
+import { generateProgram } from "../../program.js"
 import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility.js"
 import { generateDoneBlock } from "../done-block.js"
 import { generateCatchBlock } from "./catch-block.js"

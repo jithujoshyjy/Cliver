@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
+import { TokenStream } from "../../lexer/token.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
 import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 

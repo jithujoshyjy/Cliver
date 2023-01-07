@@ -1,9 +1,8 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
-import { generateExpression } from "../expression.js"
 import { generateBracePattern } from "./brace-pattern.js"
 import { generateBracketPattern } from "./bracket-pattern.js"
 import { generateInfixPattern } from "./infix-pattern.js"
@@ -25,17 +24,17 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
     let currentToken = tokens.currentToken
 
     const keyGenerators = [
-        generatePrefixPattern, generatePostfixPattern, generateIdentifier,
+        generatePrefixPattern, generatePostfixPattern, generateLiteral,
     ]
 
     const valueGenerators = [
         generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
-        generateInterpPattern, generateIdentifier
+        generateInterpPattern, generateLiteral
     ]
 
     let key: PrefixPattern
         | PostfixPattern
-        | Identifier
+        | Literal
         | MismatchToken = null!
 
     for (let keyGenerator of keyGenerators) {
@@ -69,7 +68,7 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
         | InfixPattern
         | PostfixPattern
         | InterpPattern
-        | Identifier
+        | Literal
         | MismatchToken = null!
 
     for (let valueGenerator of valueGenerators) {

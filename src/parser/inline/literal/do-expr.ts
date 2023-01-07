@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { generateBlock } from "../../block/block.js"
 import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility.js"
 import { generateInline } from "../inline.js"
@@ -26,7 +26,7 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         generateBlock, generateInline
     ]
 
-    while(currentToken.type != TokenType.EOF) {
+    while(currentToken.type != "EOF") {
 
         let node: Block
             | Inline

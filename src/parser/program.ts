@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../lexer/token.js"
+import { TokenStream } from "../lexer/token.js"
 import { generateBlock } from "./block/block.js"
 import { generateInline } from "./inline/inline.js"
 import { type Node } from "./utility.js"
@@ -11,7 +11,7 @@ export function* generateProgram(context: Node, tokens: TokenStream): ProgramGen
     let currentToken = tokens.currentToken
 
     baseContext.start = currentToken.start
-    while (currentToken.type != TokenType.EOF) {
+    while (currentToken.type != "EOF") {
 
         const block = generateBlock(context, tokens)
         let value: Block | Inline | MismatchToken = block

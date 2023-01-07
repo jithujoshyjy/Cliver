@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../../utility.js"
 import { generateFloatLiteral } from "./float-literal.js"
 import { generateIntegerLiteral } from "./integer-literal.js"
@@ -14,20 +14,11 @@ export function generateNumericLiteral(context: Node, tokens: TokenStream): Nume
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const validTokens = [
-        TokenType.IntegerLiteral,
-        TokenType.FloatLiteral
-    ]
+    let number: typeof numericLiteral.value
+        | MismatchToken = generateFloatLiteral(numericLiteral, tokens)
 
-    if(!validTokens.includes(currentToken.type)) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
-    
-    let number: typeof numericLiteral.value | MismatchToken = generateFloatLiteral(numericLiteral, tokens)
-    if(number.type == "MismatchToken") {
-        number = generateIntegerLiteral(numericLiteral, tokens)
-    }
+    if(number.type == "MismatchToken")
+        number = number.partialParse?.result ?? createMismatchToken(currentToken)
 
     if(number.type == "MismatchToken") {
         tokens.cursor = initialCursor

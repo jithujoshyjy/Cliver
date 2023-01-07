@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { skip, skipables, operatorPrecedence, type Node, createMismatchToken } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTerm } from "../../term/term.js"
@@ -9,8 +9,8 @@ import { generateNonVerbalOperator } from "./non-verbal-operator.js"
 import { generatePrefixOperation } from "./prefix-operation.js"
 import { generateVerbalOperator } from "./verbal-operator.js"
 
-export function generateInfixOperation(context: Node, tokens: TokenStream): InfixPattern | MismatchToken {
-    let infixOperation: InfixPattern = {
+export function generateInfixOperation(context: Node, tokens: TokenStream): InfixOperation | MismatchToken {
+    let infixOperation: InfixOperation = {
         type: "InfixOperation",
         left: null!,
         operator: null!,
@@ -30,10 +30,11 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
         | GroupExpression
         | Term
         | Literal
-        | InfixPattern
+        | PostfixOperation
+        | InfixOperation
         | MismatchToken
 
-    let lhs: Operand = null!
+    /* let lhs: Operand = null!
     for (let nodeGenerator of nodeGenerators) {
         lhs = nodeGenerator(infixOperation, tokens)
         currentToken = tokens.currentToken
@@ -61,11 +62,11 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
     if (_infixOperation.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return _infixOperation
-    }
+    } */
+return createMismatchToken(currentToken)
+    return /* _ */infixOperation
 
-    return _infixOperation
-
-    function _generateInfixOperation(lhs: Exclude<Operand, MismatchToken>, minPrecedence = 0): InfixPattern | MismatchToken {
+    /* function _generateInfixOperation(lhs: Exclude<Operand, MismatchToken>, minPrecedence = 0): InfixOperation | MismatchToken {
 
         const initialCursor = tokens.cursor
         let currentToken = tokens.currentToken
@@ -75,7 +76,7 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
 
         let currentOpPrecedence = 0
         const isOpKind = (op: typeof currentToken) =>
-            op.type == TokenType.Operator || op.type == TokenType.Keyword
+            op.type == Operator || op.type == TokenType.Keyword
         
         const decidePreced = (op: typeof currentToken) => {
             currentOpPrecedence = isOpKind(op) ? getPrecidence(op) : 0
@@ -177,6 +178,6 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
             return createMismatchToken(currentToken)
         }
         
-        return lhs as InfixPattern
-    }
+        return lhs as InfixOperation
+    } */
 }

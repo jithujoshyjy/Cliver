@@ -1,31 +1,4 @@
-import { Token, TokenStream, TokenType } from "../lexer/token.js"
-
-export const skip = (tokens: TokenStream, tokenTypes: TokenType[]) => {
-    while (!tokens.isFinished) {
-        tokens.advance()
-        if (!tokenTypes.includes(tokens.currentToken.type))
-            break
-    }
-    return tokens.currentToken
-}
-
-export const isKeyword = (token: Token, keyword: KeywordKind) =>
-    token.type == TokenType.Keyword && token.value == keyword
-
-export const isOperator = (token: Token, opr: VerbalOperatorKind | string) =>
-    (token.type == TokenType.Keyword || token.type == TokenType.Operator) &&
-    token.value == opr
-
-export const isPunctuator = (token: Token, punctuator: string) =>
-    token.type == TokenType.Punctuator && token.value == punctuator
-
-export const createMismatchToken = (token: Token, error?: string): MismatchToken => ({
-    type: "MismatchToken",
-    error: error ?? `Unexpected token '${token.type}' on ${token.line}:${token.column}`,
-    value: token,
-    start: token.line,
-    end: token.column
-})
+import { type TokenStream } from "../lexer/token.js"
 
 export type Node = {
     type: string,
@@ -33,24 +6,73 @@ export type Node = {
     end: number
 }
 
+export const skip = (tokens: TokenStream, tokenTypes: LexicalKind[]) => {
+    while (!tokens.isFinished) {
+        tokens.advance()
+        if (!tokenTypes.includes(tokens.currentToken.type))
+            break
+    }
+    return tokens.currentToken
+}
+export const punctuators = ['(', ')', '[', ']', '{', '}', ',', ';', '\'', '"', "\\", "$", "#"]
+export const operators = [
+    "=", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
+    "%", "<", ">", '`', ":",
+]
+export const keywords = [
+    "done", "do", "fun", "var", "val", "type",
+    "end", "ref", "case", "if", "elseif", "else", "for", "catch",
+    "throw", "in!", "in", "of", "use", "import", "export", "from",
+    "to", "is!", "is", "as"
+]
+
+export const isKeyword = (token: LexicalToken, keyword: KeywordKind) =>
+    token.type == "Word" && keywords.includes(token.value)
+
+export const isOperator = (token: LexicalToken, opr: VerbalOperatorKind | string) =>
+    (token.type == "Word" && keywords.includes(token.value) || token.type == "Operator")
+    && token.value == opr
+
+export const isPunctuator = (token: LexicalToken, punctuator: string) =>
+    token.type == "Punctuator" && token.value == punctuator
+
+type PartialParse = { result: Node, cursor: number }
+export const createMismatchToken = (token: LexicalToken, error?: string | PartialParse): MismatchToken => {
+
+    const partialParse = error && typeof error == "object"
+        ? { partialParse: { ...error } }
+        : {}
+
+    return {
+        type: "MismatchToken",
+        error: typeof error != "string"
+            ? `Unexpected token '${token.type}' on ${token.line}:${token.column}`
+            : error,
+        value: token,
+        ...partialParse,
+        start: token.line,
+        end: token.column
+    }
+}
+
 export const skipables = [
-    TokenType.MultiLineComment,
-    TokenType.SingleLineComment,
-    TokenType.WhiteSpace,
-    TokenType.Newline
-];
+    /* TokenType.MultiLineComment,
+    TokenType.SingleLineComment, */
+    "WhiteSpace",
+    "Newline"
+] as LexicalKind[]
 
 export const _skipables = [
-    TokenType.MultiLineComment,
-    TokenType.SingleLineComment,
-    TokenType.WhiteSpace
-];
+    /* TokenType.MultiLineComment,
+    TokenType.SingleLineComment, */
+    "WhiteSpace" as LexicalKind,
+]
 
 export const stringLiterals = [
-    TokenType.InlineASCIIStringLiteral,
+    /* TokenType.InlineASCIIStringLiteral,
     TokenType.InlineUnicodeStringLiteral,
     TokenType.MultilineASCIIStringLiteral,
-    TokenType.MultilineUnicodeStringLiteral,
+    TokenType.MultilineUnicodeStringLiteral, */
 ]
 
 type PrecidenceType = {

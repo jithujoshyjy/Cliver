@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
+import { TokenStream } from "../../lexer/token.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { createMismatchToken, isKeyword, skip, skipables, _skipables, type Node } from "../utility.js"
 import { generateDoCatchBlock } from "./do-catch-block/do-catch-block.js"
@@ -16,7 +16,7 @@ export function generateLabelDeclaration(context: Node, tokens: TokenStream): La
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    const labelName = generateIdentifier(labelDeclar, tokens)
+    /* const labelName = generateIdentifier(labelDeclar, tokens)
 
     if (labelName.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -70,7 +70,7 @@ export function generateLabelDeclaration(context: Node, tokens: TokenStream): La
             return value
         }
     }
-    else if (currentToken.type == TokenType.Identifier || TokenType.ParenEnclosed) { // unit-function
+    else if (currentToken.type == "Identifier" || TokenType.ParenEnclosed) { // unit-function
         const value = generateIfBlock(labelDeclar, tokens)
         if (value.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -80,7 +80,7 @@ export function generateLabelDeclaration(context: Node, tokens: TokenStream): La
     else {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
-    }
+    } */
 
     return labelDeclar
 }

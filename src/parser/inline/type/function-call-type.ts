@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, skip, _skipables, type Node } from "../../utility.js"
 import { generateTupleType } from "./tuple-type.js"
 import { generateTypeName } from "./type-name.js"
@@ -15,7 +15,7 @@ export function generateFunctionCallType(context: Node, tokens: TokenStream): Fu
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    const caller = generateTypeName(functionCallType, tokens)
+    /* const caller = generateTypeName(functionCallType, tokens)
     if (caller.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return caller
@@ -35,7 +35,7 @@ export function generateFunctionCallType(context: Node, tokens: TokenStream): Fu
         return args
     }
 
-    functionCallType.args = args as TupleType
+    functionCallType.args = args as TupleType */
 
     return functionCallType
 }

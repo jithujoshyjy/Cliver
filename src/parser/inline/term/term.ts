@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { type Node } from "../../utility.js"
+import { createMismatchToken, type Node } from "../../utility.js"
 import { generateAnonFunction } from "./anon-function/anon-function.js"
 import { generateUnitFunction } from "./unit-function.js"
 import { generateTypeAssertion } from "../type/type-assertion.js"
@@ -31,18 +31,18 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
+    return createMismatchToken(currentToken)
+    // const nodeGenerators = [
+    //     // generateTypeAssertion,
+    //     /* generatePipelineNotation, generateObjectCascadeNotation, */ /* generateObjectExtendNotation *//* ,
+    //     generateExternalCallbackNotation, */ /* generateAnonFunction, */ /* generateUnitFunction, */
+    //     /* generateAssignExpr, */ generateMetaDataInterpolation, generateTaggedSymbol,
+    //     generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
+    //     generateTaggedNumber, generateForInline, generateMatchInline, generateIfInline,
+    //     generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess
+    // ]
 
-    const nodeGenerators = [
-        // generateTypeAssertion,
-        /* generatePipelineNotation, generateObjectCascadeNotation, */ /* generateObjectExtendNotation *//* ,
-        generateExternalCallbackNotation, */ /* generateAnonFunction, */ /* generateUnitFunction, */
-        /* generateAssignExpr, */ generateMetaDataInterpolation, generateTaggedSymbol,
-        generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
-        generateTaggedNumber, generateForInline, generateMatchInline, generateIfInline,
-        generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess
-    ]
-
-    let node: typeof term.value | MismatchToken = null!
+    /* let node: typeof term.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
         node = nodeGenerator(term, tokens)
         currentToken = tokens.currentToken
@@ -61,5 +61,5 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     term.end = node.end
     term.value = node
 
-    return term
+    return term */
 }

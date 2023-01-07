@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../../utility.js"
 
 export function generateIntegerLiteral(context: Node, tokens: TokenStream): IntegerLiteral | MismatchToken {
@@ -12,14 +12,61 @@ export function generateIntegerLiteral(context: Node, tokens: TokenStream): Inte
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if(currentToken.type != TokenType.IntegerLiteral) {
+    const integer = parseInteger(tokens)
+    if (integer.type == "MismatchToken") {
         tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
+        return integer
     }
 
-    integerLiteral.value = currentToken.value as string
-    integerLiteral.start = currentToken.start
-    integerLiteral.end = currentToken.end
-    
+    integerLiteral.value = integer.value
+    integerLiteral.start = integer.start
+    integerLiteral.end = integer.end
+
     return integerLiteral
+
+    function parseInteger(tokens: TokenStream) {
+        let currentToken = tokens.currentToken
+
+        if (currentToken.type != "Integer")
+            return createMismatchToken(currentToken)
+
+        const integer: LexicalToken = {
+            ...currentToken,
+        }
+
+        tokens.advance()
+        let wasPrevTokenUnderscore = false,
+            isUnderscore = (token: LexicalToken) =>
+                token.type == "Word" && token.value == "_"
+
+        while (!tokens.isFinished) {
+            currentToken = tokens.currentToken
+
+            if (currentToken.type == "EOF") {
+                if (wasPrevTokenUnderscore)
+                    return createMismatchToken(tokens.peek(-1)!)
+                break
+            }
+
+            if (isUnderscore(currentToken) && !wasPrevTokenUnderscore) {
+                wasPrevTokenUnderscore = true
+                tokens.advance()
+                continue
+            }
+
+            if (currentToken.type != "Integer") {
+                if (wasPrevTokenUnderscore)
+                    return createMismatchToken(tokens.peek(-1)!)
+                break
+            }
+
+            integer.value += currentToken.value
+            integer.end = currentToken.end
+
+            wasPrevTokenUnderscore = false
+            tokens.advance()
+        }
+
+        return integer
+    }
 }

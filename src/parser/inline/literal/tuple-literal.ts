@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
 
@@ -20,7 +20,7 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (currentToken.type != TokenType.ParenEnclosed) {
+    /* if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -92,7 +92,7 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         const [{ value }] = tupleLiteral.values
         groupExpr.value = value
         return groupExpr
-    }
-
+    } */
+    return createMismatchToken(currentToken)
     return tupleLiteral
 }

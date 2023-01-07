@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
+import { TokenStream } from "../../lexer/token.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generatePropertyAccess } from "../inline/term/property-access.js"
 import { createMismatchToken, type Node } from "../utility.js"
@@ -24,7 +24,7 @@ export function generateBlockMacroApplication(context: Node, tokens: TokenStream
 
     currentToken = nextToken
 
-    if (currentToken.type != TokenType.Identifier) {
+    if (currentToken.type != "Word") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

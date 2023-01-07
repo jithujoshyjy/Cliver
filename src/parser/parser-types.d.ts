@@ -304,6 +304,16 @@ type StringLiteral = {
     value: InlineStringLiteral | MultilineStringLiteral
 }
 
+type EscapeSequence = {
+    type: "EscapeSequence",
+    value: string,
+    kind: "regular" | "doubleHex" | "quadHex" | "polyHex",
+    raw: string,
+    trailing: string,
+    start: number,
+    end: number
+}
+
 type InlineStringLiteral = {
     type: "InlineStringLiteral",
     value: InlineASCIIStringLiteral | InlineUnicodeStringLiteral

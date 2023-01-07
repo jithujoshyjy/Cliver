@@ -1,6 +1,6 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, skip, type Node, _skipables, operatorPrecedence } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { generateLiteral } from "../../literal/literal.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
 import { generateBracePattern } from "./brace-pattern.js"
 import { generateBracketPattern } from "./bracket-pattern.js"
@@ -21,10 +21,10 @@ export function generatePostfixPattern(context: Node, tokens: TokenStream): Post
 
     const operandGenerators = [
         generateBracePattern, generateBracketPattern, generateParenPattern,
-        generateInterpPattern, generateIdentifier
+        generateInterpPattern, generateLiteral
     ]
 
-    let operand: Identifier
+    let operand: Literal
         | BracePattern
         | BracketPattern
         | ParenPattern

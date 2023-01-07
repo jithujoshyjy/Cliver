@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, skip, skipables, type Node } from "../../utility.js"
 import { generateNonVerbalOperator } from "../expression/operation.ts/non-verbal-operator.js"
 import { generateVerbalOperator } from "../expression/operation.ts/verbal-operator.js"
@@ -14,7 +14,7 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (currentToken.type != TokenType.ParenEnclosed) {
+    /* if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -42,11 +42,11 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
     operatorRef.operator = _operator
     currentToken = skip(parenTokens, skipables)
 
-    if (currentToken.type != TokenType.EOF) {
+    if (currentToken.type != "EOF") {
         currentToken = parenTokens.currentToken
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
-    }
-
+    } */
+    return createMismatchToken(currentToken)
     return operatorRef
 }

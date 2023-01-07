@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator } from "../../utility.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateExpression } from "../expression/expression.js"
@@ -19,7 +19,7 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (currentToken.type == TokenType.ParenEnclosed) {
+    /* if (currentToken.type == TokenType.ParenEnclosed) {
 
         const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
         currentToken = parenTokens.currentToken
@@ -124,7 +124,7 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
         return body
     }
 
-    unitFunction.body = body
+    unitFunction.body = body */
 
     return unitFunction
 }

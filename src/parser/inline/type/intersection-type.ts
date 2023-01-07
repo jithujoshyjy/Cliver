@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateDifferenceType } from "./difference-type.js"
 

@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
+import { TokenStream } from "../../lexer/token.js"
 import { generateAssignExpr } from "../inline/expression/assign-expression.js"
 import { generatePattern } from "../inline/expression/pattern/pattern.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
@@ -21,7 +21,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
     let currentToken = skip(tokens, skipables) // skip fun
     const initialCursor = tokens.cursor
 
-    const captureSignature = () => {
+    /* const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
         const signature = generateTypeExpression(namedFunction, tokens)
         return signature
@@ -86,7 +86,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
             }
         }
 
-    if (currentToken.type != TokenType.ParenEnclosed) {
+    if (currentToken.type != "Punctuator") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -154,7 +154,7 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
         }
 
         namedFunction.body.push(node)
-    }
+    } */
 
     return namedFunction
 }

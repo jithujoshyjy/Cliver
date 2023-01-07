@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
 
@@ -13,7 +13,7 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (currentToken.type != TokenType.BracketEnclosed) {
+    /* if (currentToken.type != TokenType.BracketEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -75,7 +75,7 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
         }
 
         currentToken = bracketTokens.currentToken
-    }
-
+    } */
+    return createMismatchToken(currentToken)
     return arrayLiteral
 }

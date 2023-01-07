@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { generateProgram } from "../../program.js"
 import { createMismatchToken, isPunctuator, type Node } from "../../utility.js"
 
@@ -13,7 +13,7 @@ export function generateMetaDataInterpolation(context: Node, tokens: TokenStream
     let currentToken = tokens.currentToken // $
     const initialCursor = tokens.cursor
 
-    if(!isPunctuator(currentToken, "$")) {
+    /* if(!isPunctuator(currentToken, "$")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -36,7 +36,7 @@ export function generateMetaDataInterpolation(context: Node, tokens: TokenStream
             return node
         }
         metaDataInterpolation.body.push(node)
-    }
+    } */
 
     return metaDataInterpolation
 }

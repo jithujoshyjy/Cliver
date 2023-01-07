@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
+import { TokenStream } from "../../lexer/token.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateProgram } from "../program.js"
 import { isKeyword, skip, _skipables, type Node } from "../utility.js"

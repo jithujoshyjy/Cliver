@@ -1,6 +1,6 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, operatorPrecedence, skip, skipables, type Node, isOperator } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { generateLiteral } from "../../literal/literal.js"
 import { generateCaseExpr } from "../case-expression.js"
 import { generateExpression } from "../expression.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
@@ -31,13 +31,13 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
         | InfixPattern
         | PrefixPattern
         | PostfixPattern
-        | Identifier
+        | Literal
         | MismatchToken
 
     const nodeGenerators: Array<(context: Node, tokens: TokenStream) => Operand | CaseExpr | Expression> = [
         generatePrefixPattern, generatePostfixPattern,
         generateBracePattern, generateBracketPattern, generateParenPattern,
-        generateInterpPattern, generateIdentifier
+        generateInterpPattern, generateLiteral
     ]
 
     let lhs: Operand = null!
@@ -82,7 +82,7 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
 
         let currentOpPrecedence = 0
         const isOpKind = (op: typeof currentToken) =>
-            op.type == TokenType.Operator
+            op.type == "Operator"
         
         const decidePreced = (op: typeof currentToken) => {
             currentOpPrecedence = isOpKind(op) ? getPrecidence(op) : 0
@@ -157,7 +157,7 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
 
             const isNextOperator = (nextToken: typeof currentToken) => {
 
-                if (nextToken.type == TokenType.Operator) {
+                if (nextToken.type == "Operator") {
                     nextOpPrecedence = getPrecidence(nextToken)
 
                     const nextHasMorePreced = nextOpPrecedence > currentOpPrecedence

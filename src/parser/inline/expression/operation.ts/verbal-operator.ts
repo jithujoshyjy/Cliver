@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, operatorPrecedence, type Node, isKeyword } from "../../../utility.js"
 
 export function generateVerbalOperator(context: Node, tokens: TokenStream): VerbalOperator | MismatchToken {
@@ -14,7 +14,7 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const excludedOperators: string[] = [
+    /* const excludedOperators: string[] = [
         "as"
     ]
 
@@ -36,7 +36,7 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
 
     verbalOperator.name = currentToken.value as VerbalOperatorKind
     verbalOperator.start = currentToken.start
-    verbalOperator.end = currentToken.end
+    verbalOperator.end = currentToken.end */
 
     return verbalOperator
 }

@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../lexer/token.js"
+import { TokenStream } from "../../lexer/token.js"
 import { createMismatchToken, isKeyword, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 import { generateExpression } from "./expression/expression.js"
 
@@ -28,10 +28,10 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         if (_skipables.includes(currentToken.type))
             currentToken = skip(tokens, _skipables)
 
-        const isDelimited = currentToken.type == TokenType.Newline
+        const isDelimited = currentToken.type == "Newline"
             || isPunctuator(currentToken, ";")
             || isKeyword(currentToken, "end")
-            || currentToken.type == TokenType.EOF
+            || currentToken.type == "EOF"
 
         if (!isDelimited)
             return createMismatchToken(currentToken)

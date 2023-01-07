@@ -1,6 +1,6 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { skip, type Node, _skipables, operatorPrecedence, createMismatchToken } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { generateLiteral } from "../../literal/literal.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
 import { generateBracePattern } from "./brace-pattern.js"
 import { generateBracketPattern } from "./bracket-pattern.js"
@@ -59,10 +59,10 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     const operandGenerators = [
         generatePrefixPattern, generatePostfixPattern, generateBracePattern,
         generateBracketPattern, generateParenPattern,
-        generateInterpPattern, generateIdentifier
+        generateInterpPattern, generateLiteral
     ]
 
-    let operand: Identifier
+    let operand: Literal
         | BracePattern
         | BracketPattern
         | ParenPattern
@@ -88,7 +88,7 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     const skipNpeek = () => {
         let idx = 1
         let nextToken = tokens.peek(idx)
-        while (nextToken && nextToken.type != TokenType.EOF && _skipables.includes(nextToken.type)) {
+        while (nextToken && nextToken.type != "EOF" && _skipables.includes(nextToken.type)) {
             idx++
             nextToken = tokens.peek(idx)
         }
@@ -96,7 +96,7 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     }
 
     const nextToken = _skipables.includes(currentToken.type) ? skipNpeek() : currentToken
-    if (nextToken && nextToken.type == TokenType.Operator) {
+    if (nextToken && nextToken.type == "Operator") {
 
         const getPrecidence = (op: typeof currentToken) =>
             operatorPrecedence.infix.left[op.value as string] ??

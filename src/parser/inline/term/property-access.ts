@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateArrayLiteral } from "../literal/array-literal.js"
@@ -25,12 +25,20 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
     let propertyAccess: PropertyAccess | Accessor = null!
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    
+
     const accessorGenerators = [
         /* generateTaggedSymbol, generateTaggedString, generateImplicitMultiplication, generateTaggedNumber, */ /* generateFunctionCall,  */generateLiteral, generateGroupExpression
     ]
-
-    let accessor: Accessor = null!
+    return {
+        type: "PropertyAccess",
+        accessor: propertyAccess,
+        field: null!,
+        optional: null!,
+        computed: false,
+        start: 0,
+        end: 0
+    }
+    /* let accessor: Accessor = null!
 
     for (let accessorGenerator of accessorGenerators) {
         accessor = accessorGenerator(propertyAccess, tokens)
@@ -146,5 +154,5 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         }
 
         return [isOptional, field]
-    }
+    } */
 }

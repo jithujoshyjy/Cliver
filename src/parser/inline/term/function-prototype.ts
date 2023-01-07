@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
@@ -18,7 +18,7 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
     let currentToken = skip(tokens, skipables) // skip fun
     const initialCursor = tokens.cursor
 
-    const captureSignature = () => {
+    /* const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
         const signature = generateTypeExpression(functionPrototype, tokens)
         return signature
@@ -123,7 +123,7 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
             return createMismatchToken(currentToken)
 
         functionPrototype.signature = signature
-    }
+    } */
 
     return functionPrototype
 }

@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { generateProgram } from "../../../program.js"
 import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../../utility.js"
 import { generateAssignExpr } from "../../expression/assign-expression.js"
@@ -20,7 +20,7 @@ export function generateBlockAnonFunction(context: Node, tokens: TokenStream): B
     let currentToken = skip(tokens, skipables) // skip fun
     const initialCursor = tokens.cursor
 
-    const captureSignature = () => {
+    /* const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
         const signature = generateTypeExpression(blockAnonFunction, tokens)
         return signature
@@ -140,7 +140,7 @@ export function generateBlockAnonFunction(context: Node, tokens: TokenStream): B
         }
 
         blockAnonFunction.body.push(node)
-    }
+    } */
 
     return blockAnonFunction
 }

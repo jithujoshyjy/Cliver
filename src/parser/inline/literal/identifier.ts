@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../utility.js"
 
 export function generateIdentifier(context: Node, tokens: TokenStream): Identifier | MismatchToken {
@@ -11,15 +11,26 @@ export function generateIdentifier(context: Node, tokens: TokenStream): Identifi
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    
-    if (currentToken.type != TokenType.Identifier) {
+
+    if (currentToken.type != "Word") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    identifier.name = currentToken.value as string
+    identifier.name = currentToken.value
     identifier.start = currentToken.start
     identifier.end = currentToken.end
+
+    tokens.advance()
+    while (!tokens.isFinished) {
+        currentToken = tokens.currentToken
+        if (!["Integer", "Word"].includes(currentToken.type))
+            break
+
+        identifier.name += currentToken.value
+        identifier.end = currentToken.end
+        tokens.advance()
+    }
 
     return identifier
 }

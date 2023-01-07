@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { type Node } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateArrayLiteral } from "./array-literal.js"
@@ -47,6 +47,6 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
     literal.end = node.end
     literal.value = node
 
-    tokens.advance()
+    // tokens.advance()
     return literal
 }

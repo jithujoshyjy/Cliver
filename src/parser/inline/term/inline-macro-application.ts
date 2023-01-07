@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, _skipables, type Node } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 // import { generatePostfixOperation } from "../expression/operation.ts/postfix-operation.js"
@@ -22,7 +22,7 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (isOperator(currentToken, "@")) {
+    /* if (isOperator(currentToken, "@")) {
         currentToken = skip(tokens, _skipables) // skip @
         const identifier = generateIdentifier(inlineMacroApplication, tokens)
         if (identifier.type == "MismatchToken") {
@@ -69,7 +69,7 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
     }
 
     const nodeGenerators = [
-        generatePrefixOperation, /* generatePostfixOperation, */ generateTerm,
+        generatePrefixOperation, /* generatePostfixOperation, generateTerm,
         generateLiteral, generateGroupExpression
     ]
 
@@ -87,7 +87,7 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
         return body
     }
 
-    inlineMacroApplication.body = body
+    inlineMacroApplication.body = body */
 
     return inlineMacroApplication
 }

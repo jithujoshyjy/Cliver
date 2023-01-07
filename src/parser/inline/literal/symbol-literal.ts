@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../utility.js"
 
 export function generateSymbolLiteral(context: Node, tokens: TokenStream): SymbolLiteral | MismatchToken {
@@ -14,7 +14,7 @@ export function generateSymbolLiteral(context: Node, tokens: TokenStream): Symbo
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
     
-    const symbolLiteralType = [
+    /* const symbolLiteralType = [
         TokenType.SymASCIICharLiteral, TokenType.SymUnicodeCharLiteral,
         TokenType.SymASCIIStringLiteral, TokenType.SymUnicodeStringLiteral
     ]
@@ -35,6 +35,6 @@ export function generateSymbolLiteral(context: Node, tokens: TokenStream): Symbo
     symbolLiteral.text = currentToken.value as string
 
     symbolLiteral.start = currentToken.start
-    symbolLiteral.end = currentToken.end
+    symbolLiteral.end = currentToken.end */return createMismatchToken(currentToken)
     return symbolLiteral
 }

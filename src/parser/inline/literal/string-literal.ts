@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../utility.js"
 
 export function generateStringLiteral(context: Node, tokens: TokenStream): StringLiteral | MismatchToken {
@@ -14,7 +14,7 @@ export function generateStringLiteral(context: Node, tokens: TokenStream): Strin
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const inlineStr = [TokenType.InlineASCIIStringLiteral, TokenType.InlineUnicodeStringLiteral]
+    /* const inlineStr = [TokenType.InlineASCIIStringLiteral, TokenType.InlineUnicodeStringLiteral]
     const multilineStr = [TokenType.MultilineASCIIStringLiteral, TokenType.MultilineUnicodeStringLiteral]
 
     const isStr = inlineStr.includes(currentToken.type) || multilineStr.includes(currentToken.type)
@@ -34,6 +34,6 @@ export function generateStringLiteral(context: Node, tokens: TokenStream): Strin
     }
 
     stringLiteral.start = currentToken.start
-    stringLiteral.end = currentToken.end
+    stringLiteral.end = currentToken.end */return createMismatchToken(currentToken)
     return stringLiteral
 }

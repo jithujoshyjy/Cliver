@@ -13,7 +13,7 @@ export function generateInlineStringFragment(context: Node, tokens: TokenStream)
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    while(!tokens.isFinished) {
+    /* while(!tokens.isFinished) {
         const stringLiteral = generateStringLiteral(inlineStringFragment, tokens)
         const isNotStringFragment = stringLiteral.type == "MismatchToken"
             && inlineStringFragment.fragments.length == 0
@@ -38,7 +38,7 @@ export function generateInlineStringFragment(context: Node, tokens: TokenStream)
     if(inlineStringFragment.fragments.length < 2) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
-    }
+    } */
 
     return inlineStringFragment
 }

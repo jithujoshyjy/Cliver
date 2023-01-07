@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { generateProgram } from "../../program.js"
 import { createMismatchToken, skip, skipables, type Node } from "../../utility.js"
 import { generateIdentifier } from "../literal/identifier.js"
@@ -17,7 +17,7 @@ export function generateObjectExtendNotation(context: Node, tokens: TokenStream)
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    let head: FunctionCall
+    /* let head: FunctionCall
         | PropertyAccess
         | Identifier
         | MismatchToken = generateFunctionCall(objectExtendNotation, tokens)
@@ -51,7 +51,7 @@ export function generateObjectExtendNotation(context: Node, tokens: TokenStream)
             return node
         }
         objectExtendNotation.body.push(node)
-    }
+    } */
 
     return objectExtendNotation
 }

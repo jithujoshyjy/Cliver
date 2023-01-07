@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier } from "../literal/identifier.js"

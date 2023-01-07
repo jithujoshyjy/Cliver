@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, _skipables, type Node } from "../../../utility.js"
 import { generateExpression } from "../../expression/expression.js"
 import { generateGroupExpression } from "../../expression/group-expression.js"
@@ -20,7 +20,7 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
     
-    const nodeGenerators = [
+    /* const nodeGenerators = [
         generateFunctionCall, generatePropertyAccess,
         generateIdentifier, generateGroupExpression
     ]
@@ -51,11 +51,11 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
         return fragments
     }
 
-    multilineTaggedString.fragments = fragments
+    multilineTaggedString.fragments = fragments */
 
     return multilineTaggedString
 
-    function parseFstring() {
+    /* function parseFstring() {
 
         const fragments: Array<MultilineStringLiteral | InstringExpr | InstringId> = []
 
@@ -167,5 +167,5 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
             }
         }
         return fragments
-    }
+    } */
 }

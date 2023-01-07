@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../lexer/token.js"
+import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generatePair } from "../term/pair.js"
 
@@ -13,7 +13,7 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if(currentToken.type != TokenType.BraceEnclosed) {
+    /* if(currentToken.type != TokenType.BraceEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -75,7 +75,7 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
         }
 
         currentToken = braceTokens.currentToken
-    }
-
+    } */
+    return createMismatchToken(currentToken)
     return mapLiteral
 }

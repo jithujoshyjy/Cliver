@@ -1,4 +1,4 @@
-import { TokenStream, TokenType } from "../../../../lexer/token.js"
+import { TokenStream } from "../../../../lexer/token.js"
 import { operatorPrecedence, skip, skipables, type Node, createMismatchToken } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTerm } from "../../term/term.js"
@@ -24,7 +24,7 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
         generateTerm, generateLiteral, generateGroupExpression, generatePrefixOperation
     ]
 
-    let operand: InfixPattern | Literal | Term | GroupExpression | PrefixOperation | MismatchToken = null!
+    let operand: InfixOperation | Literal | Term | GroupExpression | PrefixOperation | MismatchToken = null!
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(postfixOperation, tokens)
         currentToken = tokens.currentToken
@@ -45,7 +45,7 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
     const skipNpeek = () => {
         let idx = 1
         let nextToken = tokens.peek(idx)
-        while (nextToken && nextToken.type != TokenType.EOF && skipables.includes(nextToken.type)) {
+        while (nextToken && nextToken.type != "EOF" && skipables.includes(nextToken.type)) {
             idx++
             nextToken = tokens.peek(idx)
         }
@@ -84,7 +84,7 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
     const resetCursorPoint = tokens.cursor
 
     const nextToken = skipables.includes(currentToken.type) ? skipNpeek() : currentToken
-    if (nextToken && nextToken.type == TokenType.Operator) {
+    if (nextToken && nextToken.type == "Operator") {
 
         const getPrecidence = (op: typeof currentToken) =>
             operatorPrecedence.infix.left[op.value as string] ??
