@@ -15,6 +15,8 @@ export function generateIntersectionType(context: Node, tokens: TokenStream): In
         type: "IntersectionType",
         left: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

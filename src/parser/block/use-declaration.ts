@@ -6,6 +6,8 @@ export function generateUseDeclaration(context: Node, tokens: TokenStream): UseD
     const useDeclar: UseDeclaration = {
         type: "UseDeclaration",
         rules: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

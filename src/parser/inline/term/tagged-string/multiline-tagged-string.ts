@@ -13,6 +13,8 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
         type: "MultilineTaggedString",
         fragments: null!,
         tag: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

@@ -1,18 +1,20 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { operatorPrecedence, skip, skipables, type Node, createMismatchToken } from "../../../utility.js"
-import { generateLiteral } from "../../literal/literal.js"
-import { generateTerm } from "../../term/term.js"
-import { generateGroupExpression } from "../group-expression.js"
-import { generateInfixOperation } from "./infix-operation.js"
-import { generateNonVerbalOperator } from "./non-verbal-operator.js"
-import { generatePrefixOperation } from "./prefix-operation.js"
-import { generateVerbalOperator } from "./verbal-operator.js"
+import { operatorPrecedence, skip, skipables, type Node, createMismatchToken, pickPrinter, NodePrinter } from "../../../utility.js"
+import { generateLiteral, printLiteral } from "../../literal/literal.js"
+import { generateTerm, printTerm } from "../../term/term.js"
+import { generateGroupExpression, printGroupExpression } from "../group-expression.js"
+import { generateInfixOperation, printInfixOperation } from "./infix-operation.js"
+import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-operator.js"
+import { generatePrefixOperation, printPrefixOperation } from "./prefix-operation.js"
+import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
 export function generatePostfixOperation(context: Node, tokens: TokenStream): PostfixOperation | MismatchToken {
     const postfixOperation: PostfixOperation = {
         type: "PostfixOperation",
         operand: null!,
         operator: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -38,14 +40,14 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
         return operand
     }
 
-    currentToken = skipables.includes(tokens.currentToken.type)
+    currentToken = skipables.includes(tokens.currentToken)
         ? skip(tokens, skipables)
         : tokens.currentToken // skip operand
     
     const skipNpeek = () => {
         let idx = 1
         let nextToken = tokens.peek(idx)
-        while (nextToken && nextToken.type != "EOF" && skipables.includes(nextToken.type)) {
+        while (nextToken && nextToken.type != "EOF" && skipables.includes(nextToken)) {
             idx++
             nextToken = tokens.peek(idx)
         }
@@ -83,7 +85,7 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
     postfixOperation.operator = _operator
     const resetCursorPoint = tokens.cursor
 
-    const nextToken = skipables.includes(currentToken.type) ? skipNpeek() : currentToken
+    const nextToken = skipables.includes(currentToken) ? skipNpeek() : currentToken
     if (nextToken && nextToken.type == "Operator") {
 
         const getPrecidence = (op: typeof currentToken) =>
@@ -113,4 +115,26 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
     postfixOperation.end = operand.end
 
     return postfixOperation
+}
+
+export function printPostfixOperation(token: PostfixOperation, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const operandPrinters = [
+        printInfixOperation, printPrefixOperation,
+        printTerm, printLiteral, printGroupExpression
+    ] as NodePrinter[]
+
+    const operatorPrinters = [
+        printNonVerbalOperator, printVerbalOperator
+    ] as NodePrinter[]
+
+    const operandPrinter = pickPrinter(operandPrinters, token.operand)!
+    const operatorPrinter = pickPrinter(operatorPrinters, token.operator)!
+
+    return "PostfixOperation\n" + '\t'.repeat(indent) +
+        middleJoiner + operatorPrinter(token.operator, indent+1) + '\n' +
+        endJoiner + operandPrinter(token.operand, indent+1) + '\n'
 }

@@ -1,11 +1,13 @@
 import { TokenStream } from "../../lexer/token.js"
 import { createMismatchToken, isKeyword, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
-import { generateExpression } from "./expression/expression.js"
+import { generateExpression, printExpression } from "./expression/expression.js"
 
 export function generateInline(context: Node, tokens: TokenStream): Inline | MismatchToken {
     const inline: Inline = {
         type: "Inline",
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -13,7 +15,7 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    if (skipables.includes(currentToken.type))
+    if (skipables.includes(currentToken))
         currentToken = skip(tokens, skipables)
 
     const expression = generateExpression(inline, tokens)
@@ -25,7 +27,7 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
     const captureDelimiter = () => {
         currentToken = tokens.currentToken
 
-        if (_skipables.includes(currentToken.type))
+        if (_skipables.includes(currentToken))
             currentToken = skip(tokens, _skipables)
 
         const isDelimited = currentToken.type == "Newline"
@@ -52,4 +54,11 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
     inline.end = delimiter.end
     
     return inline
+}
+
+export function printInline(token: Inline, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    return "Inline\n" + '\t'.repeat(indent) + endJoiner + printExpression(token.value, indent+1)
 }

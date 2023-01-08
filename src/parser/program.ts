@@ -1,6 +1,6 @@
 import { TokenStream } from "../lexer/token.js"
-import { generateBlock } from "./block/block.js"
-import { generateInline } from "./inline/inline.js"
+import { generateBlock, printBlock } from "./block/block.js"
+import { generateInline, printInline } from "./inline/inline.js"
 import { type Node } from "./utility.js"
 
 export type ProgramGenerator = Generator<Inline | Block | MismatchToken, Array<Inline | Block> | MismatchToken>
@@ -11,6 +11,9 @@ export function* generateProgram(context: Node, tokens: TokenStream): ProgramGen
     let currentToken = tokens.currentToken
 
     baseContext.start = currentToken.start
+    baseContext.line = currentToken.line
+    baseContext.column = currentToken.column
+
     while (currentToken.type != "EOF") {
 
         const block = generateBlock(context, tokens)
@@ -54,4 +57,14 @@ export function* generateProgram(context: Node, tokens: TokenStream): ProgramGen
     context = baseContext // Program
 
     return values
+}
+
+export function printProgram(token: Program, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    return "Program\n" + '\t'.repeat(indent) + token.value
+        .reduce((a, c, i, arr) => a +
+            (i == arr.length-1 ? endJoiner : middleJoiner) +
+            (c.type == "Block" ? printBlock(c, indent+1) : printInline(c, indent+1)), '')
 }

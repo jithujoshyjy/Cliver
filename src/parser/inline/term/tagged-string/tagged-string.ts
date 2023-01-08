@@ -8,6 +8,8 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
         type: "TaggedString",
         value: null!,
         tag: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

@@ -12,6 +12,8 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
         type: "PrefixOperation",
         operand: null!,
         operator: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -109,4 +111,12 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     prefixOperation.end = operand.end
 
     return prefixOperation */
+}
+
+export function printPrefixOperation(token: PrefixOperation, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    return "PrefixOperation\n"
 }

@@ -1,11 +1,13 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
-import { generateExpression } from "../expression/expression.js"
+import { createMismatchToken, isPunctuator, skip, skipables, type Node } from "../../utility.js"
+import { generateExpression, printExpression } from "../expression/expression.js"
 
 export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayLiteral | MismatchToken {
     const arrayLiteral: ArrayLiteral = {
         type: "ArrayLiteral",
-        values: [],
+        values: [[]],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -13,69 +15,105 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* if (currentToken.type != TokenType.BracketEnclosed) {
+    if (!isPunctuator(currentToken, "[")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
     arrayLiteral.start = currentToken.start
-    arrayLiteral.end = currentToken.end
+    arrayLiteral.line = currentToken.line
+    arrayLiteral.column = currentToken.column
 
-    const bracketTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    currentToken = bracketTokens.currentToken
+    currentToken = skip(tokens, skipables)
 
     const captureComma = () => {
-        currentToken = bracketTokens.currentToken
+        const initialToken = tokens.currentToken
 
-        if (!isPunctuator(currentToken, ",")) {
-            return createMismatchToken(currentToken)
+        if (!isPunctuator(initialToken, ",")) {
+            return createMismatchToken(initialToken)
         }
 
-        return currentToken
+        currentToken = skip(tokens, skipables)
+        return initialToken
     }
 
+    const captureSemicolon = () => {
+        const initialToken = tokens.currentToken
+
+        if (!isPunctuator(initialToken, ";")) {
+            return createMismatchToken(initialToken)
+        }
+
+        currentToken = skip(tokens, skipables)
+        return initialToken
+    }
+
+    let lastDelim: LexicalToken | MismatchToken | null = null
     const parseValue = () => {
 
-        if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
-            currentToken = skip(bracketTokens, skipables)
+        let value: Expression | MismatchToken = generateExpression(arrayLiteral, tokens)
+        currentToken = tokens.currentToken
 
-        let value: Expression | MismatchToken = generateExpression(arrayLiteral, bracketTokens)
-        currentToken = bracketTokens.currentToken
-
+        lastDelim = null
         return value
     }
 
-    while (!bracketTokens.isFinished) {
+    let isInitial = true
+    while (!tokens.isFinished) {
 
-        if (bracketTokens.currentToken.type == TokenType.EOF)
+        if (isPunctuator(currentToken, "]")) {
+            tokens.advance()
             break
-        
-        const value = parseValue()
-
-        if (value.type == "MismatchToken" && value.value.type == TokenType.EOF)
-            break
-
-        if (value.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return value
         }
 
-        arrayLiteral.values.push(value)
-        if (skipables.includes(currentToken.type))
-            currentToken = skip(bracketTokens, skipables)
-        
-        if (currentToken.type == TokenType.EOF)
-            break
-
-        const comma = captureComma()
-
-        if (comma.type == "MismatchToken") {
+        if (!isInitial && lastDelim == null) {
             tokens.cursor = initialCursor
-            return comma
+            return createMismatchToken(currentToken)
         }
 
-        currentToken = bracketTokens.currentToken
-    } */
-    return createMismatchToken(currentToken)
+        if (lastDelim?.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return lastDelim
+        }
+
+        if (!isPunctuator(currentToken, ";")) {
+            const value = parseValue()
+
+            if (value.type == "MismatchToken") {
+                tokens.cursor = initialCursor
+                return value
+            }
+
+            arrayLiteral.values.at(-1)?.push(value)
+        }
+
+        if (skipables.includes(currentToken))
+            currentToken = skip(tokens, skipables)
+
+        lastDelim = captureComma()
+
+        if (lastDelim.type == "MismatchToken")
+            lastDelim = captureSemicolon()
+
+        if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";"))
+            arrayLiteral.values.push([])
+
+        isInitial = false
+    }
+
     return arrayLiteral
+}
+
+export function printArrayLiteral(token: ArrayLiteral, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    return "ArrayLiteral\n" + '\t'.repeat(indent) + middleJoiner +
+        token.values.reduce((a, c, i, arr) => a + (i + 1) + '\n' + '\t'.repeat(indent + 1) +
+            (i == arr.length - 1 ? endJoiner : middleJoiner) +
+            c.reduce((a, c, i, arr) =>
+                a + (i == arr.length - 1 ? endJoiner : middleJoiner) +
+                printExpression(c, indent + 2) + '\n', '') + '\n', "") +
+        + '\n'
+
 }

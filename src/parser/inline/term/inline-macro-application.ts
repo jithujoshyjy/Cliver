@@ -15,6 +15,8 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
         arguments: null,
         body: null!,
         caller: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

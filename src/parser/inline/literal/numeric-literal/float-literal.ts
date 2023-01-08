@@ -6,6 +6,8 @@ export function generateFloatLiteral(context: Node, tokens: TokenStream): FloatL
     const floatLiteral: FloatLiteral = {
         type: "FloatLiteral",
         value: "0",
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -24,14 +26,21 @@ export function generateFloatLiteral(context: Node, tokens: TokenStream): FloatL
         const cursor = tokens.cursor
         if (integerPart.type == "IntegerLiteral")
             return createMismatchToken(currentToken, { cursor, result: integerPart })
-        
+
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    floatLiteral.start = integerPart.type == "IntegerLiteral"
-        ? integerPart.start
-        : currentToken.start
+    if (integerPart.type == "IntegerLiteral") {
+        floatLiteral.start = integerPart.start
+        floatLiteral.line = integerPart.line
+        floatLiteral.column = integerPart.column
+    }
+    else {
+        floatLiteral.start = currentToken.start
+        floatLiteral.line = currentToken.line
+        floatLiteral.column = currentToken.column
+    }
 
     floatLiteral.value += "."
     tokens.advance()

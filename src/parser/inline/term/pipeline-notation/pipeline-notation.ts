@@ -11,6 +11,8 @@ export function generatePipelineNotation(context: Node, tokens: TokenStream): Pi
         expression: null!,
         pipes: [],
         kind: "pointfree",
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

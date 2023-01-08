@@ -7,6 +7,8 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
         kind: "infix",
         precedence: 10,
         name: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -39,4 +41,12 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
     verbalOperator.end = currentToken.end */
 
     return verbalOperator
+}
+
+export function printVerbalOperator(token: VerbalOperator, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    return `${token.kind}__${token.precedence}__(${token.name})\n`
 }

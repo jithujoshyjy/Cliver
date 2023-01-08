@@ -15,6 +15,8 @@ export function generateDifferenceType(context: Node, tokens: TokenStream): Diff
         type: "DifferenceType",
         left: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

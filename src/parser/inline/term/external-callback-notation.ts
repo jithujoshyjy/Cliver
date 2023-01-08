@@ -8,6 +8,8 @@ export function generateExternalCallbackNotation(context: Node, tokens: TokenStr
         type: "ExternalCallbackNotation",
         callback: null!,
         caller: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

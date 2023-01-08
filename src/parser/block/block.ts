@@ -14,6 +14,8 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
     const block: Block = {
         type: "Block",
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -21,6 +23,8 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
     const inline: Inline = {
         type: "Inline",
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -28,7 +32,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (skipables.includes(currentToken.type))
+    /* if (skipables.includes(currentToken.type))
         currentToken = skip(tokens, skipables)
 
     let value: LabelDeclaration
@@ -138,6 +142,13 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
 
     block.value = value
     block.start = value.start
-    block.end = value.end
-    return block
+    block.end = value.end */
+    return /* block */createMismatchToken(currentToken)
+}
+
+export function printBlock(token: Block, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    return "Block\n"
 }

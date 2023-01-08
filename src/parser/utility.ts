@@ -1,19 +1,46 @@
 import { type TokenStream } from "../lexer/token.js"
+import { generateComment } from "./comment.js"
+import diagnosticMessages from "./diagnosticMessages.js"
 
 export type Node = {
     type: string,
+    line: number,
+    column: number,
     start: number,
     end: number
+} & { [x: string]: any }
+
+export type DiagnosticMessage = keyof typeof diagnosticMessages
+export type DiagnosticDescription = {
+    code: string,
+    severity: number,
+    catagory: string
 }
 
-export const skip = (tokens: TokenStream, tokenTypes: LexicalKind[]) => {
+export const createDiagnosticMessage = <T extends DiagnosticMessage>(message: T, ...args: unknown[]): T => {
+
+    for (const [i, arg] of args.entries())
+        message = message.replace("{" + i + "}", String(arg)) as T
+
+    return message
+}
+
+export const skip = (tokens: TokenStream, skipable: Skipable) => {
+    let currentToken = tokens.currentToken
     while (!tokens.isFinished) {
         tokens.advance()
-        if (!tokenTypes.includes(tokens.currentToken.type))
+        currentToken = tokens.currentToken
+
+        if (!skipable.includes(currentToken))
             break
+
+        if (currentToken.value == "#") {
+            const comment = generateComment(tokens)
+        }
     }
-    return tokens.currentToken
+    return currentToken
 }
+
 export const punctuators = ['(', ')', '[', ']', '{', '}', ',', ';', '\'', '"', "\\", "$", "#"]
 export const operators = [
     "=", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
@@ -35,44 +62,92 @@ export const isOperator = (token: LexicalToken, opr: string) =>
 export const isPunctuator = (token: LexicalToken, punctuator: string) =>
     token.type == "Punctuator" && token.value == punctuator
 
-type PartialParse = { result: Node, cursor: number }
-export const createMismatchToken = (token: LexicalToken, error?: string | PartialParse): MismatchToken => {
+export type PartialParse = { result: Node, cursor: number }
+export type DiagnosticDescriptionObj = Partial<DiagnosticDescription> & { message: DiagnosticMessage, args: any[] }
 
-    const partialParse = error && typeof error == "object"
-        ? { partialParse: { ...error } }
-        : {}
+type DiagnosticObj = {
+    partialParse?: PartialParse,
+    diagnostics: DiagnosticDescriptionObj
+}
+
+export const createMismatchToken = (token: LexicalToken, error?: [DiagnosticMessage, ...any] | PartialParse | DiagnosticObj): MismatchToken => {
+
+    if (Array.isArray(error)) {
+        let [message, ...args] = error
+
+        return {
+            type: "MismatchToken",
+            error: createDiagnosticMessage(message, ...args),
+            errorDescription: diagnosticMessages[message],
+            value: token,
+            line: token.line,
+            column: token.column,
+            start: token.start,
+            end: token.end
+        }
+    }
+
+    if (error && "diagnostics" in error) {
+
+        const diagnosticDescription: Partial<DiagnosticDescription> = {
+            ...(error.diagnostics.catagory ? { catagory: error.diagnostics.catagory } : {}),
+            ...(error.diagnostics.code ? { code: error.diagnostics.code } : {}),
+            ...(error.diagnostics.severity ? { severity: error.diagnostics.severity } : {})
+        }
+
+
+        return {
+            type: "MismatchToken",
+            error: createDiagnosticMessage(error.diagnostics.message, ...error.diagnostics.args),
+            errorDescription: { ...diagnosticMessages[error.diagnostics.message], ...diagnosticDescription },
+            value: token,
+            ...(error.partialParse ? { partialParse: error.partialParse } : {}),
+            line: token.line,
+            column: token.column,
+            start: token.start,
+            end: token.end
+        }
+    }
+
+    const partialParse = error ? { partialParse: { ...error } } : {}
+    const defaultMessage: DiagnosticMessage = "Unexpected token '{0}' on {1}:{2}"
 
     return {
         type: "MismatchToken",
-        error: typeof error != "string"
-            ? `Unexpected token '${token.type}' on ${token.line}:${token.column}`
-            : error,
+        error: createDiagnosticMessage(defaultMessage, token.type, token.line, token.column),
+        errorDescription: diagnosticMessages[defaultMessage],
         value: token,
         ...partialParse,
-        start: token.line,
-        end: token.column
+        line: token.line,
+        column: token.column,
+        start: token.start,
+        end: token.end
     }
 }
 
-export const skipables = [
-    /* TokenType.MultiLineComment,
-    TokenType.SingleLineComment, */
-    "WhiteSpace",
-    "Newline"
-] as LexicalKind[]
+type Skipable = {
+    includes: (token: LexicalToken) => boolean
+}
 
-export const _skipables = [
-    /* TokenType.MultiLineComment,
-    TokenType.SingleLineComment, */
-    "WhiteSpace" as LexicalKind,
-]
+export type NodePrinter = (token: Node, indent?: number) => string
 
-export const stringLiterals = [
-    /* TokenType.InlineASCIIStringLiteral,
-    TokenType.InlineUnicodeStringLiteral,
-    TokenType.MultilineASCIIStringLiteral,
-    TokenType.MultilineUnicodeStringLiteral, */
-]
+export const pickPrinter = (printers: Array<NodePrinter>, token: Node) =>
+    printers.find(x => x.name.replace(/^print/, "") == token.type)
+
+export const skipables: Skipable = {
+    includes(token: LexicalToken) {
+        return token.type == "Punctuator" && token.value == "#" ||
+            token.type == "Whitespace" ||
+            token.type == "Newline"
+    }
+}
+
+export const _skipables: Skipable = {
+    includes(token: LexicalToken) {
+        return token.type == "Punctuator" && token.value == "#" ||
+            token.type == "Whitespace"
+    }
+}
 
 type PrecidenceType = {
     infix: { left: { [key: string]: number }, right: { [key: string]: number }, },

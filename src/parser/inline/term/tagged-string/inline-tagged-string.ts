@@ -13,6 +13,8 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
         type: "InlineTaggedString",
         fragments: [],
         tag: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

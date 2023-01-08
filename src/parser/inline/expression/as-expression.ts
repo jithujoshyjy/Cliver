@@ -9,6 +9,8 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
         type: "AsExpression",
         left: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

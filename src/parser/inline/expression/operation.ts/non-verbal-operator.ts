@@ -7,6 +7,8 @@ export function generateNonVerbalOperator(context: Node, tokens: TokenStream): N
         precedence: 10,
         kind: "infix",
         name: "",
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -30,4 +32,12 @@ export function generateNonVerbalOperator(context: Node, tokens: TokenStream): N
     nonVerbalOperator.end = currentToken.end
 
     return nonVerbalOperator
+}
+
+export function printNonVerbalOperator(token: NonVerbalOperator, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    return `${token.kind}__${token.precedence}__(${token.name})\n`
 }

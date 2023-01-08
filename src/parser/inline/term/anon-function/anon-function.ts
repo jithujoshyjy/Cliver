@@ -8,6 +8,8 @@ export function generateAnonFunction(context: Node, tokens: TokenStream): AnonFu
     const anonFunction: AnonFunction = {
         type: "AnonFunction",
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

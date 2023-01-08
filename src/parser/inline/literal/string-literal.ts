@@ -1,12 +1,15 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, type Node } from "../../utility.js"
+import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isPunctuator, type Node } from "../../utility.js"
+import { generateEscapeSequence } from "./escape-sequence.js"
 
 export function generateStringLiteral(context: Node, tokens: TokenStream): StringLiteral | MismatchToken {
     const stringLiteral: StringLiteral = {
         type: "StringLiteral",
-        text: null!,
+        text: "",
         kind: "inline",
         charset: "ascii",
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -14,26 +17,96 @@ export function generateStringLiteral(context: Node, tokens: TokenStream): Strin
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* const inlineStr = [TokenType.InlineASCIIStringLiteral, TokenType.InlineUnicodeStringLiteral]
-    const multilineStr = [TokenType.MultilineASCIIStringLiteral, TokenType.MultilineUnicodeStringLiteral]
-
-    const isStr = inlineStr.includes(currentToken.type) || multilineStr.includes(currentToken.type)
-    if(!isStr) {
+    if (!isPunctuator(currentToken, '"')) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    stringLiteral.text = currentToken.value[0] as string ?? ""
-
-    if(/multiline/ig.test(currentToken.type)) {
-        stringLiteral.kind = "multiline"
-    }
-
-    if(/unicode/ig.test(currentToken.type)) {
-        stringLiteral.charset = "unicode"
-    }
-
     stringLiteral.start = currentToken.start
-    stringLiteral.end = currentToken.end */return createMismatchToken(currentToken)
+    stringLiteral.line = currentToken.line
+    stringLiteral.column = currentToken.column
+
+    let startQuoteCount = 0
+    while (!tokens.isFinished && isPunctuator(currentToken, '"')) {
+
+        stringLiteral.end = currentToken.end
+        startQuoteCount++
+        tokens.advance()
+        currentToken = tokens.currentToken
+    }
+
+    if (startQuoteCount == 2)
+        return stringLiteral
+
+    if (startQuoteCount > 1)
+        stringLiteral.kind = "multiline"
+
+    while (!tokens.isFinished) {
+        currentToken = tokens.currentToken
+
+        if (currentToken.type == "EOF") {
+            tokens.cursor = initialCursor
+            const error: DiagnosticMessage = "Unexpected end of input on {0}:{1}"
+            return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
+        }
+
+        if (isPunctuator(currentToken, '"')) {
+            let endQuoteCount = 0
+            while (!tokens.isFinished && isPunctuator(currentToken, '"')) {
+
+                stringLiteral.end = currentToken.end
+                endQuoteCount++
+                tokens.advance()
+                currentToken = tokens.currentToken
+
+                if (endQuoteCount === startQuoteCount) break
+            }
+
+            if (endQuoteCount < startQuoteCount) {
+                tokens.cursor = initialCursor
+                return createMismatchToken(currentToken)
+            }
+            break
+        }
+
+        if (isPunctuator(currentToken, '\\')) {
+            const escapeSequence = generateEscapeSequence(stringLiteral, tokens)
+
+            if (escapeSequence.type == "MismatchToken") {
+                tokens.cursor = initialCursor
+                return escapeSequence
+            }
+
+            const { value: escape, trailing } = escapeSequence
+            const value = escape + trailing
+            stringLiteral.text += value
+
+            for (const _char of value)
+                if (_char.codePointAt(0)! > 127)
+                    stringLiteral.charset = "unicode"
+
+            continue
+        }
+
+        const { value } = currentToken
+        stringLiteral.text += value
+
+        for (const _char of value)
+            if (_char.codePointAt(0)! > 127)
+                stringLiteral.charset = "unicode"
+
+        tokens.advance()
+    }
+
     return stringLiteral
+}
+
+export function printStringLiteral(token: StringLiteral, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    
+    const quote = '"'.repeat(token.kind == "multiline" ? 3 : 1)
+    return "StringLiteral\n" + '\t'.repeat(indent) + endJoiner +
+        token.charset + quote + token.text + quote + '\n'
 }

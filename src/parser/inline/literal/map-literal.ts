@@ -6,6 +6,8 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
     const mapLiteral: MapLiteral = {
         type: "MapLiteral",
         pairs: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -78,4 +80,11 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
     } */
     return createMismatchToken(currentToken)
     return mapLiteral
+}
+
+export function printMapLiteral(token: MapLiteral, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    return "MapLiteral\n"
 }

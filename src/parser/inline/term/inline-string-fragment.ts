@@ -6,6 +6,8 @@ export function generateInlineStringFragment(context: Node, tokens: TokenStream)
     const inlineStringFragment: InlineStringFragment = {
         type: "InlineStringFragment",
         fragments: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

@@ -1,12 +1,15 @@
 export class TokenStream {
     #index = 0;
     #length = 0;
+    input = "";
     #isFinished = false;
     #tokens: LexicalToken[] = [];
 
-    constructor(tokens: LexicalToken[]) {
+    constructor(input: string, tokens: LexicalToken[]) {
 
         this.#tokens = tokens;
+        this.input = input;
+        
         if (tokens.at(-1)?.type != "EOF") {
             const EOF: LexicalToken = {
                 value: "EOF",

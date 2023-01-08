@@ -12,6 +12,8 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
         params: [],
         signature: null,
         body: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

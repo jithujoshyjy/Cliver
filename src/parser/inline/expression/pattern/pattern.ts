@@ -15,6 +15,8 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
     const pattern: Pattern = {
         type: "Pattern",
         body: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -44,6 +46,11 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
         currentToken = tokens.currentToken
         if (patternNode.type != "MismatchToken") {
             break
+        }
+
+        if (patternNode.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return patternNode
         }
     }
 
@@ -102,4 +109,5 @@ x.[y]
 (None)
 (Just(x))
 (Just(1))
+
 */

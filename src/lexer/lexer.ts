@@ -36,8 +36,7 @@ export function tokenize(codeStr: string, file: string = '') {
         tokens.push(token)
     }
 
-    return new TokenStream(tokens)
-
+    return new TokenStream(codeStr, tokens)
     function generateInteger(code: string[]) {
         const integer: LexicalToken = {
             type: "Integer",

@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, type Node } from "../../utility.js"
+import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isPunctuator, type Node } from "../../utility.js"
 import { generateEscapeSequence } from "./escape-sequence.js"
 
 export function generateCharLiteral(context: Node, tokens: TokenStream): CharLiteral | MismatchToken {
@@ -7,6 +7,8 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
         type: "CharLiteral",
         charset: "ascii",
         text: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -20,6 +22,9 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
     }
 
     charLiteral.start = currentToken.start
+    charLiteral.line = currentToken.line
+
+    charLiteral.column = currentToken.column
     tokens.advance()
 
     currentToken = tokens.currentToken
@@ -33,8 +38,8 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
 
         if(escapeSequence.trailing) {
             tokens.cursor = initialCursor
-            const error = `SyntaxError: Multiple characters in character literal on ${currentToken.line}:${escapeSequence.end + escapeSequence.trailing.length}`
-            return createMismatchToken(currentToken, error)
+            const error: DiagnosticMessage = "Multiple characters in character literal on {0}:{1}"
+            return createMismatchToken(currentToken, [error, currentToken.line, escapeSequence.end + escapeSequence.trailing.length])
         }
 
         charLiteral.text = escapeSequence
@@ -44,14 +49,15 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
 
         if(currentToken.type == "EOF") {
             tokens.cursor = initialCursor
-            const error = `SyntaxError: Unexpected end of input on ${currentToken.line}:${currentToken.column}`
-            return createMismatchToken(currentToken, error)
+            const error: DiagnosticMessage = "Unexpected end of input on {0}:{1}"
+            return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
         }
 
         charLiteral.text = currentToken.value
         if(/[\s\S]{2,}/u.test(currentToken.value)) {
             tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
+            const error: DiagnosticMessage = "Multiple characters in character literal on {0}:{1}"
+            return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
         }
 
         charLiteral.charset = charLiteral.text.codePointAt(0)! > 127 ? "unicode" : "ascii"
@@ -68,4 +74,14 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
     tokens.advance()
 
     return charLiteral
+}
+
+export function printCharLiteral(token: CharLiteral, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    
+    const quote = "'"
+    return "CharLiteral\n" + '\t'.repeat(indent) + endJoiner +
+        token.charset + quote + token.text + quote + '\n'
 }

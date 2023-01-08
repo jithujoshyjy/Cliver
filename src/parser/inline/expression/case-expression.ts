@@ -6,6 +6,8 @@ export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr |
     const caseExpr: CaseExpr = {
         type: "CaseExpr",
         pattern: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

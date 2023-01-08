@@ -8,6 +8,8 @@ export function generateTypeAssertion(context: Node, tokens: TokenStream): TypeA
         type: "TypeAssertion",
         left: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

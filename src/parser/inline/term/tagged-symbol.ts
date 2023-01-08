@@ -11,6 +11,8 @@ export function generateTaggedSymbol(context: Node, tokens: TokenStream): Tagged
         type: "TaggedSymbol",
         fragments: [],
         tag: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -34,6 +36,11 @@ export function generateTaggedSymbol(context: Node, tokens: TokenStream): Tagged
         currentToken = tokens.currentToken
         if (tag.type != "MismatchToken")
             break
+
+        if (tag.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return tag
+        }
     }
 
     if (tag.type == "MismatchToken") {

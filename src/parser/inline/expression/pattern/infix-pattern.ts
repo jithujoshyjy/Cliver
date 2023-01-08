@@ -17,6 +17,8 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
         operator: null!,
         left: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -46,6 +48,11 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
         currentToken = tokens.currentToken
         if (lhs.type != "MismatchToken")
             break
+
+        if (lhs.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return lhs
+        }
     }
 
     if (lhs.type == "MismatchToken") {
@@ -77,13 +84,13 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
         const initialCursor = tokens.cursor
         let currentToken = tokens.currentToken
 
-        if (skipables.includes(currentToken.type))
+        if (skipables.includes(currentToken))
             currentToken = skip(tokens, skipables)
 
         let currentOpPrecedence = 0
         const isOpKind = (op: typeof currentToken) =>
             op.type == "Operator"
-        
+
         const decidePreced = (op: typeof currentToken) => {
             currentOpPrecedence = isOpKind(op) ? getPrecidence(op) : 0
             return currentOpPrecedence
@@ -114,11 +121,11 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
             const isInvalidOp = !validInfixOp.includes(currentToken.value as string)
 
             let conditionalExprType: "and" | "or" | "none" = "none"
-            if(isInvalidOp && isOperator(currentToken, "&&")) {
+            if (isInvalidOp && isOperator(currentToken, "&&")) {
                 conditionalExprType = "and"
                 nodeGenerators.unshift(...andConditionalExprs)
             }
-            else if(isInvalidOp && isOperator(currentToken, "||")) {
+            else if (isInvalidOp && isOperator(currentToken, "||")) {
                 conditionalExprType = "or"
                 nodeGenerators.unshift(...orConditionalExprs)
             }
@@ -137,6 +144,11 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
                 rhs = nodeGenerator(infixPattern, tokens)
                 if (rhs.type != "MismatchToken")
                     break
+
+                if (rhs.errorDescription.severity <= 3) {
+                    tokens.cursor = initialCursor
+                    return rhs
+                }
             }
 
             if (rhs.type == "MismatchToken") {
@@ -144,11 +156,11 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
                 return rhs
             }
 
-            if(conditionalExprType == "and") {
+            if (conditionalExprType == "and") {
                 andConditionalExprs.forEach(_ =>
                     nodeGenerators.shift())
             }
-            else if(conditionalExprType == "or") {
+            else if (conditionalExprType == "or") {
                 orConditionalExprs.forEach(_ =>
                     nodeGenerators.shift())
             }
@@ -171,7 +183,7 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
             }
 
             const resetCursorPoint = tokens.cursor
-            currentToken = skipables.includes(tokens.currentToken.type) // operator
+            currentToken = skipables.includes(tokens.currentToken) // operator
                 ? skip(tokens, skipables)
                 : tokens.currentToken
 
@@ -194,20 +206,22 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
                 left: lhs,
                 operator: _operator,
                 right: rhs as Exclude<Operand, MismatchToken>,
+                line: lhs.line,
+                column: lhs.column,
                 start: lhs.start,
                 end: rhs.end
             }
 
-            currentToken = skipables.includes(currentToken.type)
+            currentToken = skipables.includes(currentToken)
                 ? skip(tokens, skipables)
                 : tokens.currentToken
         }
 
-        if(lhs.type != "InfixPattern") {
+        if (lhs.type != "InfixPattern") {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }
-        
+
         return lhs as InfixPattern
     }
 }

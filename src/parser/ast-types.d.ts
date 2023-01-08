@@ -1,6 +1,8 @@
 type Program = {
     type: "Program",
     value: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -8,11 +10,14 @@ type Program = {
 type MismatchToken = {
     type: "MismatchToken",
     error: string,
+    errorDescription: import("./utility").DiagnosticDescription,
     value: LexicalToken,
     partialParse?: {
         result: any,
         cursor: number
     },
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -21,6 +26,8 @@ type ImportDeclaration = {
     type: "ImportDeclaration",
     specifiers: Array<AsExpression | Identifier | ObjectExtendNotation | PrefixOperation | NonVerbalOperator>,
     sources: Array<StringLiteral | TaggedSymbol | FunctionCall | Identifier | PropertyAccess>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -30,6 +37,8 @@ type VariableDeclaration = {
     signature: TypeExpression | null,
     declarations: VariableDeclarator[],
     kind: "var" | "val",
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -39,6 +48,8 @@ type VariableDeclarator = {
     signature: TypeExpression | null,
     left: Pattern,
     right: Expression | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -46,6 +57,8 @@ type VariableDeclarator = {
 type Identifier = {
     type: "Identifier",
     name: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -55,6 +68,8 @@ type KeywordKind = "do" | "done" | "end" | "fun" | "var" | "val" | "type" | "ref
 type Keyword = {
     type: "Keyword",
     name: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -63,6 +78,8 @@ type TypeDeclaration = {
     type: "TypeDeclaration",
     declarations: TypeDeclarator[],
     signature: TypeExpression | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -76,6 +93,8 @@ type TypeDeclarator = {
     name: Identifier,
     args: Array<Pattern>,
     right: TypeExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -85,6 +104,8 @@ type UnitFunction = {
     params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -92,6 +113,8 @@ type UnitFunction = {
 type AnonFunction = {
     type: "AnonFunction",
     value: InlineAnonFunction | BlockAnonFunction,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -101,6 +124,8 @@ type InlineAnonFunction = {
     params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -113,6 +138,8 @@ type BlockAnonFunction = {
     params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -124,6 +151,8 @@ type NamedFunction = {
     params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -133,6 +162,8 @@ type FunctionPrototype = {
     kind: FunctionKind[],
     params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -142,6 +173,8 @@ type NonVerbalOperator = {
     kind: "infix" | "prefix" | "postfix",
     precedence: number,
     name: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -153,6 +186,8 @@ type VerbalOperator = {
     kind: "infix" | "prefix" | "postfix",
     precedence: number,
     name: VerbalOperatorKind,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -162,6 +197,8 @@ type InfixOperation = {
     left: PrefixOperation | GroupExpression | Term | Literal | PostfixOperation | InfixOperation,
     right: PrefixOperation | GroupExpression | Term | Literal | PostfixOperation | InfixOperation,
     operator: InfixCallOperator | NonVerbalOperator | VerbalOperator,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -170,6 +207,8 @@ type PrefixOperation = {
     type: "PrefixOperation",
     operand: Literal | Term | GroupExpression | InfixOperation | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -178,6 +217,8 @@ type PostfixOperation = {
     type: "PostfixOperation",
     operand: Literal | Term | GroupExpression | InfixOperation | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -187,6 +228,8 @@ type InlineMacroApplication = {
     caller: Identifier | PropertyAccess,
     arguments: CallSiteArgsList | null,
     body: PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -196,6 +239,8 @@ type FunctionCall = {
     arguments: CallSiteArgsList,
     caller: Identifier | PropertyAccess | OperatorRef | GroupExpression,
     externcallback: boolean,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -203,6 +248,8 @@ type FunctionCall = {
 type OperatorRef = {
     type: "OperatorRef",
     operator: VerbalOperator | NonVerbalOperator,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -211,6 +258,8 @@ type CallSiteArgsList = {
     type: "CallSiteArgsList",
     positional: Array<Pair | Expression | FunctionPrototype>,
     keyword: Array<Pair | Identifier>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -218,6 +267,8 @@ type CallSiteArgsList = {
 type DoExpr = {
     type: "DoExpr",
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -227,6 +278,8 @@ type PipelineNotation = {
     expression: AsExpression | Expression,
     pipes: Array<ErrorPipeline | TransformPipeline>,
     kind: "pointed" | "pointfree",
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -235,6 +288,8 @@ type ErrorPipeline = {
     type: "ErrorPipeline",
     expression: Expression,
     handler: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -243,6 +298,8 @@ type TransformPipeline = {
     type: "TransformPipeline",
     expression: Expression,
     transformer: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -251,6 +308,8 @@ type InfixCallOperator = {
     type: "InfixCallOperator",
     caller: Identifier | PropertyAccess,
     precedence: 9,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -259,6 +318,8 @@ type ExternalCallbackNotation = {
     type: "ExternalCallbackNotation",
     caller: FunctionCall,
     callback: DoExpr,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -268,6 +329,8 @@ type BlockMacroApplication = {
     caller: Identifier | PropertyAccess,
     left: Array<Inline | Block>,
     right: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -276,6 +339,8 @@ type ObjectExtendNotation = {
     type: "ObjectExtendNotation",
     head: Expression,
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -283,6 +348,8 @@ type ObjectExtendNotation = {
 type ObjectCascadeNotation = {
     type: "ObjectCascadeNotation",
     body: Array<ObjectOptionalCascade | ObjectRegularCascade>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -290,6 +357,8 @@ type ObjectCascadeNotation = {
 type ObjectOptionalCascade = {
     type: "ObjectOptionalCascade",
     body: Array<FunctionCall | AssignExpr>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -297,6 +366,8 @@ type ObjectOptionalCascade = {
 type ObjectRegularCascade = {
     type: "ObjectRegularCascade",
     body: Array<FunctionCall | AssignExpr>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -306,6 +377,8 @@ type AssignExpr = {
     left: Pattern,
     right: Expression,
     signature: TypeExpression | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -315,6 +388,8 @@ type IfBlock = {
     condition: AsExpression | Expression,
     body: Array<Inline | Block>,
     alternate: IfBlock | ElseBlock | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -322,6 +397,8 @@ type IfBlock = {
 type ElseBlock = {
     type: "ElseBlock",
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -331,6 +408,8 @@ type IfInline = {
     condition: AsExpression | Expression,
     body: Expression,
     alternate: ElseInline,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -339,6 +418,8 @@ type AsExpression = {
     type: "AsExpression",
     left: Expression,
     right: Identifier | CaseExpr,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -346,6 +427,8 @@ type AsExpression = {
 type ElseInline = {
     type: "ElseInline",
     body: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -354,6 +437,8 @@ type MatchInline = {
     type: "MatchInline",
     head: Expression,
     cases: MatchCaseExpr[],
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -362,6 +447,8 @@ type MatchCaseExpr = {
     type: "MatchCaseExpr",
     patterns: Pattern[],
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -369,6 +456,8 @@ type MatchCaseExpr = {
 type CaseExpr = {
     type: "CaseExpr",
     pattern: Pattern,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -378,6 +467,8 @@ type ForBlock = {
     condition: Expression,
     body: Array<Inline | Block>,
     done: DoneBlock | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -386,6 +477,8 @@ type DoneBlock = {
     type: "DoneBlock",
     status: Identifier,
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -394,6 +487,8 @@ type ForInline = {
     type: "ForInline",
     condition: Expression,
     body: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -403,6 +498,8 @@ type DoCatchBlock = {
     body: Array<Inline | Block>,
     handlers: CatchBlock[],
     done: DoneBlock | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -411,6 +508,8 @@ type CatchBlock = {
     type: "CatchBlock",
     body: Array<Inline | Block>,
     params: Array<Pattern>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -427,6 +526,8 @@ type Pattern = {
     | PostfixPattern
     | InterpPattern
     | Literal,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -435,6 +536,8 @@ type PairPattern = {
     type: "PairPattern",
     key: any,
     value: any,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -442,6 +545,8 @@ type PairPattern = {
 type InterpPattern = {
     type: "InterpPattern",
     body: TaggedString | MetaDataInterpolation,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -450,6 +555,8 @@ type PrefixPattern = {
     type: "PrefixPattern",
     operator: NonVerbalOperator,
     operand: Literal | BracePattern | BracketPattern | ParenPattern | InterpPattern | PrefixPattern | InfixPattern | PostfixPattern,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -458,6 +565,8 @@ type PostfixPattern = {
     type: "PostfixPattern",
     operator: NonVerbalOperator,
     operand: Literal | BracePattern | BracketPattern | ParenPattern | InterpPattern,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -481,6 +590,8 @@ type InfixPattern = {
     | PrefixPattern
     | PostfixPattern
     | Literal,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -488,6 +599,8 @@ type InfixPattern = {
 type BracePattern = {
     type: "BracePattern",
     values: any[],
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -495,6 +608,8 @@ type BracePattern = {
 type BracketPattern = {
     type: "BracketPattern",
     values: any[],
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -502,6 +617,18 @@ type BracketPattern = {
 type ParenPattern = {
     type: "ParenPattern",
     values: any[],
+    line: number,
+    column: number,
+    start: number,
+    end: number
+}
+
+type CommentLiteral = {
+    type: "CommentLiteral",
+    value: string,
+    kind: "inline" | "block",
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -509,6 +636,8 @@ type ParenPattern = {
 type Literal = {
     type: "Literal",
     value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | CharLiteral | SymbolLiteral | NumericLiteral | DoExpr | Identifier | GroupExpression | OperatorRef,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -516,6 +645,8 @@ type Literal = {
 type Term = {
     type: "Term",
     value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | AssignExpr | GroupExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -523,6 +654,8 @@ type Term = {
 type Expression = {
     type: "Expression",
     value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -530,6 +663,8 @@ type Expression = {
 type GroupExpression = {
     type: "GroupExpression",
     value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -537,6 +672,8 @@ type GroupExpression = {
 type UseDeclaration = {
     type: "UseDeclaration",
     rules: Array<StringLiteral | TypeAssertion>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -545,6 +682,8 @@ type TypeAssertion = {
     type: "TypeAssertion",
     left: Expression,
     right: TypeExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -553,6 +692,8 @@ type LabelDeclaration = {
     type: "LabelDeclaration",
     name: Identifier,
     body: IfBlock | ForBlock | DoCatchBlock | MatchInline | AnonFunction | UnitFunction,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -561,6 +702,8 @@ type TaggedNumber = {
     type: "TaggedNumber",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     number: NumericLiteral,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -569,13 +712,18 @@ type ImplicitMultiplication = {
     type: "ImplicitMultiplication",
     left: NumericLiteral,
     right: Identifier | PropertyAccess | GroupExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
 
 type NumericLiteral = {
     type: "NumericLiteral",
-    value: IntegerLiteral | FloatLiteral,
+    value: string,
+    kind: "float" | "integer",
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -583,6 +731,8 @@ type NumericLiteral = {
 type IntegerLiteral = {
     type: "IntegerLiteral",
     value: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -590,6 +740,8 @@ type IntegerLiteral = {
 type FloatLiteral = {
     type: "FloatLiteral",
     value: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -599,6 +751,8 @@ type StringLiteral = {
     text: string,
     kind: "inline" | "multiline",
     charset: "ascii" | "unicode",
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -610,6 +764,8 @@ type InlineTaggedString = {
     type: "InlineTaggedString",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     fragments: InlineFString[],
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -617,6 +773,8 @@ type InlineTaggedString = {
 type InstringExpr = {
     type: "InstringExpr",
     body: Array<Pair | Expression>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -624,6 +782,8 @@ type InstringExpr = {
 type InstringId = {
     type: "InstringId",
     value: Identifier,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -631,6 +791,8 @@ type InstringId = {
 type InlineFString = {
     type: "InlineFString",
     fragments: Array<InlineStringLiteral | InstringExpr | InstringId>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -638,6 +800,8 @@ type InlineFString = {
 type InlineStringFragment = {
     type: "InlineStringFragment",
     fragments: InlineStringLiteral[],
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -645,6 +809,8 @@ type InlineStringFragment = {
 type MultilineASCIIString = {
     type: "MultilineASCIIString",
     text: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -652,6 +818,8 @@ type MultilineASCIIString = {
 type MultilineUnicodeString = {
     type: "MultilineUnicodeString",
     text: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -660,6 +828,8 @@ type MultilineTaggedString = {
     type: "MultilineTaggedString",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     fragments: Array<MultilineStringLiteral | InstringExpr | InstringId>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -668,6 +838,8 @@ type TaggedString = {
     type: "TaggedString",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     value: InlineTaggedString | MultilineTaggedString,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -676,6 +848,8 @@ type TaggedSymbol = {
     type: "TaggedSymbol",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     fragments: Array<SymbolLiteral>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -685,6 +859,8 @@ type SymbolLiteral = {
     text: string,
     kind: "string" | "char",
     charset: "ascii" | "unicode",
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -693,20 +869,27 @@ type CharLiteral = {
     type: "CharLiteral",
     text: string | EscapeSequence,
     charset: "ascii" | "unicode",
+    line: number,
+    column: number,
     start: number,
     end: number
 }
 
 type ArrayLiteral = {
     type: "ArrayLiteral",
-    values: Array<Expression>,
+    values: Array<Expression[]>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
 
 type TupleLiteral = {
     type: "TupleLiteral",
-    values: Array<Expression>,
+    positional: Array<Expression>,
+    keyword: Array<Pair | Expression>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -714,6 +897,8 @@ type TupleLiteral = {
 type MapLiteral = {
     type: "MapLiteral",
     pairs: Pair[],
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -722,6 +907,8 @@ type Pair = {
     type: "Pair",
     key: PrefixOperation | PostfixOperation | GroupExpression | Term | Literal,
     value: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -729,6 +916,8 @@ type Pair = {
 type MetaDataInterpolation = {
     type: "MetaDataInterpolation",
     body: Array<Inline | Block>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -736,6 +925,8 @@ type MetaDataInterpolation = {
 type Inline = {
     type: "Inline",
     value: Expression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -743,6 +934,8 @@ type Inline = {
 type Block = {
     type: "Block",
     value: LabelDeclaration | UseDeclaration | DoCatchBlock | ForBlock | IfBlock | BlockMacroApplication | NamedFunction | ImportDeclaration | VariableDeclaration,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -750,6 +943,8 @@ type Block = {
 type TypeName = {
     type: "TypeName",
     name: Identifier,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -758,6 +953,8 @@ type UnionType = {
     type: "UnionType",
     left: TypeName | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | TupleType | GroupTypeExpression,
     right: TypeExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -766,6 +963,8 @@ type IntersectionType = {
     type: "IntersectionType",
     left: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | TupleType | GroupTypeExpression,
     right: TypeExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -773,6 +972,8 @@ type IntersectionType = {
 type NegateType = {
     type: "NegateType",
     operand: TypeExpression | GroupTypeExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -781,6 +982,8 @@ type DifferenceType = {
     type: "DifferenceType",
     left: TypeName | UnionType | IntersectionType | NegateType | FunctionType | FunctionCallType | StructureType | TupleType | GroupTypeExpression,
     right: TypeExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -789,6 +992,8 @@ type FunctionType = {
     type: "FunctionType",
     head: FunctionCallType | TypeName | TupleType,
     body: TypeExpression,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -797,6 +1002,8 @@ type TypeExpression = {
     type: "TypeExpression",
     body: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | GroupTypeExpression | StructureType,
     constraint: TypeConstraint | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -805,6 +1012,20 @@ type GroupTypeExpression = {
     type: "GroupTypeExpression",
     body: TypeName | UnionType | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | TupleType | GroupTypeExpression | StructureType,
     constraint: TypeConstraint | null,
+    line: number,
+    column: number,
+    start: number,
+    end: number
+}
+
+type EscapeSequence = {
+    type: "EscapeSequence",
+    value: string,
+    kind: "regular" | "doubleHex" | "quadHex" | "polyHex",
+    raw: string,
+    trailing: string,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -814,6 +1035,8 @@ type TypeConstraint = {
     assert: FunctionType | null,
     structure: StructureType | null,
     body: TupleLiteral | null,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -821,6 +1044,8 @@ type TypeConstraint = {
 type StructureType = {
     type: "StructureType",
     fields: Array<TypeAssertion>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -828,6 +1053,8 @@ type StructureType = {
 type TupleType = {
     type: "TupleType",
     values: Array<TypeExpression>,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -836,6 +1063,8 @@ type FunctionCallType = {
     type: "FunctionCallType",
     args: TupleType,
     caller: TypeName,
+    line: number,
+    column: number,
     start: number,
     end: number
 }
@@ -846,6 +1075,8 @@ type PropertyAccess = {
     field: NumericLiteral | Identifier | ArrayLiteral,
     optional: boolean,
     computed: boolean,
+    line: number,
+    column: number,
     start: number,
     end: number
 }

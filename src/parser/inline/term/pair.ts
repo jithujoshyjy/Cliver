@@ -1,17 +1,20 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node } from "../../utility.js"
-import { generateExpression } from "../expression/expression.js"
-import { generateGroupExpression } from "../expression/group-expression.js"
-import { generatePrefixOperation } from "../expression/operation.ts/prefix-operation.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, pickPrinter, NodePrinter } from "../../utility.js"
+import { generateExpression, printExpression } from "../expression/expression.js"
+import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
+import { printPostfixOperation } from "../expression/operation.ts/postfix-operation.js"
+import { generatePrefixOperation, printPrefixOperation } from "../expression/operation.ts/prefix-operation.js"
 // import { generatePrefixOperation } from "../expression/operation.ts/prefix-operation.js"
-import { generateLiteral } from "../literal/literal.js"
-import { generateTerm } from "./term.js"
+import { generateLiteral, printLiteral } from "../literal/literal.js"
+import { generateTerm, printTerm } from "./term.js"
 
 export function generatePair(context: Node, tokens: TokenStream): Pair | MismatchToken {
     const pair: Pair = {
         type: "Pair",
         key: null!,
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -30,12 +33,16 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
         | Term
         | Literal
         | MismatchToken = null!
-    
-    for(let nodeGenerator of nodeGenerators) {
+
+    for (let nodeGenerator of nodeGenerators) {
         key = nodeGenerator(pair, tokens)
         currentToken = tokens.currentToken
-        if(key.type != "MismatchToken") {
+        if (key.type != "MismatchToken")
             break
+
+        if (key.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return key
         }
     }
 
@@ -45,8 +52,8 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
     }
 
     pair.key = key
-    
-    if(!isOperator(currentToken, ":")) {
+
+    if (!isOperator(currentToken, ":")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -62,4 +69,22 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
     pair.value = value
 
     return pair
+}
+
+export function printPair(token: Pair, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const keyPrinters = [
+        printPrefixOperation, printPostfixOperation, printGroupExpression,
+        printTerm, printLiteral
+    ] as NodePrinter[]
+
+    const keyPrinter = pickPrinter(keyPrinters, token.key)!
+    return "Pair\n" +
+        '\t'.repeat(indent) + middleJoiner +
+        "key\n" + '\t'.repeat(indent + 1) + endJoiner + keyPrinter(token.key, indent+2) +
+        '\t'.repeat(indent) + endJoiner +
+        "value\n" + '\t'.repeat(indent + 1) + endJoiner + printExpression(token.value, indent+2)
 }

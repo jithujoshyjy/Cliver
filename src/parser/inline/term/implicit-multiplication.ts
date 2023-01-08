@@ -10,6 +10,8 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
         type: "ImplicitMultiplication",
         left: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -37,6 +39,11 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
         currentToken = tokens.currentToken
         if(multiplier.type != "MismatchToken") {
             break
+        }
+
+        if (multiplier.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return multiplier
         }
     }
 

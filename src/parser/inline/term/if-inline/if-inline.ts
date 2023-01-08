@@ -10,6 +10,8 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
         alternate: null!,
         body: null!,
         condition: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

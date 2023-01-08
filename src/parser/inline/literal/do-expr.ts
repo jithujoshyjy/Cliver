@@ -1,12 +1,14 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { generateBlock } from "../../block/block.js"
+import { generateBlock, printBlock } from "../../block/block.js"
 import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility.js"
-import { generateInline } from "../inline.js"
+import { generateInline, printInline } from "../inline.js"
 
 export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | MismatchToken {
     const doExpr: DoExpr = {
         type: "DoExpr",
         body: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -20,6 +22,9 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
     }
 
     doExpr.start = currentToken.start
+    doExpr.line = currentToken.line
+
+    doExpr.column = currentToken.column
     currentToken = skip(tokens, skipables) // skip do
 
     const nodeGenerators = [
@@ -37,6 +42,11 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
             currentToken = tokens.currentToken
             if(node.type != "MismatchToken") {
                 break
+            }
+
+            if (node.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return node
             }
         }
 
@@ -56,4 +66,15 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
     }
 
     return doExpr
+}
+
+export function printDoExpr(token: DoExpr, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    
+    return "DoExpr\n" + '\t'.repeat(indent) + token.body
+        .reduce((a, c, i, arr) => a +
+            (i == arr.length-1 ? endJoiner : middleJoiner) +
+            (c.type == "Block" ? printBlock(c, indent+1) : printInline(c, indent+1)) + '\n', '')
 }

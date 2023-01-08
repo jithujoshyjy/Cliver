@@ -12,6 +12,8 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
         arguments: null!,
         caller: null!,
         externcallback: false,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

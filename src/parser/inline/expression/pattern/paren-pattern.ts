@@ -14,6 +14,8 @@ export function generateParenPattern(context: Node, tokens: TokenStream): ParenP
     const parenPattern: ParenPattern = {
         type: "ParenPattern",
         values: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

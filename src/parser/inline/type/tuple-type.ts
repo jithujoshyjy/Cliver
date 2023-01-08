@@ -7,6 +7,8 @@ export function generateTupleType(context: Node, tokens: TokenStream): TupleType
     const tupleType: TupleType = {
         type: "TupleType",
         values: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -15,6 +17,8 @@ export function generateTupleType(context: Node, tokens: TokenStream): TupleType
         type: "GroupTypeExpression",
         body: null!,
         constraint: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

@@ -16,6 +16,8 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
         type: "PairPattern",
         key: null!,
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

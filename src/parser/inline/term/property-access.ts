@@ -35,6 +35,8 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         field: null!,
         optional: null!,
         computed: false,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

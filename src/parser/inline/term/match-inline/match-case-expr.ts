@@ -8,6 +8,8 @@ export function generateMatchCaseExpr(context: Node, tokens: TokenStream): Match
         type: "MatchCaseExpr",
         patterns: null!,
         body: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

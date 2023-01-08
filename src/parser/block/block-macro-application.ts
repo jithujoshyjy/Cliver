@@ -9,6 +9,8 @@ export function generateBlockMacroApplication(context: Node, tokens: TokenStream
         caller: null!,
         left: [],
         right: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

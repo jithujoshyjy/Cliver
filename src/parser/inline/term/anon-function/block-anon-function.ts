@@ -13,6 +13,8 @@ export function generateBlockAnonFunction(context: Node, tokens: TokenStream): B
         kind: ["return"],
         params: [],
         signature: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

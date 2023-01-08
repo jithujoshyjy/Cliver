@@ -6,6 +6,8 @@ export function generateNegateType(context: Node, tokens: TokenStream): NegateTy
     const negateType: NegateType = {
         type: "NegateType",
         operand: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

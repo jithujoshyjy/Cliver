@@ -10,6 +10,8 @@ export function generateForBlock(context: Node, tokens: TokenStream): ForBlock |
         body: [],
         condition: null!,
         done: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

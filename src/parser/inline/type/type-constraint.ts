@@ -10,6 +10,8 @@ export function generateTypeConstraint(context: Node, tokens: TokenStream): Type
         assert: null,
         structure: null,
         body: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

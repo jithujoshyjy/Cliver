@@ -11,6 +11,8 @@ export function generateCallSiteArgsList(context: Node, tokens: TokenStream): Ca
         type: "CallSiteArgsList",
         positional: [],
         keyword: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

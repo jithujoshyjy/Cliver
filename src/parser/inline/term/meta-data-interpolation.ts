@@ -6,6 +6,8 @@ export function generateMetaDataInterpolation(context: Node, tokens: TokenStream
     const metaDataInterpolation: MetaDataInterpolation = {
         type: "MetaDataInterpolation",
         body: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

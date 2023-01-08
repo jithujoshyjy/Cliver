@@ -10,6 +10,8 @@ export function generateFunctionType(context: Node, tokens: TokenStream): Functi
         type: "FunctionType",
         body: null!,
         head: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

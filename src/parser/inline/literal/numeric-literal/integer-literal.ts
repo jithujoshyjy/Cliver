@@ -5,6 +5,8 @@ export function generateIntegerLiteral(context: Node, tokens: TokenStream): Inte
     const integerLiteral: IntegerLiteral = {
         type: "IntegerLiteral",
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -20,8 +22,11 @@ export function generateIntegerLiteral(context: Node, tokens: TokenStream): Inte
 
     integerLiteral.value = integer.value
     integerLiteral.start = integer.start
-    integerLiteral.end = integer.end
 
+    integerLiteral.line = integer.line
+    integerLiteral.column = integer.column
+
+    integerLiteral.end = integer.end
     return integerLiteral
 
     function parseInteger(tokens: TokenStream) {

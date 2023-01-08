@@ -6,6 +6,8 @@ export function generateTransformPipeline(context: Node, tokens: TokenStream): T
         type: "TransformPipeline",
         expression: null!,
         transformer: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

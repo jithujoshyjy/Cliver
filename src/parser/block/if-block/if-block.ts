@@ -11,6 +11,8 @@ export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | M
         alternate: null,
         body: [],
         condition: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

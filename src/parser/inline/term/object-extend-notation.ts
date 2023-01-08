@@ -10,6 +10,8 @@ export function generateObjectExtendNotation(context: Node, tokens: TokenStream)
         type: "ObjectExtendNotation",
         head: null!,
         body: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

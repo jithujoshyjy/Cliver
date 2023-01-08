@@ -25,6 +25,8 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     const term: Term = {
         type: "Term",
         value: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -62,4 +64,11 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     term.value = node
 
     return term */
+}
+
+export function printTerm(token: Term, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    return "Term\n"
 }

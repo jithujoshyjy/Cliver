@@ -8,6 +8,8 @@ export function generateAssignExpr(context: Node, tokens: TokenStream): AssignEx
         left: null!,
         right: null!,
         signature: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

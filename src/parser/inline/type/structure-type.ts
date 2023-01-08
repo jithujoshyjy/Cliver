@@ -6,6 +6,8 @@ export function generateStructureType(context: Node, tokens: TokenStream): Struc
     const structureType: StructureType = {
         type: "StructureType",
         fields: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

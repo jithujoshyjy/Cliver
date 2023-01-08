@@ -10,6 +10,8 @@ export function generateLabelDeclaration(context: Node, tokens: TokenStream): La
         type: "LabelDeclaration",
         body: null!,
         name: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

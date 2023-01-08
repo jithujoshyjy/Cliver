@@ -15,6 +15,8 @@ export function generateBracketPattern(context: Node, tokens: TokenStream): Brac
     const bracketPattern: BracketPattern = {
         type: "BracketPattern",
         values: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

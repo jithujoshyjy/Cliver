@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, type Node } from "../../utility.js"
+import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isPunctuator, type Node } from "../../utility.js"
 
 export function generateEscapeSequence(context: Node, tokens: TokenStream): EscapeSequence | MismatchToken {
     let escapeSequence: EscapeSequence = {
@@ -8,6 +8,8 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
         kind: "regular",
         trailing: "",
         raw: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -21,6 +23,8 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
     }
 
     escapeSequence.start = currentToken.start
+    escapeSequence.line = currentToken.line
+    escapeSequence.column = currentToken.column
 
     tokens.advance()
     currentToken = tokens.currentToken
@@ -30,7 +34,7 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
 
     if (currentToken.type == "Word" && startsWithU()) {
         const unicodeSequence = parseUnicodeSequence(tokens)
-        
+
         if (unicodeSequence.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return unicodeSequence
@@ -51,10 +55,10 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
     }
     else {
         escapeSequence.raw = currentToken.value.substring(0, 1)
-        
+
         if (escapeSequence.raw === "") {
-            const error = `SyntaxError: Unexpected end of input on ${currentToken.line}:${currentToken.column}`
-            return createMismatchToken(currentToken, error)
+            const error: DiagnosticMessage = "Unexpected end of input on {0}:{1}"
+            return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
         }
 
         tokens.advance()
@@ -72,10 +76,12 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
             kind: "quadHex",
             raw: currentToken.value.substring(1, 5),
             trailing: currentToken.value.substring(5),
+            line: 0,
+            column: 0,
             start: 0,
             end: 0
         }
-        
+
         if (escapeSequence.raw === "" && tokens.peek(1)?.value === "{") {
 
             tokens.advance()
@@ -94,8 +100,9 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
 
                 currentToken = tokens.currentToken
                 if (currentToken.type == "EOF") {
-                    const error = `SyntaxError: Unexpected end of input on ${currentToken.line}:${currentToken.column}`
-                    return createMismatchToken(currentToken, error)
+                    tokens.cursor = initialCursor
+                    const error: DiagnosticMessage = "Unexpected end of input on {0}:{1}"
+                    return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
                 }
 
                 if (isPunctuator(currentToken, "}")) {
@@ -108,8 +115,9 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
                     && /^[a-f0-9]+$/i.test(currentToken.value)
 
                 if (!isValidSequence) {
-                    const error = `SyntaxError: Invalid Unicode escape sequence on ${currentToken.line}:${currentToken.column}`
-                    return createMismatchToken(currentToken, error)
+                    tokens.cursor = initialCursor
+                    const error: DiagnosticMessage = "Unexpected end of input on {0}:{1}"
+                    return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
                 }
 
                 escapeSequence.raw += currentToken.value
@@ -122,22 +130,24 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
             escapeSequence.value = String.fromCodePoint(Number.parseInt(`0x${escapeSequence.raw}`))
             return escapeSequence
         }
-        
+
         while (!tokens.isFinished && escapeSequence.raw.length < 4) {
             tokens.advance()
             currentToken = tokens.currentToken
 
             if (currentToken.type == "EOF") {
-                const error = `SyntaxError: Unexpected end of input on ${currentToken.line}:${currentToken.column}`
-                return createMismatchToken(currentToken, error)
+                tokens.cursor = initialCursor
+                const error: DiagnosticMessage = "Unexpected end of input on {0}:{1}"
+                return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
             }
 
             const isValidSequence = ["Word", "Integer"].includes(currentToken.type)
                 && /^[a-f0-9]+$/i.test(currentToken.value)
 
             if (!isValidSequence) {
-                const error = `SyntaxError: Invalid Unicode escape sequence on ${currentToken.line}:${currentToken.column}`
-                return createMismatchToken(currentToken, error)
+                tokens.cursor = initialCursor
+                const error: DiagnosticMessage = "Invalid Unicode escape sequence on {0}:{1}"
+                return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
             }
 
             escapeSequence.trailing = currentToken.value.substring(4 - escapeSequence.raw.length)
@@ -160,6 +170,8 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
             kind: "doubleHex",
             raw: currentToken.value.substring(1, 3),
             trailing: currentToken.value.substring(3),
+            line: 0,
+            column: 0,
             start: 0,
             end: 0
         }
@@ -169,16 +181,18 @@ export function generateEscapeSequence(context: Node, tokens: TokenStream): Esca
             currentToken = tokens.currentToken
 
             if (currentToken.type == "EOF") {
-                const error = `SyntaxError: Unexpected end of input on ${currentToken.line}:${currentToken.column}`
-                return createMismatchToken(currentToken, error)
+                tokens.cursor = initialCursor
+                const error: DiagnosticMessage = "Unexpected end of input on {0}:{1}"
+                return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
             }
 
             const isValidSequence = ["Word", "Integer"].includes(currentToken.type)
                 && /^[a-f0-9]+$/i.test(currentToken.value)
 
             if (!isValidSequence) {
-                const error = `SyntaxError: Invalid Hexadecimal escape sequence on ${currentToken.line}:${currentToken.column}`
-                return createMismatchToken(currentToken, error)
+                tokens.cursor = initialCursor
+                const error: DiagnosticMessage = "Invalid Hexadecimal escape sequence on {0}:{1}"
+                return createMismatchToken(currentToken, [error, currentToken.line, currentToken.column])
             }
 
             escapeSequence.trailing = currentToken.value.substring(2 - escapeSequence.raw.length)

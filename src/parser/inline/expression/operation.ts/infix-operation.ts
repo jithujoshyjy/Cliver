@@ -15,6 +15,8 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
         left: null!,
         operator: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -180,4 +182,12 @@ return createMismatchToken(currentToken)
         
         return lhs as InfixOperation
     } */
+}
+
+export function printInfixOperation(token: InfixOperation, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    return "InfixOperation\n"
 }

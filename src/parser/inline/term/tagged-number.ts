@@ -11,15 +11,17 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
         type: "TaggedNumber",
         tag: null!,
         number: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
 
-    let  currentToken = tokens.currentToken
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
     const number = generateNumericLiteral(taggedNumber, tokens)
-    if(number.type == "MismatchToken") {
+    if (number.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return number
     }
@@ -28,7 +30,7 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
     tokens.advance()
     currentToken = tokens.currentToken
 
-    if(!isOperator(currentToken, "!")) {
+    if (!isOperator(currentToken, "!")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -52,6 +54,11 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
         currentToken = tokens.currentToken
         if (tag.type != "MismatchToken")
             break
+
+        if (tag.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return tag
+        }
     }
 
     if (tag.type == "MismatchToken") {

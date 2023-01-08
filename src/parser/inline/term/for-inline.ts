@@ -7,6 +7,8 @@ export function generateForInline(context: Node, tokens: TokenStream): ForInline
         type: "ForInline",
         body: null!,
         condition: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

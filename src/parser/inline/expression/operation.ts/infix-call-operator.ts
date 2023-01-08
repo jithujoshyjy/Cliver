@@ -8,6 +8,8 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
         type: "InfixCallOperator",
         precedence: 9,
         caller: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -34,6 +36,11 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
         currentToken = tokens.currentToken
         if (caller.type != "MismatchToken")
             break
+
+        if (caller.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return caller
+        }
     }
 
     if (caller.type == "MismatchToken") {
@@ -48,6 +55,6 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
-    
+
     return infixCallOperator
 }

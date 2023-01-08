@@ -12,6 +12,8 @@ export function generatePostfixPattern(context: Node, tokens: TokenStream): Post
         type: "PostfixPattern",
         operand: null!,
         operator: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

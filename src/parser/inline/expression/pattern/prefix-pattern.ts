@@ -14,6 +14,8 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
         type: "PrefixPattern",
         operand: null!,
         operator: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -88,14 +90,14 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     const skipNpeek = () => {
         let idx = 1
         let nextToken = tokens.peek(idx)
-        while (nextToken && nextToken.type != "EOF" && _skipables.includes(nextToken.type)) {
+        while (nextToken && nextToken.type != "EOF" && _skipables.includes(nextToken)) {
             idx++
             nextToken = tokens.peek(idx)
         }
         return nextToken
     }
 
-    const nextToken = _skipables.includes(currentToken.type) ? skipNpeek() : currentToken
+    const nextToken = _skipables.includes(currentToken) ? skipNpeek() : currentToken
     if (nextToken && nextToken.type == "Operator") {
 
         const getPrecidence = (op: typeof currentToken) =>

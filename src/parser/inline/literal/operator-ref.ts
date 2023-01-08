@@ -7,6 +7,8 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
     const operatorRef: OperatorRef = {
         type: "OperatorRef",
         operator: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -49,4 +51,12 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
     } */
     return createMismatchToken(currentToken)
     return operatorRef
+}
+
+export function printOperatorRef(token: OperatorRef, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    return "OperatorRef\n"
 }

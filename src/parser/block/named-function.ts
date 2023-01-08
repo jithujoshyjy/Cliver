@@ -14,6 +14,8 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
         name: null!,
         params: [],
         signature: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

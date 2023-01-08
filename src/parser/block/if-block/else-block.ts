@@ -7,6 +7,8 @@ export function generateElseBlock(context: Node, tokens: TokenStream): ElseBlock
     const elseBlock: ElseBlock = {
         type: "ElseBlock",
         body: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

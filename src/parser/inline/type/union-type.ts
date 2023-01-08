@@ -14,6 +14,8 @@ export function generateUnionType(context: Node, tokens: TokenStream): UnionType
         type: "UnionType",
         left: null!,
         right: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

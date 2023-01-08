@@ -7,6 +7,8 @@ export function generateInterpPattern(context: Node, tokens: TokenStream): Inter
     const interpPattern: InterpPattern = {
         type: "InterpPattern",
         body: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

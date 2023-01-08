@@ -6,6 +6,8 @@ export function generateErrorPipeline(context: Node, tokens: TokenStream): Error
         type: "ErrorPipeline",
         expression: null!,
         handler: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

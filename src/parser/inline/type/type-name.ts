@@ -6,6 +6,8 @@ export function generateTypeName(context: Node, tokens: TokenStream): TypeName |
     const typeName: TypeName = {
         type: "TypeName",
         name: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

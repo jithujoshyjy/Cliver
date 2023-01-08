@@ -11,6 +11,8 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
         kind: ["return"],
         params: [],
         signature: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

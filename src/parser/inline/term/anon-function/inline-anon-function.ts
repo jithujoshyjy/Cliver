@@ -11,6 +11,8 @@ export function generateInlineAnonFunction(context: Node, tokens: TokenStream): 
         body: null!,
         params: [],
         signature: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

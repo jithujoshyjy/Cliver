@@ -13,6 +13,8 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
         type: "ImportDeclaration",
         specifiers: [],
         sources: [],
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }

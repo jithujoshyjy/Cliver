@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateProgram } from "../../program.js"
-import { createMismatchToken, isKeyword, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, skipables, type Node, DiagnosticMessage, createDiagnosticMessage } from "../../utility.js"
 import { generateDoneBlock } from "../done-block.js"
 import { generateCatchBlock } from "./catch-block.js"
 
@@ -10,6 +10,8 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
         body: [],
         handlers: [],
         done: null,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
@@ -42,9 +44,9 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
     }
 
     if (doCatchBlock.body.length === 0) {
-        const error = `SyntaxError: Empty DoExpression on ${currentToken.line}:${currentToken.column}`
+        const error: DiagnosticMessage = "Empty DoExpression on {0}:{1}"
         tokens.cursor = initialCursor
-        return createMismatchToken(tokens.currentToken, error)
+        return createMismatchToken(tokens.currentToken, [error, currentToken.line, currentToken.column])
     }
 
     const captureCatch = () => {
@@ -73,8 +75,8 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoExpr
         else if (isKeyword(currentToken, "done")) {
             if (doCatchBlock.done != null) {
                 tokens.cursor = initialCursor
-                const error = `SyntaxError: Unexpected done block on ${currentToken.line}:${currentToken.column}`
-                return createMismatchToken(tokens.currentToken, error)
+                const error: DiagnosticMessage = "Unexpected done block on {0}:{1}"
+                return createMismatchToken(tokens.currentToken, [error, currentToken.line, currentToken.column])
             }
 
             const doneBlock = generateDoneBlock(doCatchBlock, tokens)

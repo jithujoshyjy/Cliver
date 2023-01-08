@@ -8,6 +8,8 @@ export function generateDoneBlock(context: Node, tokens: TokenStream): DoneBlock
         type: "DoneBlock",
         body: [],
         status: null!,
+        line: 0,
+        column: 0,
         start: 0,
         end: 0
     }
