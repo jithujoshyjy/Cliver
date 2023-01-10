@@ -1,6 +1,6 @@
 import { type TokenStream } from "../lexer/token.js"
 import { generateComment } from "./comment.js"
-import diagnosticMessages from "./diagnosticMessages.js"
+import diagnosticMessages from "./diagnostic-messages.js"
 
 export type Node = {
     type: string,
@@ -53,14 +53,19 @@ export const keywords = [
     "to", "is!", "is", "as"
 ]
 
-export const isKeyword = (token: LexicalToken, keyword: KeywordKind) =>
-    token.type == "Word" && keywords.includes(token.value)
+export const isKeyword = (token: Node, keyword: KeywordKind) =>
+    token.type == "Identifier" && keywords.includes(token.name)
 
 export const isOperator = (token: LexicalToken, opr: string) =>
     token.type == "Operator" && token.value == opr
 
 export const isPunctuator = (token: LexicalToken, punctuator: string) =>
     token.type == "Punctuator" && token.value == punctuator
+
+export const isRightAssociative = (op: InfixCallOperator | NonVerbalOperator | VerbalOperator) => {
+    const value = op.type == "InfixCallOperator" ? "`" : op.name
+    return value in operatorPrecedence.infix.right
+}
 
 export type PartialParse = { result: Node, cursor: number }
 export type DiagnosticDescriptionObj = Partial<DiagnosticDescription> & { message: DiagnosticMessage, args: any[] }

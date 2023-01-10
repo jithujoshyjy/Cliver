@@ -1,13 +1,14 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, skipables, operatorPrecedence, type Node, createMismatchToken } from "../../../utility.js"
-import { generateLiteral } from "../../literal/literal.js"
-import { generateTerm } from "../../term/term.js"
+import { skip, skipables, operatorPrecedence, type Node, createMismatchToken, PartialParse, NodePrinter, pickPrinter, isRightAssociative } from "../../../utility.js"
+import { generateLiteral, printLiteral } from "../../literal/literal.js"
+import { generateTerm, printTerm } from "../../term/term.js"
 import { generateGroupExpression } from "../group-expression.js"
-import { generateInfixCallOperator } from "./infix-call-operator.js"
-import { generateNonVerbalOperator } from "./non-verbal-operator.js"
+import { generateInfixCallOperator, printInfixCallOperator } from "./infix-call-operator.js"
+import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-operator.js"
+import { printPostfixOperation } from "./postfix-operation.js"
 // import { generatePostfixOperation } from "./postfix-operation.js"
-import { generatePrefixOperation } from "./prefix-operation.js"
-import { generateVerbalOperator } from "./verbal-operator.js"
+import { generatePrefixOperation, printPrefixOperation } from "./prefix-operation.js"
+import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
 export function generateInfixOperation(context: Node, tokens: TokenStream): InfixOperation | MismatchToken {
     let infixOperation: InfixOperation = {
@@ -24,164 +25,153 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const nodeGenerators = [
+    type OperandGenerator = Array<(context: Node, tokens: TokenStream) => typeof infixOperation.left | MismatchToken>
+
+    let operandGenerators: OperandGenerator = [
         generatePrefixOperation, generateTerm, generateLiteral
     ]
 
-    type Operand = PrefixOperation
-        | GroupExpression
-        | Term
-        | Literal
-        | PostfixOperation
-        | InfixOperation
-        | MismatchToken
+    const generateOperand = () => {
+        let operand: typeof infixOperation.left
+            | MismatchToken = null!
 
-    /* let lhs: Operand = null!
-    for (let nodeGenerator of nodeGenerators) {
-        lhs = nodeGenerator(infixOperation, tokens)
+        for (let operandGenerator of operandGenerators) {
+            operand = operandGenerator(infixOperation, tokens)
+            currentToken = tokens.currentToken
+
+            if (operand.type != "MismatchToken")
+                break
+
+            if (operand.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return operand
+            }
+        }
+
+        return operand
+    }
+
+    let operand: typeof infixOperation.left
+        | MismatchToken = generateOperand()
+
+    if (operand.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return operand
+    }
+
+    currentToken = tokens.currentToken
+    infixOperation.left = operand
+
+    infixOperation.start = operand.start
+    infixOperation.line = operand.line
+    infixOperation.column = operand.column
+
+    const getPrecidence = (op: InfixCallOperator | NonVerbalOperator | VerbalOperator) => {
+        const value = op.type == "InfixCallOperator" ? "`" : op.name
+        return operatorPrecedence.infix.left[value]
+            ?? operatorPrecedence.infix.right[value]
+            ?? 10
+    }
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    const operatorGenerators = [
+        generateInfixCallOperator, generateNonVerbalOperator, generateVerbalOperator
+    ]
+
+    let _operator: InfixCallOperator
+        | NonVerbalOperator
+        | VerbalOperator
+        | MismatchToken = null!;
+
+    for (let operatorGenerator of operatorGenerators) {
+        _operator = operatorGenerator(infixOperation, tokens)
         currentToken = tokens.currentToken
-        if (lhs.type != "MismatchToken")
+
+        if (_operator.type != "MismatchToken")
             break
-    }
 
-    if (lhs.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return lhs
-    }
-
-    infixOperation.start = lhs.start
-    infixOperation.end = lhs.end
-
-    const getPrecidence = (op: typeof currentToken) =>
-        operatorPrecedence.infix.left[op.value as string] ??
-        operatorPrecedence.infix.right[op.value as string] ?? 10
-
-    const isRightAssociative = (op: typeof currentToken) =>
-        op.value as string in operatorPrecedence.infix.right
-
-    const _infixOperation = _generateInfixOperation(lhs)
-
-    if (_infixOperation.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return _infixOperation
-    } */
-return createMismatchToken(currentToken)
-    return /* _ */infixOperation
-
-    /* function _generateInfixOperation(lhs: Exclude<Operand, MismatchToken>, minPrecedence = 0): InfixOperation | MismatchToken {
-
-        const initialCursor = tokens.cursor
-        let currentToken = tokens.currentToken
-
-        if (skipables.includes(currentToken.type))
-            currentToken = skip(tokens, skipables)
-
-        let currentOpPrecedence = 0
-        const isOpKind = (op: typeof currentToken) =>
-            op.type == Operator || op.type == TokenType.Keyword
-        
-        const decidePreced = (op: typeof currentToken) => {
-            currentOpPrecedence = isOpKind(op) ? getPrecidence(op) : 0
-            return currentOpPrecedence
-        }
-
-        const operatorGenerators = [
-            generateInfixCallOperator, generateNonVerbalOperator, generateVerbalOperator
-        ]
-
-        while (isOpKind(currentToken) && decidePreced(currentToken) >= minPrecedence) {
-            
-            let _operator: InfixCallOperator
-                | NonVerbalOperator
-                | VerbalOperator
-                | MismatchToken = null!;
-
-            for (let operatorGenerator of operatorGenerators) {
-                _operator = operatorGenerator(infixOperation, tokens)
-                currentToken = tokens.currentToken
-                if (_operator.type != "MismatchToken")
-                    break
-            }
-
-            if (_operator.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return _operator
-            }
-
-            _operator.precedence = currentOpPrecedence
-
-            currentToken = skip(tokens, skipables) // skip operator
-
-            let rhs: Operand = null!
-
-            for (let nodeGenerator of nodeGenerators) {
-                rhs = nodeGenerator(infixOperation, tokens)
-                if (rhs.type != "MismatchToken")
-                    break
-            }
-
-            if (rhs.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return rhs
-            }
-
-            let nextOpPrecedence = 0
-
-            const isNextOperator = (nextToken: typeof currentToken) => {
-
-                if (nextToken.type == TokenType.Operator) {
-                    nextOpPrecedence = getPrecidence(nextToken)
-
-                    const nextHasMorePreced = nextOpPrecedence > currentOpPrecedence
-                    const isNextRightAssoc = nextOpPrecedence == currentOpPrecedence
-                        && isRightAssociative(nextToken)
-
-                    return nextHasMorePreced || isNextRightAssoc
-                }
-
-                return false
-            }
-
-            const resetCursorPoint = tokens.cursor
-            currentToken = skipables.includes(tokens.currentToken.type) // operator
-                ? skip(tokens, skipables)
-                : tokens.currentToken
-
-            if (!isNextOperator(currentToken)) {
-                tokens.cursor = resetCursorPoint
-                currentToken = tokens.currentToken
-            }
-            else {
-                nextOpPrecedence = currentOpPrecedence > nextOpPrecedence ? nextOpPrecedence : 0
-                rhs = _generateInfixOperation(rhs as Exclude<Operand, MismatchToken>, nextOpPrecedence)
-
-                if (rhs.type == "MismatchToken") {
-                    tokens.cursor = initialCursor
-                    return rhs
-                }
-            }
-
-            lhs = {
-                type: "InfixOperation",
-                left: lhs,
-                operator: _operator,
-                right: rhs as Exclude<Operand, MismatchToken>,
-                start: lhs.start,
-                end: rhs.end
-            }
-
-            currentToken = skipables.includes(currentToken.type)
-                ? skip(tokens, skipables)
-                : tokens.currentToken
-        }
-
-        if(lhs.type != "InfixOperation") {
+        if (_operator.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
+            return _operator
         }
-        
-        return lhs as InfixOperation
-    } */
+    }
+
+    currentToken = tokens.currentToken
+    if (_operator.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return _operator
+    }
+
+    _operator.precedence = getPrecidence(_operator)
+    infixOperation.operator = _operator
+
+    if (infixOperation.left.type == "PrefixOperation") {
+        const thisOpPreced = _operator.precedence
+        let lhsPrefixOpr = infixOperation.left as PrefixOperation
+
+        const lhsPrefixOprPreced = infixOperation.left.operator.precedence
+
+        if (thisOpPreced > lhsPrefixOprPreced) {
+            infixOperation.left = lhsPrefixOpr.operand
+            lhsPrefixOpr.operand = infixOperation
+
+            const partialParse: PartialParse = {
+                result: lhsPrefixOpr,
+                cursor: tokens.cursor
+            }
+
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken, partialParse)
+        }
+    }
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    operandGenerators = [
+        generateInfixOperation, ...operandGenerators
+    ]
+
+    operand = generateOperand()
+    if (operand.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return operand
+    }
+
+    infixOperation.end = operand.end
+    currentToken = tokens.currentToken
+
+    if (operand.type == "InfixOperation") {
+        const thisOpPreced = _operator.precedence
+        const otherOpPreced = operand.operator.precedence
+
+        if (thisOpPreced > otherOpPreced || thisOpPreced == otherOpPreced && !isRightAssociative(operand.operator)) {
+
+            operand.line = infixOperation.line
+            operand.column = infixOperation.column
+
+            operand.start = infixOperation.start
+            infixOperation.end = operand.start
+
+            infixOperation.right = operand.left
+            operand.left = infixOperation
+            infixOperation = operand
+        }
+        else {
+            infixOperation.right = operand
+            infixOperation.end = operand.end
+        }
+    }
+    else {
+        infixOperation.right = operand
+        infixOperation.end = operand.end
+    }
+
+    return infixOperation
 }
 
 export function printInfixOperation(token: InfixOperation, indent = 0) {
@@ -189,5 +179,24 @@ export function printInfixOperation(token: InfixOperation, indent = 0) {
     const endJoiner = "└── "
     const trailJoiner = "│\t"
 
-    return "InfixOperation\n"
+    const operandPrinters = [
+        printInfixOperation, printPostfixOperation,
+        printTerm, printLiteral, printPrefixOperation
+    ] as NodePrinter[]
+
+    const operatorPrinters = [
+        printNonVerbalOperator, printVerbalOperator, printInfixCallOperator
+    ] as NodePrinter[]
+
+    const lhsPrinter = pickPrinter(operandPrinters, token.left)!
+    const rhsPrinter = pickPrinter(operandPrinters, token.right)!
+    const operatorPrinter = pickPrinter(operatorPrinters, token.operator)!
+
+    return "InfixOperation\n" +
+        '\t'.repeat(indent) + middleJoiner + "left\n" +
+        '\t'.repeat(indent + 1) + endJoiner + lhsPrinter(token.left, indent + 2) + '\n' +
+        '\t'.repeat(indent) + middleJoiner + "operator\n" +
+        '\t'.repeat(indent + 1) + endJoiner + operatorPrinter(token.operator, indent + 2) + '\n' +
+        '\t'.repeat(indent) + endJoiner + "right\n" +
+        '\t'.repeat(indent + 1) + endJoiner + rhsPrinter(token.right, indent + 2)
 }

@@ -1,5 +1,6 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, operatorPrecedence, type Node, isKeyword } from "../../../utility.js"
+import { createMismatchToken, operatorPrecedence, type Node } from "../../../utility.js"
+import { generateIdentifier } from "../../literal/identifier.js"
 
 export function generateVerbalOperator(context: Node, tokens: TokenStream): VerbalOperator | MismatchToken {
     const verbalOperator: VerbalOperator = {
@@ -16,29 +17,34 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* const excludedOperators: string[] = [
+    const excludedOperators: string[] = [
         "as"
     ]
 
-    const isExcludedOperator = (y: any) => excludedOperators.some(x => isKeyword(y, x as KeywordKind))
+    const isOpKeword = (op: Identifier) =>
+        op.name in operatorPrecedence.infix.left
+        || op.name in operatorPrecedence.infix.right
+        || op.name in operatorPrecedence.prefix
 
-    const isOpKeword = (op: typeof currentToken) => {
-        return op.type == TokenType.Keyword &&
-            (
-                op.value as string in operatorPrecedence.infix.left
-                || op.value as string in operatorPrecedence.infix.right
-                || op.value as string in operatorPrecedence.prefix
-            )
-    }
-
-    if(!isOpKeword(currentToken) || isExcludedOperator(currentToken)) {
+    const identifier: Identifier | MismatchToken = generateIdentifier(verbalOperator, tokens)
+    currentToken = tokens.currentToken
+    
+    if (identifier.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    verbalOperator.name = currentToken.value as VerbalOperatorKind
-    verbalOperator.start = currentToken.start
-    verbalOperator.end = currentToken.end */
+    if (!isOpKeword(identifier) || excludedOperators.includes(identifier.name)) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+
+    verbalOperator.name = identifier.name as VerbalOperatorKind
+    verbalOperator.start = identifier.start
+    verbalOperator.end = identifier.end
+
+    verbalOperator.line = identifier.line
+    verbalOperator.column = identifier.column
 
     return verbalOperator
 }
@@ -48,5 +54,5 @@ export function printVerbalOperator(token: VerbalOperator, indent = 0) {
     const endJoiner = "└── "
     const trailJoiner = "│\t"
 
-    return `${token.kind}__${token.precedence}__(${token.name})\n`
+    return `${token.kind}__${token.precedence}__(${token.name})`
 }

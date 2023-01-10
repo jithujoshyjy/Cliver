@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, skip, skipables, type Node, NodePrinter, pickPrinter } from "../../utility.js"
+import { createMismatchToken, skip, skipables, type Node, NodePrinter, pickPrinter, isPunctuator, PartialParse } from "../../utility.js"
 import { printLiteral } from "../literal/literal.js"
 import { printTerm } from "../term/term.js"
 import { generateExpression } from "./expression.js"
@@ -20,46 +20,44 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* let expression: Expression | MismatchToken = null!
-
-    if (currentToken.type != TokenType.ParenEnclosed) {
+    if (!isPunctuator(currentToken, '(')) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
     groupExpression.start = currentToken.start
-    groupExpression.end = currentToken.end
+    groupExpression.line = currentToken.line
+    groupExpression.column = currentToken.column
 
-    const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    currentToken = parenTokens.currentToken
+    currentToken = skip(tokens, skipables) // skip (
 
-    const parseValue = () => {
-
-        if (skipables.includes(currentToken.type))
-            currentToken = skip(parenTokens, skipables)
-
-        let value: Expression | MismatchToken = generateExpression(groupExpression, parenTokens)
-        currentToken = parenTokens.currentToken
-
-        return value
-    }
-
-    expression = parseValue()
-    currentToken = parenTokens.currentToken
+    let expression: Expression | MismatchToken = generateExpression(groupExpression, tokens)
+    currentToken = tokens.currentToken
 
     if (expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
     }
 
-    if (currentToken.type != TokenType.EOF) {
+    groupExpression.value = expression.value
+
+    if (skipables.includes(currentToken))
+        currentToken = skip(tokens, skipables)
+
+    if (!isPunctuator(currentToken, ')')) {
         tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
+
+        const partialParse: PartialParse = {
+            result: expression,
+            cursor: currentToken.end
+        }
+
+        return createMismatchToken(currentToken, partialParse)
     }
 
-    const { value } = expression
-    groupExpression.value = value  */   
-    return createMismatchToken(currentToken)
+    groupExpression.end = currentToken.end
+    currentToken = skip(tokens, skipables) // skip )
+    
     return groupExpression
 }
 
@@ -75,5 +73,5 @@ export function printGroupExpression(token: GroupExpression, indent = 0) {
 
     const printer = pickPrinter(printers, token.value)!
 
-    return "GroupExpression\n" + '\t'.repeat(indent) + endJoiner + printer(token.value, indent+1) + '\n'
+    return "GroupExpression\n" + '\t'.repeat(indent) + endJoiner + printer(token.value, indent + 1) + '\n'
 }

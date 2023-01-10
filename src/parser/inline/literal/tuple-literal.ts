@@ -208,11 +208,11 @@ export function printTupleLiteral(token: TupleLiteral, indent = 0) {
         (token.positional.length ? "positional\n" +
         token.positional.reduce((a, c, i, arr) => a + '\t'.repeat(indent + 1) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
-            printExpression(c, indent + 2), '') : "") +
+            printExpression(c, indent + 2) + '\n', '') : "") +
         
         (token.keyword.length ? (token.positional.length ? '\t'.repeat(indent) + endJoiner : "") + "keyword\n" +
         token.keyword.reduce((a, c, i, arr) => a + '\t'.repeat(indent + 1) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
-            (c.type == "Expression" ? printExpression(c, indent + 2) : printPair(c, indent + 2)), '') : "")
+            (c.type == "Expression" ? printExpression(c, indent + 2) : printPair(c, indent + 2)) + '\n', '') : "")
 
 }

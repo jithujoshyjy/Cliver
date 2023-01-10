@@ -61,5 +61,5 @@ export function printSymbolLiteral(token: SymbolLiteral, indent = 0) {
     
     const slash = '\\'
     return "SymbolLiteral\n" + '\t'.repeat(indent) + endJoiner +
-        token.charset + slash + token.text + '\n'
+        token.charset + slash + token.text
 }

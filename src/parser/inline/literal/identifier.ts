@@ -108,5 +108,5 @@ export function printIdentifier(token: Identifier, indent = 0) {
     const trailJoiner = "│\t"
     
     return "Identifier\n" + '\t'.repeat(indent) + endJoiner +
-       token.name + '\n'
+       token.name
 }

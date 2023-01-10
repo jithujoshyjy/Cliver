@@ -85,6 +85,6 @@ export function printPair(token: Pair, indent = 0) {
     return "Pair\n" +
         '\t'.repeat(indent) + middleJoiner +
         "key\n" + '\t'.repeat(indent + 1) + endJoiner + keyPrinter(token.key, indent+2) +
-        '\t'.repeat(indent) + endJoiner +
+        '\n' + '\t'.repeat(indent) + endJoiner +
         "value\n" + '\t'.repeat(indent + 1) + endJoiner + printExpression(token.value, indent+2)
 }

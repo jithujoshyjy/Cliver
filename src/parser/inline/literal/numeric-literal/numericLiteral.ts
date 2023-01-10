@@ -47,5 +47,5 @@ export function printNumericLiteral(token: NumericLiteral, indent = 0) {
     
     const excl = '!'
     return "NumericLiteral\n" + '\t'.repeat(indent) + endJoiner +
-        token.value + excl + token.kind + '\n'
+        token.value + excl + token.kind
 }

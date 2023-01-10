@@ -58,3 +58,11 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
 
     return infixCallOperator
 }
+
+export function printInfixCallOperator(token: InfixCallOperator, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    
+    return "InfixCallOperator\n"
+}

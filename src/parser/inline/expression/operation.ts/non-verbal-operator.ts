@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isOperator, type Node } from "../../../utility.js"
+import { createMismatchToken, isOperator, isRightAssociative, type Node } from "../../../utility.js"
 
 export function generateNonVerbalOperator(context: Node, tokens: TokenStream): NonVerbalOperator | MismatchToken {
     const nonVerbalOperator: NonVerbalOperator = {
@@ -19,18 +19,20 @@ export function generateNonVerbalOperator(context: Node, tokens: TokenStream): N
     const excludedOperators: string[] = [
         "``", ".``", "??", "..", ".", "?.", "?", "..?", "->", "@", "@@", ":",
     ]
-
-    const isExcludedOperator = (y: any) => excludedOperators.some(x => isOperator(y, x))
     
-    if(currentToken.type != "Operator" || isExcludedOperator(currentToken)) {
+    if(currentToken.type != "Operator" || excludedOperators.includes(currentToken.value)) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    nonVerbalOperator.name = currentToken.value as string
+    nonVerbalOperator.name = currentToken.value
     nonVerbalOperator.start = currentToken.start
     nonVerbalOperator.end = currentToken.end
 
+    nonVerbalOperator.line = currentToken.line
+    nonVerbalOperator.column = currentToken.column
+
+    tokens.advance()
     return nonVerbalOperator
 }
 
@@ -39,5 +41,5 @@ export function printNonVerbalOperator(token: NonVerbalOperator, indent = 0) {
     const endJoiner = "└── "
     const trailJoiner = "│\t"
 
-    return `${token.kind}__${token.precedence}__(${token.name})\n`
+    return `${token.kind}${token.kind == "infix" ? isRightAssociative(token) ? 'r' : 'l' : ''}__${token.precedence}__(${token.name})`
 }

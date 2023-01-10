@@ -17,7 +17,6 @@ export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr |
 
     const pattern = generatePattern(caseExpr, tokens)
     if (pattern.type == "MismatchToken") {
-
         tokens.cursor = initialCursor
         return pattern
     }

@@ -83,5 +83,5 @@ export function printCharLiteral(token: CharLiteral, indent = 0) {
     
     const quote = "'"
     return "CharLiteral\n" + '\t'.repeat(indent) + endJoiner +
-        token.charset + quote + token.text + quote + '\n'
+        token.charset + quote + token.text + quote
 }

@@ -1,11 +1,12 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { operatorPrecedence, skip, skipables, type Node, createMismatchToken } from "../../../utility.js"
-import { generateLiteral } from "../../literal/literal.js"
-import { generateTerm } from "../../term/term.js"
-import { generateGroupExpression } from "../group-expression.js"
-import { generateInfixOperation } from "./infix-operation.js"
-import { generateNonVerbalOperator } from "./non-verbal-operator.js"
-import { generateVerbalOperator } from "./verbal-operator.js"
+import { operatorPrecedence, skip, skipables, type Node, createMismatchToken, NodePrinter, pickPrinter } from "../../../utility.js"
+import { generateLiteral, printLiteral } from "../../literal/literal.js"
+import { generateTerm, printTerm } from "../../term/term.js"
+import { generateGroupExpression, printGroupExpression } from "../group-expression.js"
+import { generateInfixOperation, printInfixOperation } from "./infix-operation.js"
+import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-operator.js"
+import { printPostfixOperation } from "./postfix-operation.js"
+import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
 export function generatePrefixOperation(context: Node, tokens: TokenStream): PrefixOperation | MismatchToken {
     const prefixOperation: PrefixOperation = {
@@ -20,29 +21,30 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    return createMismatchToken(currentToken)
-    /* let _operator: NonVerbalOperator
+
+    let _operator: NonVerbalOperator
         | VerbalOperator
         | MismatchToken = generateNonVerbalOperator(prefixOperation, tokens)
 
-    if (_operator.type == "MismatchToken") {
+    if (_operator.type == "MismatchToken")
         _operator = generateVerbalOperator(prefixOperation, tokens)
-    }
-    
+
     if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return _operator
     }
 
     prefixOperation.start = _operator.start
+    prefixOperation.line = _operator.line
+    prefixOperation.column = _operator.column
 
     const getPrecidence = (op: NonVerbalOperator | VerbalOperator): number => {
-        const isVerbalOperator = /^\p{Letter}+$/gu.test(op.name as string)
-        const defaultPreced = isVerbalOperator ? 2 : 10
         switch (op.type) {
             case "VerbalOperator":
-            case "NonVerbalOperator":
+            case "NonVerbalOperator": {
+                const defaultPreced = op.type == "VerbalOperator" ? 2 : 10
                 return operatorPrecedence.prefix[op.name] ?? defaultPreced
+            }
         }
     }
 
@@ -50,67 +52,38 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
     _operator.precedence = getPrecidence(_operator)
 
     prefixOperation.operator = _operator
-    currentToken = skip(tokens, skipables) // skip operator
-    const resetCursorPoint = tokens.cursor
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
     const operandGenerators = [
-        generateTerm, generateLiteral, generateGroupExpression, generatePrefixOperation
+        generateTerm, generateLiteral, generatePrefixOperation
     ]
 
-    let operand: InfixOperation | Literal | Term | GroupExpression | PrefixOperation | MismatchToken = null!
+    let operand: Literal | Term | PrefixOperation | MismatchToken = null!
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(prefixOperation, tokens)
         currentToken = tokens.currentToken
-        if (operand.type != "MismatchToken") {
+
+        if (operand.type != "MismatchToken")
             break
+
+        if (operand.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return operand
         }
     }
-    
+
     if (operand.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return operand
+
     }
-
-    const skipNpeek = () => {
-        let idx = 1
-        let nextToken = tokens.peek(idx)
-        while (nextToken && nextToken.type != "EOF" && skipables.includes(nextToken.type)) {
-            idx++
-            nextToken = tokens.peek(idx)
-        }
-        return nextToken
-    }
-
-    const nextToken = skipables.includes(currentToken.type) ? skipNpeek() : currentToken
-    if (nextToken && nextToken.type == "Operator") {
-
-        const getPrecidence = (op: typeof currentToken) =>
-            operatorPrecedence.infix.left[op.value as string] ??
-            operatorPrecedence.infix.right[op.value as string] ?? 10
-
-        const isRightAssociative = (op: typeof currentToken) =>
-            Object.keys(operatorPrecedence.infix.right).includes(op.value as string)
-
-        const nextOpPrecedence = getPrecidence(nextToken)
-        const nextHasMorePreced = nextOpPrecedence > _operator.precedence
-        const isNextRightAssoc = nextOpPrecedence == _operator.precedence
-            && isRightAssociative(nextToken)
-
-        if (nextHasMorePreced || isNextRightAssoc) {
-            tokens.cursor = resetCursorPoint
-            const infixOperation = generateInfixOperation(prefixOperation, tokens)
-            if (infixOperation.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return infixOperation
-            }
-            operand = infixOperation
-        }
-    }
-
     prefixOperation.operand = operand
     prefixOperation.end = operand.end
 
-    return prefixOperation */
+    return prefixOperation
 }
 
 export function printPrefixOperation(token: PrefixOperation, indent = 0) {
@@ -118,5 +91,21 @@ export function printPrefixOperation(token: PrefixOperation, indent = 0) {
     const endJoiner = "└── "
     const trailJoiner = "│\t"
 
-    return "PrefixOperation\n"
+    const operandPrinters = [
+        printInfixOperation, printPrefixOperation,
+        printTerm, printLiteral,
+    ] as NodePrinter[]
+
+    const operatorPrinters = [
+        printNonVerbalOperator, printVerbalOperator
+    ] as NodePrinter[]
+
+    const operandPrinter = pickPrinter(operandPrinters, token.operand)!
+    const operatorPrinter = pickPrinter(operatorPrinters, token.operator)!
+
+    return "PrefixOperation\n" +
+        '\t'.repeat(indent) + middleJoiner + "operator\n" +
+        '\t'.repeat(indent + 1) + endJoiner + operatorPrinter(token.operator, indent + 2) + '\n' +
+        '\t'.repeat(indent) + endJoiner + "operand\n" +
+        '\t'.repeat(indent + 1) + endJoiner + operandPrinter(token.operand, indent + 2)
 }

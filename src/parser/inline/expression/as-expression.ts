@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isKeyword, skip, _skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, _skipables, type Node, PartialParse } from "../../utility.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateCaseExpr } from "./case-expression.js"
 import { generateExpression } from "./expression.js"
@@ -29,7 +29,11 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
 
     if (!isKeyword(currentToken, "as")) {
         tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
+        const partialParse: PartialParse = {
+            cursor: currentToken.end,
+            result: left
+        }
+        return createMismatchToken(currentToken, partialParse)
     }
 
     currentToken = skip(tokens, _skipables) // skip as

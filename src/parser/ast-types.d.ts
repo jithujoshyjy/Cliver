@@ -194,8 +194,8 @@ type VerbalOperator = {
 
 type InfixOperation = {
     type: "InfixOperation",
-    left: PrefixOperation | GroupExpression | Term | Literal | PostfixOperation | InfixOperation,
-    right: PrefixOperation | GroupExpression | Term | Literal | PostfixOperation | InfixOperation,
+    left: PrefixOperation | Term | Literal | PostfixOperation | InfixOperation,
+    right: PrefixOperation | Term | Literal | PostfixOperation | InfixOperation,
     operator: InfixCallOperator | NonVerbalOperator | VerbalOperator,
     line: number,
     column: number,
@@ -205,7 +205,7 @@ type InfixOperation = {
 
 type PrefixOperation = {
     type: "PrefixOperation",
-    operand: Literal | Term | GroupExpression | InfixOperation | PrefixOperation,
+    operand: Literal | Term | InfixOperation | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     line: number,
     column: number,
@@ -215,7 +215,7 @@ type PrefixOperation = {
 
 type PostfixOperation = {
     type: "PostfixOperation",
-    operand: Literal | Term | GroupExpression | InfixOperation | PrefixOperation,
+    operand: Literal | Term | InfixOperation | PrefixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     line: number,
     column: number,

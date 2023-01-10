@@ -19,7 +19,6 @@ export function generateAssignExpr(context: Node, tokens: TokenStream): AssignEx
 
     const declarator = generateVariableDeclarator(assignExpr, tokens)
     if(declarator.type == "MismatchToken") {
-
         tokens.cursor = initialCursor
         return declarator
     }

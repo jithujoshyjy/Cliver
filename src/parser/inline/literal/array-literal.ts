@@ -113,7 +113,6 @@ export function printArrayLiteral(token: ArrayLiteral, indent = 0) {
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
             c.reduce((a, c, i, arr) =>
                 a + (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                printExpression(c, indent + 2) + '\n', '') + '\n', "") +
-        + '\n'
+                printExpression(c, indent + 2) + '\n', '') + '\n', "")
 
 }
