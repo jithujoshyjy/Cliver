@@ -5,7 +5,7 @@ import { generateTerm, printTerm } from "../../term/term.js"
 import { generateGroupExpression, printGroupExpression } from "../group-expression.js"
 import { generateInfixOperation, printInfixOperation } from "./infix-operation.js"
 import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-operator.js"
-import { printPostfixOperation } from "./postfix-operation.js"
+import { generatePostfixOperation, printPostfixOperation } from "./postfix-operation.js"
 import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
 export function generatePrefixOperation(context: Node, tokens: TokenStream): PrefixOperation | MismatchToken {
@@ -58,10 +58,15 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
         : tokens.currentToken
 
     const operandGenerators = [
-        generateTerm, generateLiteral, generatePrefixOperation
+        generatePrefixOperation, generatePostfixOperation, generateTerm, generateLiteral
     ]
 
-    let operand: Literal | Term | PrefixOperation | MismatchToken = null!
+    let operand: Literal
+        | Term
+        | PostfixOperation
+        | PrefixOperation
+        | MismatchToken = null!
+
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(prefixOperation, tokens)
         currentToken = tokens.currentToken
@@ -92,7 +97,7 @@ export function printPrefixOperation(token: PrefixOperation, indent = 0) {
     const trailJoiner = "│\t"
 
     const operandPrinters = [
-        printInfixOperation, printPrefixOperation,
+        printInfixOperation, printPrefixOperation, printPostfixOperation,
         printTerm, printLiteral,
     ] as NodePrinter[]
 

@@ -31,12 +31,33 @@ export function generateAST(tokens: TokenStream): Program {
             const errorCode = "[" + value.errorDescription.code + "]"
             const errorDescription = `${chalk.bold.redBright(errorCode)} ${chalk.redBright(value.error)}\n`
 
+            let lines = 1, startIdx = 0, errorLineText = ''
+
+            for (let i = 0, _char = tokens.input[i]; i < tokens.input.length; i++, _char = tokens.input[i]) {
+                if (value.line == lines)
+                    break
+                if (_char == '\n') {
+                    lines++
+                    startIdx = i + 1
+                }
+            }
+
+            for (let i = startIdx; i < tokens.input.length; i++) {
+                if (tokens.input.charAt(i) === '\n') break
+                errorLineText += tokens.input.charAt(i)
+            }
+
             let errorLine = value.value.line
-            const errorSite = `${chalk.bgWhite.blackBright(errorLine)} ${tokens.input
-                .substring(value.start, value.end + 1)
+            const underlineChar = '¯'
+            const errorUnderline = "\n" +
+                " ".repeat(errorLine.toString().length + value.column) +
+                chalk.redBright(underlineChar.repeat(value.end - value.start+1)) +
+                " ".repeat(errorLineText.length - value.end)
+
+            const errorSite = `${chalk.bgWhite.blackBright(errorLine)} ${errorLineText
                 .split('\n')
-                .join('\n' + chalk.bgWhite.blackBright(errorLine++) + ' ')
-                }`
+                .join('\n' + chalk.bgWhite.blackBright(++errorLine) + ' ')
+                }${errorUnderline}`
 
             console.error(errorDescription)
             console.error(errorSite)

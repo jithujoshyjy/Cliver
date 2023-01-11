@@ -5,7 +5,7 @@ import { generateTerm, printTerm } from "../../term/term.js"
 import { generateGroupExpression } from "../group-expression.js"
 import { generateInfixCallOperator, printInfixCallOperator } from "./infix-call-operator.js"
 import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-operator.js"
-import { printPostfixOperation } from "./postfix-operation.js"
+import { generatePostfixOperation, printPostfixOperation } from "./postfix-operation.js"
 // import { generatePostfixOperation } from "./postfix-operation.js"
 import { generatePrefixOperation, printPrefixOperation } from "./prefix-operation.js"
 import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
@@ -28,7 +28,7 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
     type OperandGenerator = Array<(context: Node, tokens: TokenStream) => typeof infixOperation.left | MismatchToken>
 
     let operandGenerators: OperandGenerator = [
-        generatePrefixOperation, generateTerm, generateLiteral
+        generatePrefixOperation, generatePostfixOperation, generateTerm, generateLiteral
     ]
 
     const generateOperand = () => {

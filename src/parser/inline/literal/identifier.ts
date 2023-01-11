@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isOperator, isPunctuator, type Node } from "../../utility.js"
+import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isOperator, isPunctuator, keywords, PartialParse, type Node } from "../../utility.js"
 
 export function generateIdentifier(context: Node, tokens: TokenStream): Identifier | MismatchToken {
     const identifier: Identifier = {
@@ -98,6 +98,8 @@ export function generateIdentifier(context: Node, tokens: TokenStream): Identifi
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
+
+    currentToken = tokens.currentToken
 
     return identifier
 }

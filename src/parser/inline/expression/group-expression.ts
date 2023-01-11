@@ -67,7 +67,7 @@ export function printGroupExpression(token: GroupExpression, indent = 0) {
     const trailJoiner = "│\t"
 
     const printers = [
-        printInfixOperation, printPrefixOperation, printPostfixOperation,
+        printInfixOperation, printPostfixOperation, printPrefixOperation,
         printTerm, printLiteral, printGroupExpression
     ] as NodePrinter[]
 

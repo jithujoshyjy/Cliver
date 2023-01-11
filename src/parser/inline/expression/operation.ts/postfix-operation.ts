@@ -23,10 +23,10 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
     const initialCursor = tokens.cursor
 
     const operandGenerators = [
-        generateTerm, generateLiteral, generatePrefixOperation
+        generateTerm, generateLiteral
     ]
 
-    let operand: InfixOperation | Literal | Term | PrefixOperation | MismatchToken = null!
+    let operand: Literal | Term | MismatchToken = null!
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(postfixOperation, tokens)
         currentToken = tokens.currentToken
@@ -50,23 +50,22 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
     postfixOperation.line = operand.line
     postfixOperation.column = operand.column
 
-    currentToken = skipables.includes(tokens.currentToken)
-        ? skip(tokens, skipables)
-        : tokens.currentToken // skip operand
-
-
-    let _operator: NonVerbalOperator
-        | VerbalOperator
-        | MismatchToken = generateNonVerbalOperator(postfixOperation, tokens)
-
     const partialParse: PartialParse = {
         cursor: tokens.cursor,
         result: operand
     }
 
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken // skip operand
+
+    let _operator: NonVerbalOperator
+        | VerbalOperator
+        | MismatchToken = generateNonVerbalOperator(postfixOperation, tokens)
+
     if (_operator.type == "MismatchToken")
         _operator = generateVerbalOperator(postfixOperation, tokens)
-
+        
     if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor
         _operator.partialParse = partialParse
@@ -115,7 +114,9 @@ export function printPostfixOperation(token: PostfixOperation, indent = 0) {
     const operandPrinter = pickPrinter(operandPrinters, token.operand)!
     const operatorPrinter = pickPrinter(operatorPrinters, token.operator)!
 
-    return "PostfixOperation\n" + '\t'.repeat(indent) +
-        middleJoiner + operatorPrinter(token.operator, indent + 1) + '\n' +
-        endJoiner + operandPrinter(token.operand, indent + 1) + '\n'
+    return "PostfixOperation\n" +
+        '\t'.repeat(indent) + middleJoiner + "operand\n" +
+        '\t'.repeat(indent + 1) + endJoiner + operandPrinter(token.operand, indent + 2) + '\n' +
+        '\t'.repeat(indent) + endJoiner + "operator\n" +
+        '\t'.repeat(indent + 1) + endJoiner + operatorPrinter(token.operator, indent + 2)
 }

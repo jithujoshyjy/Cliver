@@ -205,7 +205,7 @@ type InfixOperation = {
 
 type PrefixOperation = {
     type: "PrefixOperation",
-    operand: Literal | Term | InfixOperation | PrefixOperation,
+    operand: Literal | Term | InfixOperation | PrefixOperation | PostfixOperation,
     operator: NonVerbalOperator | VerbalOperator,
     line: number,
     column: number,
@@ -215,7 +215,7 @@ type PrefixOperation = {
 
 type PostfixOperation = {
     type: "PostfixOperation",
-    operand: Literal | Term | InfixOperation | PrefixOperation,
+    operand: Literal | Term,
     operator: NonVerbalOperator | VerbalOperator,
     line: number,
     column: number,

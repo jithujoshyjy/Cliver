@@ -5,7 +5,7 @@ import { generateTerm, printTerm } from "../term/term.js"
 import { generateGroupExpression, printGroupExpression } from "./group-expression.js"
 import { generateInfixOperation, printInfixOperation } from "./operation.ts/infix-operation.js"
 import { generateNonVerbalOperator } from "./operation.ts/non-verbal-operator.js"
-import { printPostfixOperation } from "./operation.ts/postfix-operation.js"
+import { generatePostfixOperation, printPostfixOperation } from "./operation.ts/postfix-operation.js"
 // import { generatePostfixOperation } from "./operation.ts/postfix-operation.js"
 import { generatePrefixOperation, printPrefixOperation } from "./operation.ts/prefix-operation.js"
 import { generateVerbalOperator } from "./operation.ts/verbal-operator.js"
@@ -24,7 +24,7 @@ export function generateExpression(context: Node, tokens: TokenStream): Expressi
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        generateInfixOperation, generatePrefixOperation, /* generatePostfixOperation, */
+        generateInfixOperation, generatePrefixOperation, generatePostfixOperation,
         generateTerm, generateLiteral
     ]
 

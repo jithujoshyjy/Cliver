@@ -17,7 +17,7 @@ export function generateNonVerbalOperator(context: Node, tokens: TokenStream): N
     const initialCursor = tokens.cursor
 
     const excludedOperators: string[] = [
-        "``", ".``", "??", "..", ".", "?.", "?", "..?", "->", "@", "@@", ":",
+        "``", ".``", "??", "..", ".", "->", "@", "@@", ":",
     ]
     
     if(currentToken.type != "Operator" || excludedOperators.includes(currentToken.value)) {
