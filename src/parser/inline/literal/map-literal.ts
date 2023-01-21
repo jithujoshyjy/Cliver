@@ -1,6 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
-import { generatePair } from "../term/pair.js"
+import { generatePair, printPair } from "../term/pair.js"
+import { generateIdentifier, printIdentifier } from "./identifier.js"
 
 export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiteral | MismatchToken {
     const mapLiteral: MapLiteral = {
@@ -15,47 +16,64 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* if(currentToken.type != TokenType.BraceEnclosed) {
+    if (!isPunctuator(currentToken, '{')) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
     mapLiteral.start = currentToken.start
     mapLiteral.end = currentToken.end
-    
+    mapLiteral.line = currentToken.line
+    mapLiteral.column = currentToken.column
+
+    currentToken = skip(tokens, skipables) // skip {
+
     const captureComma = () => {
-        currentToken = braceTokens.currentToken
+        const initialToken = tokens.currentToken
 
         if (!isPunctuator(currentToken, ",")) {
-            return createMismatchToken(currentToken)
+            return createMismatchToken(initialToken)
         }
 
-        return currentToken
+        currentToken = skip(tokens, skipables)
+        return initialToken
     }
-    
-    const braceTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    currentToken = braceTokens.currentToken
 
-    const parsePair = () => {
+    let isInitial = true, lastDelim: LexicalToken | MismatchToken | null = null
+    const parsePair = (isInitial: boolean) => {
 
-        if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
-            currentToken = skip(braceTokens, skipables)
+        let pair: Pair
+            | Identifier
+            | MismatchToken = generatePair(mapLiteral, tokens)
 
-        let pair: Pair | MismatchToken = generatePair(mapLiteral, braceTokens)
-        currentToken = braceTokens.currentToken
+        if(!isInitial && pair.type == "MismatchToken")
+            pair = generateIdentifier(mapLiteral, tokens)
 
+        currentToken = tokens.currentToken
+
+        lastDelim = null
         return pair
     }
 
-    while (!braceTokens.isFinished) {
+    while (!tokens.isFinished) {
 
-        if (braceTokens.currentToken.type == TokenType.EOF)
+        if (isPunctuator(currentToken, "}")) {
+            mapLiteral.end = currentToken.end
+            tokens.advance()
             break
-        
-        const pair = parsePair()
+        }
 
-        if (pair.type == "MismatchToken" && pair.value.type == TokenType.EOF)
-            break
+        if (!isInitial && lastDelim == null) {
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken)
+        }
+
+        if (lastDelim?.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return lastDelim
+        }
+
+        const pair = parsePair(isInitial)
 
         if (pair.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -63,22 +81,13 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
         }
 
         mapLiteral.pairs.push(pair)
-        if (skipables.includes(currentToken.type))
-            currentToken = skip(braceTokens, skipables)
-        
-        if (currentToken.type == TokenType.EOF)
-            break
-        
-        const comma = captureComma()
+        if (skipables.includes(currentToken))
+            currentToken = skip(tokens, skipables)
 
-        if (comma.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return comma
-        }
-
-        currentToken = braceTokens.currentToken
-    } */
-    return createMismatchToken(currentToken)
+        lastDelim = captureComma()
+        isInitial = false
+    }
+    
     return mapLiteral
 }
 
@@ -86,5 +95,10 @@ export function printMapLiteral(token: MapLiteral, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    return "MapLiteral\n"
+    const space = ' '.repeat(4)
+    return "MapLiteral\n" +
+        token.pairs.reduce((a, c, i, arr) => a +
+            space.repeat(indent) +
+            (i == arr.length - 1 ? endJoiner : middleJoiner) +
+            (c.type == "Identifier" ? printIdentifier(c, indent + 1) : printPair(c, indent + 1)) + '\n', '')
 }

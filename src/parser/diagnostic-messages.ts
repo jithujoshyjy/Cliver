@@ -17,7 +17,7 @@ export default {
         "catagory": "error"
     },
 
-    "Unexpected done block on {0}:{1}": {
+    "Unexpected {0} block on {1}:{2}": {
         "code": "CLE0004",
         "severity": 2,
         "catagory": "error"
@@ -45,5 +45,11 @@ export default {
         "code": "CLE0008",
         "severity": 2,
         "catagory": "error"
-    }
+    },
+
+    "Unexpected Keyword '{0}' on {1}:{2}": {
+        "code": "CLE0009",
+        "severity": 2,
+        "catagory": "error"
+    },
 }

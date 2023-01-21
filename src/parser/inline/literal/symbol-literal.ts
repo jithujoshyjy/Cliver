@@ -60,6 +60,7 @@ export function printSymbolLiteral(token: SymbolLiteral, indent = 0) {
     const trailJoiner = "│\t"
     
     const slash = '\\'
-    return "SymbolLiteral\n" + '\t'.repeat(indent) + endJoiner +
+    const space = ' '.repeat(4)
+    return "SymbolLiteral\n" + space.repeat(indent) + endJoiner +
         token.charset + slash + token.text
 }

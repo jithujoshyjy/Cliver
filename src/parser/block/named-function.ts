@@ -158,5 +158,14 @@ export function generateNamedFunction(context: Node, tokens: TokenStream): Named
         namedFunction.body.push(node)
     } */
 
-    return namedFunction
+    return /* namedFunction */ createMismatchToken(currentToken)
+}
+
+export function printNamedFunction(token: NamedFunction, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "NamedFunction\n"
 }

@@ -1,5 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isKeyword, skip, _skipables, type Node, PartialParse } from "../../utility.js"
+import { generateKeyword } from "../keyword.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateCaseExpr } from "./case-expression.js"
 import { generateExpression } from "./expression.js"
@@ -17,32 +18,38 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    const left = generateExpression(asExpression, tokens)
 
+    const left = generateExpression(asExpression, tokens)
     if (left.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return left
     }
 
     asExpression.left = left
-    currentToken = skip(tokens, _skipables)
+    currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
 
-    if (!isKeyword(currentToken, "as")) {
+    const asKeyword = generateKeyword(asExpression, tokens)
+    if (asKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
-        const partialParse: PartialParse = {
-            cursor: currentToken.end,
-            result: left
-        }
-        return createMismatchToken(currentToken, partialParse)
+        return asKeyword
     }
 
-    currentToken = skip(tokens, _skipables) // skip as
-    let right: Identifier | CaseExpr | MismatchToken = null!
+    if (!isKeyword(asKeyword, "as")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
 
-    if (isKeyword(currentToken, "case"))
-        right = generateCaseExpr(asExpression, tokens)
-    else
-        right = generateIdentifier(asExpression, tokens)
+    currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
+    
+    let right: Identifier
+        | CaseExpr
+        | MismatchToken = null!
+
+    right = generateIdentifier(asExpression, tokens)
 
     if (right.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -50,6 +57,5 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
     }
 
     asExpression.right = right
-
     return asExpression
 }

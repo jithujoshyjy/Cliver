@@ -108,11 +108,14 @@ export function printArrayLiteral(token: ArrayLiteral, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    return "ArrayLiteral\n" + '\t'.repeat(indent) + middleJoiner +
-        token.values.reduce((a, c, i, arr) => a + (i + 1) + '\n' + '\t'.repeat(indent + 1) +
+    const space = ' '.repeat(4)
+    return "ArrayLiteral" +
+        token.values.reduce((a, c, i, arr) => a + '\n' + space.repeat(indent) +
+        (i == arr.length - 1 ? endJoiner : middleJoiner) + (i + 1) +
+        c.reduce((a, c, i, arr) =>
+            a + '\n' + space.repeat(indent+1) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
-            c.reduce((a, c, i, arr) =>
-                a + (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                printExpression(c, indent + 2) + '\n', '') + '\n', "")
+            printExpression(c, indent + 2), '')
+        , '')
 
 }

@@ -17,6 +17,5 @@ void async function main() {
     const ast = generateAST(tokens);
 
     console.log("=== AST ===");
-    // console.dir(ast, { depth: null });
-    console.log(printProgram(ast))
+    console.log(printProgram(ast));
 }()

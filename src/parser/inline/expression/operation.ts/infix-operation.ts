@@ -2,11 +2,9 @@ import { TokenStream } from "../../../../lexer/token.js"
 import { skip, skipables, operatorPrecedence, type Node, createMismatchToken, PartialParse, NodePrinter, pickPrinter, isRightAssociative } from "../../../utility.js"
 import { generateLiteral, printLiteral } from "../../literal/literal.js"
 import { generateTerm, printTerm } from "../../term/term.js"
-import { generateGroupExpression } from "../group-expression.js"
 import { generateInfixCallOperator, printInfixCallOperator } from "./infix-call-operator.js"
 import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-operator.js"
 import { generatePostfixOperation, printPostfixOperation } from "./postfix-operation.js"
-// import { generatePostfixOperation } from "./postfix-operation.js"
 import { generatePrefixOperation, printPrefixOperation } from "./prefix-operation.js"
 import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
@@ -191,12 +189,12 @@ export function printInfixOperation(token: InfixOperation, indent = 0) {
     const lhsPrinter = pickPrinter(operandPrinters, token.left)!
     const rhsPrinter = pickPrinter(operandPrinters, token.right)!
     const operatorPrinter = pickPrinter(operatorPrinters, token.operator)!
-
+    const space = ' '.repeat(4)
     return "InfixOperation\n" +
-        '\t'.repeat(indent) + middleJoiner + "left\n" +
-        '\t'.repeat(indent + 1) + endJoiner + lhsPrinter(token.left, indent + 2) + '\n' +
-        '\t'.repeat(indent) + middleJoiner + "operator\n" +
-        '\t'.repeat(indent + 1) + endJoiner + operatorPrinter(token.operator, indent + 2) + '\n' +
-        '\t'.repeat(indent) + endJoiner + "right\n" +
-        '\t'.repeat(indent + 1) + endJoiner + rhsPrinter(token.right, indent + 2)
+        space.repeat(indent) + middleJoiner + "left\n" +
+        space.repeat(indent + 1) + endJoiner + lhsPrinter(token.left, indent + 2) + '\n' +
+        space.repeat(indent) + middleJoiner + "operator\n" +
+        space.repeat(indent + 1) + endJoiner + operatorPrinter(token.operator, indent + 2) + '\n' +
+        space.repeat(indent) + endJoiner + "right\n" +
+        space.repeat(indent + 1) + endJoiner + rhsPrinter(token.right, indent + 2)
 }

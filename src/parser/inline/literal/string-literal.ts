@@ -107,6 +107,7 @@ export function printStringLiteral(token: StringLiteral, indent = 0) {
     const trailJoiner = "│\t"
     
     const quote = '"'.repeat(token.kind == "multiline" ? 3 : 1)
-    return "StringLiteral\n" + '\t'.repeat(indent) + endJoiner +
+    const space = ' '.repeat(4)
+    return "StringLiteral\n" + space.repeat(indent) + endJoiner +
         token.charset + quote + token.text + quote
 }

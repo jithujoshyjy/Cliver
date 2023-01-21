@@ -46,6 +46,7 @@ export function printNumericLiteral(token: NumericLiteral, indent = 0) {
     const trailJoiner = "│\t"
     
     const excl = '!'
-    return "NumericLiteral\n" + '\t'.repeat(indent) + endJoiner +
+    const space = ' '.repeat(4)
+    return "NumericLiteral\n" + space.repeat(indent) + endJoiner +
         token.value + excl + token.kind
 }

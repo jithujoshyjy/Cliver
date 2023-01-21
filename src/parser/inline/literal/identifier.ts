@@ -99,7 +99,14 @@ export function generateIdentifier(context: Node, tokens: TokenStream): Identifi
         return createMismatchToken(currentToken)
     }
 
-    currentToken = tokens.currentToken
+    if(keywords.includes(identifier.name)) {
+        const partialParse: PartialParse = {
+            cursor: tokens.cursor,
+            result: identifier
+        }
+        tokens.cursor = initialCursor
+        return createMismatchToken(tokens.currentToken, partialParse)
+    }
 
     return identifier
 }
@@ -108,7 +115,7 @@ export function printIdentifier(token: Identifier, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    
-    return "Identifier\n" + '\t'.repeat(indent) + endJoiner +
+    const space = ' '.repeat(4)
+    return "Identifier\n" + space.repeat(indent) + endJoiner +
        token.name
 }

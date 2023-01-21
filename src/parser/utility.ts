@@ -54,7 +54,7 @@ export const keywords = [
 ]
 
 export const isKeyword = (token: Node, keyword: KeywordKind) =>
-    token.type == "Identifier" && keywords.includes(token.name)
+    token.type == "Keyword" && token.name == keyword
 
 export const isOperator = (token: LexicalToken, opr: string) =>
     token.type == "Operator" && token.value == opr

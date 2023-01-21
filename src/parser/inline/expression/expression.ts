@@ -69,6 +69,6 @@ export function printExpression(token: Expression, indent = 0) {
     ] as NodePrinter[]
 
     const printer = pickPrinter(printers, token.value)!
-
-    return "Expression\n" + '\t'.repeat(indent) + endJoiner + printer(token.value, indent+1)
+    const space = ' '.repeat(4)
+    return "Expression\n" + space.repeat(indent) + endJoiner + printer(token.value, indent+1)
 }

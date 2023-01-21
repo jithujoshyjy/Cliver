@@ -33,8 +33,14 @@ export function generateDifferenceType(context: Node, tokens: TokenStream): Diff
     for (let typeGenerator of typeGenerators) {
         typeMember = typeGenerator(differenceType, tokens)
         currentToken = tokens.currentToken
+
         if (typeMember.type != "MismatchToken")
             break
+
+        if (typeMember.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return typeMember
+        }
     }
 
     if (typeMember.type == "MismatchToken") {
@@ -43,7 +49,8 @@ export function generateDifferenceType(context: Node, tokens: TokenStream): Diff
     }
 
     differenceType.left = typeMember
-    currentToken = skip(tokens, skipables)
+    if (skipables.includes(currentToken))
+        currentToken = skip(tokens, skipables)
 
     if (!isOperator(currentToken, "-")) {
         tokens.cursor = initialCursor
@@ -54,8 +61,10 @@ export function generateDifferenceType(context: Node, tokens: TokenStream): Diff
 
     const right = generateTypeExpression(differenceType, tokens)
 
-    if (right.type == "MismatchToken")
+    if (right.type == "MismatchToken") {
+        tokens.cursor = initialCursor
         return right
+    }
 
     differenceType.right = right
 

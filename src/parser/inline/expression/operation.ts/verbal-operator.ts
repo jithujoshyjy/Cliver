@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, operatorPrecedence, type Node } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { generateKeyword } from "../../keyword.js"
 
 export function generateVerbalOperator(context: Node, tokens: TokenStream): VerbalOperator | MismatchToken {
     const verbalOperator: VerbalOperator = {
@@ -21,30 +21,30 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
         "as"
     ]
 
-    const isOpKeword = (op: Identifier) =>
+    const isOpKeword = (op: Keyword) =>
         op.name in operatorPrecedence.infix.left
         || op.name in operatorPrecedence.infix.right
         || op.name in operatorPrecedence.prefix
 
-    const identifier: Identifier | MismatchToken = generateIdentifier(verbalOperator, tokens)
+    const keyword: Keyword | MismatchToken = generateKeyword(verbalOperator, tokens)
     currentToken = tokens.currentToken
     
-    if (identifier.type == "MismatchToken") {
+    if (keyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    if (!isOpKeword(identifier) || excludedOperators.includes(identifier.name)) {
+    if (!isOpKeword(keyword) || excludedOperators.includes(keyword.name)) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    verbalOperator.name = identifier.name as VerbalOperatorKind
-    verbalOperator.start = identifier.start
-    verbalOperator.end = identifier.end
+    verbalOperator.name = keyword.name as VerbalOperatorKind
+    verbalOperator.start = keyword.start
+    verbalOperator.end = keyword.end
 
-    verbalOperator.line = identifier.line
-    verbalOperator.column = identifier.column
+    verbalOperator.line = keyword.line
+    verbalOperator.column = keyword.column
 
     return verbalOperator
 }

@@ -2,6 +2,7 @@ import { TokenStream } from "../../lexer/token.js"
 import { generateAsExpression } from "../inline/expression/as-expression.js"
 import { generateNonVerbalOperator } from "../inline/expression/operation.ts/non-verbal-operator.js"
 import { generatePrefixOperation } from "../inline/expression/operation.ts/prefix-operation.js"
+import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
 import { generateObjectExtendNotation } from "../inline/term/object-extend-notation.js"
@@ -20,7 +21,22 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
     }
 
     const initialCursor = tokens.cursor
-    let currentToken = skip(tokens, skipables) // skip import
+    let currentToken = tokens.currentToken
+
+    const importKeyword = generateKeyword(importDeclr, tokens)
+    if (importKeyword.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return importKeyword
+    }
+
+    if(!isKeyword(importKeyword, "import")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+
+    importDeclr.start = importKeyword.start
+    importDeclr.line = importKeyword.line
+    importDeclr.column = importKeyword.column
 
     const captureComma = () => {
         currentToken = skip(tokens, skipables)
@@ -140,4 +156,13 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
     }
 
     return importDeclr
+}
+
+export function printImportDeclaration(token: ImportDeclaration, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "ImportDeclaration\n"
 }

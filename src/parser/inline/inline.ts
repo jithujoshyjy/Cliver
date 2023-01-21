@@ -60,5 +60,6 @@ export function printInline(token: Inline, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    return "Inline\n" + '\t'.repeat(indent) + endJoiner + printExpression(token.value, indent+1)
+    const space = ' '.repeat(4)
+    return "Inline\n" + space.repeat(indent) + endJoiner + printExpression(token.value, indent+1)
 }

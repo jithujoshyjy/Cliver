@@ -1,8 +1,8 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateBlock, printBlock } from "../../block/block.js"
-import { createMismatchToken, isKeyword, skip, skipables, type Node, keywords } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, skipables, type Node, keywords, DiagnosticMessage } from "../../utility.js"
 import { generateInline, printInline } from "../inline.js"
-import { generateIdentifier } from "./identifier.js"
+import { generateKeyword } from "../keyword.js"
 
 export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | MismatchToken {
     const doExpr: DoExpr = {
@@ -14,10 +14,10 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         end: 0
     }
 
-    let currentToken = tokens.currentToken // do
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const doKeyword = generateIdentifier(doExpr, tokens)
+    const doKeyword = generateKeyword(doExpr, tokens)
 
     if (doKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -25,8 +25,9 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
     }
 
     if (!isKeyword(doKeyword, "do")) {
+        const error: DiagnosticMessage = "Unexpected Keyword '{0}' on {1}:{2}"
         tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
+        return createMismatchToken(currentToken, [error, doKeyword.name, doKeyword.line, doExpr.column])
     }
 
     doExpr.start = doKeyword.start
@@ -43,6 +44,18 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
         currentToken = skipables.includes(tokens.currentToken)
             ? skip(tokens, skipables)
             : tokens.currentToken
+
+        const endKeyword = generateKeyword(doExpr, tokens)
+
+        if(isKeyword(endKeyword, "end")) {
+            doExpr.end = endKeyword.end
+            break
+        }
+        else if(endKeyword.type != "MismatchToken") {
+            const error = "Unexpected Keyword '{0}' on {1}:{2}"
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken, [error, endKeyword.name, endKeyword.line, endKeyword.column])
+        }
 
         let node: Block
             | Inline
@@ -67,17 +80,13 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
             return node
         }
 
-        if (node.type == "Inline"
-            && node.value.type == "Expression"
-            && node.value.value.type == "Literal"
-            && node.value.value.value.type == "Identifier"
-            && isKeyword(node.value.value.value, "end")) {
-
-            doExpr.end = node.end
-            break
-        }
-
         doExpr.body.push(node)
+    }
+
+    if (doExpr.body.length == 0) {
+        const error: DiagnosticMessage = "Empty DoExpression on {0}:{1}"
+        tokens.cursor = initialCursor
+        return createMismatchToken(tokens.currentToken, [error, doExpr.line, doExpr.column])
     }
 
     return doExpr
@@ -87,10 +96,10 @@ export function printDoExpr(token: DoExpr, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-
+    const space = ' '.repeat(4)
     return "DoExpr\n" +
         token.body.reduce((a, c, i, arr) => a +
-            '\t'.repeat(indent) +
+            space.repeat(indent) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
             (c.type == "Block" ? printBlock(c, indent + 1) : printInline(c, indent + 1)) + '\n', '')
 }

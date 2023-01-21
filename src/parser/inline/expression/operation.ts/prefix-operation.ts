@@ -1,9 +1,8 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { operatorPrecedence, skip, skipables, type Node, createMismatchToken, NodePrinter, pickPrinter } from "../../../utility.js"
+import { operatorPrecedence, skip, skipables, type Node, NodePrinter, pickPrinter } from "../../../utility.js"
 import { generateLiteral, printLiteral } from "../../literal/literal.js"
 import { generateTerm, printTerm } from "../../term/term.js"
-import { generateGroupExpression, printGroupExpression } from "../group-expression.js"
-import { generateInfixOperation, printInfixOperation } from "./infix-operation.js"
+import { printInfixOperation } from "./infix-operation.js"
 import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-operator.js"
 import { generatePostfixOperation, printPostfixOperation } from "./postfix-operation.js"
 import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
@@ -107,10 +106,10 @@ export function printPrefixOperation(token: PrefixOperation, indent = 0) {
 
     const operandPrinter = pickPrinter(operandPrinters, token.operand)!
     const operatorPrinter = pickPrinter(operatorPrinters, token.operator)!
-
+    const space = ' '.repeat(4)
     return "PrefixOperation\n" +
-        '\t'.repeat(indent) + middleJoiner + "operator\n" +
-        '\t'.repeat(indent + 1) + endJoiner + operatorPrinter(token.operator, indent + 2) + '\n' +
-        '\t'.repeat(indent) + endJoiner + "operand\n" +
-        '\t'.repeat(indent + 1) + endJoiner + operandPrinter(token.operand, indent + 2)
+        space.repeat(indent) + middleJoiner + "operator\n" +
+        space.repeat(indent + 1) + endJoiner + operatorPrinter(token.operator, indent + 2) + '\n' +
+        space.repeat(indent) + endJoiner + "operand\n" +
+        space.repeat(indent + 1) + endJoiner + operandPrinter(token.operand, indent + 2)
 }

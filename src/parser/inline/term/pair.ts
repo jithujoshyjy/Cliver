@@ -4,7 +4,6 @@ import { generateExpression, printExpression } from "../expression/expression.js
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { printPostfixOperation } from "../expression/operation.ts/postfix-operation.js"
 import { generatePrefixOperation, printPrefixOperation } from "../expression/operation.ts/prefix-operation.js"
-// import { generatePrefixOperation } from "../expression/operation.ts/prefix-operation.js"
 import { generateLiteral, printLiteral } from "../literal/literal.js"
 import { generateTerm, printTerm } from "./term.js"
 
@@ -23,7 +22,7 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        generatePrefixOperation, /* generatePostfixOperation, */ generateTerm,
+        generatePrefixOperation, generateTerm,
         generateLiteral, generateGroupExpression
     ]
 
@@ -82,9 +81,10 @@ export function printPair(token: Pair, indent = 0) {
     ] as NodePrinter[]
 
     const keyPrinter = pickPrinter(keyPrinters, token.key)!
+    const space = ' '.repeat(4)
     return "Pair\n" +
-        '\t'.repeat(indent) + middleJoiner +
-        "key\n" + '\t'.repeat(indent + 1) + endJoiner + keyPrinter(token.key, indent+2) +
-        '\n' + '\t'.repeat(indent) + endJoiner +
-        "value\n" + '\t'.repeat(indent + 1) + endJoiner + printExpression(token.value, indent+2)
+        space.repeat(indent) + middleJoiner +
+        "key\n" + space.repeat(indent + 1) + endJoiner + keyPrinter(token.key, indent+2) +
+        '\n' + space.repeat(indent) + endJoiner +
+        "value\n" + space.repeat(indent + 1) + endJoiner + printExpression(token.value, indent+2)
 }

@@ -63,8 +63,10 @@ export function printProgram(token: Program, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    return "Program\n" + '\t'.repeat(indent) + token.value
-        .reduce((a, c, i, arr) => a +
-            (i == arr.length-1 ? endJoiner : middleJoiner) +
-            (c.type == "Block" ? printBlock(c, indent+1) : printInline(c, indent+1)), '')
+    const space = ' '.repeat(4)
+    return "Program\n" + space.repeat(indent) +
+        token.value.reduce((a, c, i, arr) => a +
+            (i == arr.length - 1 ? endJoiner : middleJoiner) +
+            (c.type == "Block" ? printBlock(c, indent + 1) : printInline(c, indent + 1)) +
+            (i == arr.length - 1 ? '' : '\n'), '')
 }

@@ -72,6 +72,6 @@ export function printGroupExpression(token: GroupExpression, indent = 0) {
     ] as NodePrinter[]
 
     const printer = pickPrinter(printers, token.value)!
-
-    return "GroupExpression\n" + '\t'.repeat(indent) + endJoiner + printer(token.value, indent + 1) + '\n'
+    const space = ' '.repeat(4)
+    return "GroupExpression\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

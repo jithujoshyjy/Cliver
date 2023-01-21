@@ -1,6 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
+import { generateIdentifier } from "../../inline/literal/identifier.js"
 import { generateTypeExpression } from "../../inline/type/type-expression.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, isKeyword } from "../../utility.js"
 import { generateVariableDeclarator } from "./variable-declarator.js"
 
 export function generateVariableDeclaration(context: Node, tokens: TokenStream): VariableDeclaration | MismatchToken {
@@ -18,14 +19,21 @@ export function generateVariableDeclaration(context: Node, tokens: TokenStream):
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (!["var", "val"].includes(currentToken.value as string)) {
+    const varOrValKeyword = generateIdentifier(variableDeclaration, tokens)
+    if (varOrValKeyword.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return varOrValKeyword
+    }
+
+    if (!["var", "val"].includes(varOrValKeyword.name)) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    variableDeclaration.kind = currentToken.value as "var" | "val"
-
-    currentToken = skip(tokens, skipables) // skip var | val
+    variableDeclaration.start = varOrValKeyword.start
+    variableDeclaration.line = varOrValKeyword.line
+    variableDeclaration.column = varOrValKeyword.column
+    variableDeclaration.kind = varOrValKeyword.name as "var" | "val"
 
     const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
@@ -87,4 +95,13 @@ export function generateVariableDeclaration(context: Node, tokens: TokenStream):
     variableDeclaration.declarations = declarators
 
     return variableDeclaration
+}
+
+export function printVariableDeclaration(token: VariableDeclaration, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "VariableDeclaration\n"
 }

@@ -201,17 +201,18 @@ export function printTupleLiteral(token: TupleLiteral, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    return "TupleLiteral\n" + '\t'.repeat(indent) +
+    const space = ' '.repeat(4)
+    return "TupleLiteral\n" + space.repeat(indent) +
     
         (!!token.positional.length && !!token.keyword.length ? middleJoiner : endJoiner) +
 
         (token.positional.length ? "positional\n" +
-        token.positional.reduce((a, c, i, arr) => a + '\t'.repeat(indent + 1) +
+        token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
             printExpression(c, indent + 2) + '\n', '') : "") +
         
-        (token.keyword.length ? (token.positional.length ? '\t'.repeat(indent) + endJoiner : "") + "keyword\n" +
-        token.keyword.reduce((a, c, i, arr) => a + '\t'.repeat(indent + 1) +
+        (token.keyword.length ? (token.positional.length ? space.repeat(indent) + endJoiner : "") + "keyword\n" +
+        token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
             (c.type == "Expression" ? printExpression(c, indent + 2) : printPair(c, indent + 2)) + '\n', '') : "")
 

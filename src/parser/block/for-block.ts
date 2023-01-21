@@ -1,8 +1,11 @@
 import { TokenStream } from "../../lexer/token.js"
 import { generateExpression } from "../inline/expression/expression.js"
-import { generateProgram } from "../program.js"
-import { isKeyword, skip, skipables, type Node } from "../utility.js"
-import { generateDoneBlock } from "./done-block.js"
+import { generateInline } from "../inline/inline.js"
+import { generateKeyword } from "../inline/keyword.js"
+import { generateIdentifier } from "../inline/literal/identifier.js"
+import { generateStringLiteral } from "../inline/literal/string-literal.js"
+import { isKeyword, skip, skipables, type Node, createMismatchToken, DiagnosticMessage, PartialParse, isOperator } from "../utility.js"
+import { generateBlock } from "./block.js"
 
 export function generateForBlock(context: Node, tokens: TokenStream): ForBlock | MismatchToken {
     const forBlock: ForBlock = {
@@ -16,43 +19,159 @@ export function generateForBlock(context: Node, tokens: TokenStream): ForBlock |
         end: 0
     }
 
-    let currentToken = skip(tokens, skipables)
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    const expression = generateExpression(forBlock, tokens)
 
+    let isSingleItemBlock = false
+    let blockHolder: ForBlock
+        | DoneBlock = forBlock
+    let blockHolderBody = forBlock.body
+
+    const nodeGenerators = [
+        generateBlock, generateInline
+    ]
+
+    const forKeyword = generateKeyword(forBlock, tokens)
+    if (forKeyword.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return forKeyword
+    }
+
+    if (!isKeyword(forKeyword, "for")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
+
+    forBlock.start = forKeyword.start
+    forBlock.line = forKeyword.line
+    forBlock.column = forKeyword.column
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    const expression = generateExpression(forBlock, tokens)
     if (expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
     }
 
-    forBlock.condition = expression
-    const nodeGenerator = generateProgram(forBlock, tokens)
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
-    for (let node of nodeGenerator) {
+    if (isOperator(currentToken, ":")) {
+        currentToken = skip(tokens, skipables)
+        isSingleItemBlock = true
+    }
+
+    const parseDoneParam = (doneBlock: DoneBlock) => {
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
+        let status: Identifier
+            | StringLiteral
+            | MismatchToken = generateIdentifier(doneBlock, tokens)
+
+        if (status.type == "MismatchToken")
+            status = generateStringLiteral(doneBlock, tokens)
+
+        return status
+    }
+
+    while (currentToken.type != "EOF") {
+
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
+        const maybeKeyword = generateKeyword(forBlock, tokens)
+        if (isKeyword(maybeKeyword, "done")) {
+
+            if (forBlock.done !== null) {
+                tokens.cursor = initialCursor
+                const error: DiagnosticMessage = "Unexpected {0} block on {1}:{2}"
+                return createMismatchToken(tokens.currentToken, [error, "done", maybeKeyword.line, maybeKeyword.column])
+            }
+
+            const doneBlock: DoneBlock = {
+                type: "DoneBlock",
+                body: [],
+                status: null!,
+                line: maybeKeyword.line,
+                column: maybeKeyword.column,
+                start: maybeKeyword.start,
+                end: 0
+            }
+
+            const doneBlockParam = parseDoneParam(doneBlock)
+            if (doneBlockParam.type == "MismatchToken") {
+                tokens.cursor = initialCursor
+                return doneBlockParam
+            }
+
+            doneBlock.status = doneBlockParam
+            blockHolder = doneBlock
+            blockHolderBody = doneBlock.body
+            forBlock.done = doneBlock
+
+            currentToken = skipables.includes(tokens.currentToken)
+                ? skip(tokens, skipables)
+                : tokens.currentToken
+
+            if (isOperator(currentToken, ":")) {
+                currentToken = skip(tokens, skipables)
+                isSingleItemBlock = true
+            }
+        }
+        else if (isKeyword(maybeKeyword, "end")) {
+            forBlock.end = blockHolder.end = maybeKeyword.end
+            break
+        }
+        else if (maybeKeyword.type != "MismatchToken") {
+            const error = "Unexpected Keyword '{0}' on {1}:{2}"
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken, [error, maybeKeyword.name, maybeKeyword.line, maybeKeyword.column])
+        }
+
+        let node: Block
+            | Inline
+            | MismatchToken = null!
+
+        for (const nodeGenerator of nodeGenerators) {
+            node = nodeGenerator(forBlock, tokens)
+            currentToken = tokens.currentToken
+            if (node.type != "MismatchToken")
+                break
+
+            if (node.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return node
+            }
+        }
 
         currentToken = tokens.currentToken
-
-        if (node.type == "MismatchToken" && isKeyword(currentToken, "end"))
-            break
-        else if (node.type == "MismatchToken") {
+        if (node.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return node
         }
 
-        forBlock.body.push(node)
-    }
+        blockHolder.end = node.end
+        blockHolderBody.push(node)
 
-    currentToken = tokens.currentToken
-    if (isKeyword(currentToken, "done")) {
-
-        const doneBlock = generateDoneBlock(forBlock, tokens)
-        if (doneBlock.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return doneBlock
-        }
-
-        forBlock.done = doneBlock
+        if (isSingleItemBlock)
+            break
     }
 
     return forBlock
+}
+
+export function printForBlock(token: ForBlock, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "ForBlock\n"
 }

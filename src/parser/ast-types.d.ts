@@ -387,7 +387,18 @@ type IfBlock = {
     type: "IfBlock",
     condition: AsExpression | Expression,
     body: Array<Inline | Block>,
-    alternate: IfBlock | ElseBlock | null,
+    alternatives: Array<ElseIfBlock>,
+    fallback: ElseBlock,
+    line: number,
+    column: number,
+    start: number,
+    end: number
+}
+
+type ElseIfBlock = {
+    type: "ElseIfBlock",
+    condition: AsExpression | Expression,
+    body: Array<Inline | Block>,
     line: number,
     column: number,
     start: number,
@@ -475,7 +486,7 @@ type ForBlock = {
 
 type DoneBlock = {
     type: "DoneBlock",
-    status: Identifier,
+    status: Identifier | StringLiteral,
     body: Array<Inline | Block>,
     line: number,
     column: number,
@@ -671,7 +682,7 @@ type GroupExpression = {
 
 type UseDeclaration = {
     type: "UseDeclaration",
-    rules: Array<StringLiteral | TypeAssertion>,
+    rules: Array<StringLiteral /* | TypeAssertion */>,
     line: number,
     column: number,
     start: number,
@@ -896,7 +907,7 @@ type TupleLiteral = {
 
 type MapLiteral = {
     type: "MapLiteral",
-    pairs: Pair[],
+    pairs: Array<Identifier | Pair>,
     line: number,
     column: number,
     start: number,
