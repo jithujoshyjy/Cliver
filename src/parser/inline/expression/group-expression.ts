@@ -41,8 +41,9 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
 
     groupExpression.value = expression.value
 
-    if (skipables.includes(currentToken))
-        currentToken = skip(tokens, skipables)
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
     if (!isPunctuator(currentToken, ')')) {
         tokens.cursor = initialCursor
@@ -57,7 +58,7 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
 
     groupExpression.end = currentToken.end
     currentToken = skip(tokens, skipables) // skip )
-    
+
     return groupExpression
 }
 

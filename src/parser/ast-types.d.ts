@@ -101,7 +101,9 @@ type TypeDeclarator = {
 
 type UnitFunction = {
     type: "UnitFunction",
-    params: Array<AssignExpr | Pattern>,
+    positional: Array<AssignExpr | Pattern>,
+    keyword: Array<AssignExpr>,
+    captured: Array<Identifier>,
     signature: TypeExpression | null,
     body: Expression,
     line: number,
@@ -418,7 +420,7 @@ type IfInline = {
     type: "IfInline",
     condition: AsExpression | Expression,
     body: Expression,
-    alternate: ElseInline,
+    fallback: Expression,
     line: number,
     column: number,
     start: number,
@@ -584,7 +586,7 @@ type PostfixPattern = {
 
 type InfixPattern = {
     type: "InfixPattern",
-    operator: NonVerbalOperator,
+    operator: VerbalOperator | NonVerbalOperator,
     left: BracePattern
     | BracketPattern
     | ParenPattern
@@ -618,7 +620,7 @@ type BracePattern = {
 
 type BracketPattern = {
     type: "BracketPattern",
-    values: any[],
+    values: any[][],
     line: number,
     column: number,
     start: number,
@@ -627,7 +629,8 @@ type BracketPattern = {
 
 type ParenPattern = {
     type: "ParenPattern",
-    values: any[],
+    positional: Array<any>,
+    keyword: Array<any>,
     line: number,
     column: number,
     start: number,
@@ -722,7 +725,7 @@ type TaggedNumber = {
 type ImplicitMultiplication = {
     type: "ImplicitMultiplication",
     left: NumericLiteral,
-    right: Identifier | PropertyAccess | GroupExpression,
+    right: Identifier | GroupExpression,
     line: number,
     column: number,
     start: number,
@@ -781,17 +784,18 @@ type InlineTaggedString = {
     end: number
 }
 
-type InstringExpr = {
-    type: "InstringExpr",
-    body: Array<Pair | Expression>,
+type InStringExpr = {
+    type: "InStringExpr",
+    positional: Array<Expression>,
+    keyword: Array<Pair>,
     line: number,
     column: number,
     start: number,
     end: number
 }
 
-type InstringId = {
-    type: "InstringId",
+type InStringId = {
+    type: "InStringId",
     value: Identifier,
     line: number,
     column: number,
@@ -801,7 +805,7 @@ type InstringId = {
 
 type InlineFString = {
     type: "InlineFString",
-    fragments: Array<InlineStringLiteral | InstringExpr | InstringId>,
+    fragments: Array<StringLiteral & { kind: "inline" } | InStringExpr | InStringId>,
     line: number,
     column: number,
     start: number,
@@ -838,7 +842,7 @@ type MultilineUnicodeString = {
 type MultilineTaggedString = {
     type: "MultilineTaggedString",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
-    fragments: Array<MultilineStringLiteral | InstringExpr | InstringId>,
+    fragments: Array<MultilineStringLiteral | InStringExpr | InStringId>,
     line: number,
     column: number,
     start: number,
@@ -847,7 +851,6 @@ type MultilineTaggedString = {
 
 type TaggedString = {
     type: "TaggedString",
-    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
     value: InlineTaggedString | MultilineTaggedString,
     line: number,
     column: number,

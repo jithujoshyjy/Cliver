@@ -1,6 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
+import { generateKeyword } from "../keyword.js"
 
 export function generateForInline(context: Node, tokens: TokenStream): ForInline | MismatchToken {
     const forInline: ForInline = {
@@ -13,39 +14,53 @@ export function generateForInline(context: Node, tokens: TokenStream): ForInline
         end: 0
     }
 
-    let  currrentToken = tokens.currentToken
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if(!isKeyword(currrentToken, "for")) {
+    const forKeyword = generateKeyword(forInline, tokens)
+
+    if (forKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
-        return createMismatchToken(currrentToken)
+        return forKeyword
     }
 
-    currrentToken = skip(tokens, skipables) // skip for
-    const condition = generateExpression(forInline, tokens)
+    if (!isKeyword(forKeyword, "for")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
 
-    if(condition.type == "MismatchToken") {
+    forInline.start = forKeyword.start
+    forInline.line = forKeyword.line
+    forInline.column = forKeyword.column
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    const condition = generateExpression(forInline, tokens)
+    if (condition.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return condition
     }
 
     forInline.condition = condition
-    currrentToken = skip(tokens, skipables) // :
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
-    if(!isOperator(currrentToken, ":")) {
+    if (!isOperator(currentToken, ":")) {
         tokens.cursor = initialCursor
-        return createMismatchToken(currrentToken)
+        return createMismatchToken(currentToken)
     }
 
-    currrentToken = skip(tokens, skipables) // skip :
+    currentToken = skip(tokens, skipables) // skip :
     const body = generateExpression(forInline, tokens)
 
-    if(body.type == "MismatchToken") {
+    if (body.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return body
     }
 
     forInline.body = body
-
     return forInline
 }

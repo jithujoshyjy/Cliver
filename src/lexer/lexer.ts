@@ -20,7 +20,7 @@ export function tokenize(codeStr: string, file: string = '') {
         generateInteger, generateNewline,
         generateWhitespace, generatePunctuator,
         generateOperator, generateWord,
-        gennerateUnknownToken
+        generateUnknownToken
     ]
 
     let line = +!!code.length, column = line, start = 0, end = 0
@@ -184,7 +184,7 @@ export function tokenize(codeStr: string, file: string = '') {
         return newline
     }
 
-    function gennerateUnknownToken(code: string[]) {
+    function generateUnknownToken(code: string[]) {
         const unknownToken: LexicalToken = {
             type: "UnknownToken",
             value: null!,

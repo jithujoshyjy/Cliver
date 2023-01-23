@@ -823,16 +823,15 @@ fun Person<static>()
 			print("sad")
 		end
 	end
-
 end
 
 #### AsyncFunction ####
 
-fun :: AsyncFunction(a -> a) where a :: Printable
+fun :: AsyncFunction(a) -> a where a :: Printable
 sayHello<await>(word)
-	var name = FileSys.File("/file.txt").read()
-	var greet = await name + word
-	return await greet
+	var name = await FileSys.File("/file.txt").read()
+	var greet = name + word
+	return greet
 end
 
 
@@ -854,18 +853,18 @@ print(person.salary) # 40000
 person
 	..name = "Jack" # Jack
 	..greet("hello") # hello from Jack
-	..getMood() # pleasant	
+	..getMood() # pleasant
 
 # object literal
-var obj = @Object {
+var obj = Object.do
 	var color = "red"
 	fun fill()
 		# implementation logic
 	end
 	fun stroke()
-		# implementation logic
+		# implementation logic 144, 8, 114
 	end
-}
+end
 
 type.of(obj) # type :: Object
 
@@ -900,15 +899,15 @@ var sign = if num >= 0: 1 else: -1
 
 var x = 7
 var y = match x
-case 1: "sunday"
-case 2: "monday"
-case 3: "tuesday"
-case 4: "wednesday"
-case 5: "thursday"
-case 6: "friday"
-case 7: "saturday"
-case 8 | 9 | 10: "hello Martian!"
-case _: "invalid"
+	case 1: "sunday"
+	case 2: "monday"
+	case 3: "tuesday"
+	case 4: "wednesday"
+	case 5: "thursday"
+	case 6: "friday"
+	case 7: "saturday"
+	case 8 | 9 | 10: "hello Martian!"
+	case _: "invalid"
 
 
 print(y) # "saturday"

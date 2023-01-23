@@ -42,8 +42,14 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
     for (let keyGenerator of keyGenerators) {
         key = keyGenerator(pairPattern, tokens)
         currentToken = tokens.currentToken
+
         if (key.type != "MismatchToken") {
             break
+        }
+
+        if (key.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return key
         }
     }
 
@@ -53,7 +59,13 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
     }
 
     pairPattern.key = key
-    currentToken = skip(tokens, skipables) // :
+    pairPattern.start = key.start
+    pairPattern.line = key.line
+    pairPattern.column = key.column
+    
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
     if (!isOperator(currentToken, ":")) {
         tokens.cursor = initialCursor
@@ -61,6 +73,7 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
     }
 
     currentToken = skip(tokens, skipables) // skip :
+
     let value: AsExpression
         | TypeAssertion
         | BracePattern
@@ -76,9 +89,13 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
     for (let valueGenerator of valueGenerators) {
         value = valueGenerator(pairPattern, tokens)
         currentToken = tokens.currentToken
-        if (value.type != "MismatchToken") {
+
+        if (value.type != "MismatchToken")
             break
-        }
+
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
     }
 
     if (value.type == "MismatchToken") {
@@ -87,6 +104,7 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
     }
 
     pairPattern.value = value
+    pairPattern.end = value.end
 
     return pairPattern
 }

@@ -6,7 +6,7 @@ import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateExternalCallbackNotation } from "./external-callback-notation.js"
 import { generateForInline } from "./for-inline.js"
 import { generateFunctionCall } from "./function-call.js"
-import { generateIfInline } from "./if-inline/if-inline.js"
+import { generateIfInline } from "./if-inline.js"
 import { generateImplicitMultiplication } from "./implicit-multiplication.js"
 import { generateInlineMacroApplication } from "./inline-macro-application.js"
 import { generateInlineStringFragment } from "./inline-string-fragment.js"
@@ -20,6 +20,7 @@ import { generateTaggedNumber } from "./tagged-number.js"
 import { generateTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol } from "./tagged-symbol.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
+import { generateGroupExpression } from "../expression/group-expression.js"
 
 export function generateTerm(context: Node, tokens: TokenStream): Term | MismatchToken {
     const term: Term = {
@@ -33,24 +34,29 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    return createMismatchToken(currentToken)
-    // const nodeGenerators = [
-    //     // generateTypeAssertion,
-    //     /* generatePipelineNotation, generateObjectCascadeNotation, */ /* generateObjectExtendNotation *//* ,
-    //     generateExternalCallbackNotation, */ /* generateAnonFunction, */ /* generateUnitFunction, */
-    //     /* generateAssignExpr, */ generateMetaDataInterpolation, generateTaggedSymbol,
-    //     generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication,
-    //     generateTaggedNumber, generateForInline, generateMatchInline, generateIfInline,
-    //     generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess
-    // ]
+    
+    const nodeGenerators = [
+        /* generateTypeAssertion,
+        generatePipelineNotation, generateObjectCascadeNotation, generateObjectExtendNotation,
+        generateExternalCallbackNotation, generateAnonFunction,*/  generateUnitFunction,
+        /* generateAssignExpr, generateMetaDataInterpolation, generateTaggedSymbol,*/
+        generateTaggedString, /* generateInlineStringFragment, */ generateImplicitMultiplication,
+        /* generateTaggedNumber, */ generateForInline, /* generateMatchInline, */ generateIfInline,
+        generateGroupExpression, /* generateInlineMacroApplication, generateFunctionCall, generatePropertyAccess */
+    ]
 
-    /* let node: typeof term.value | MismatchToken = null!
+    let node: typeof term.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
         node = nodeGenerator(term, tokens)
         currentToken = tokens.currentToken
         
         if (node.type != "MismatchToken") {
             break
+        }
+
+        if (node.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return node
         }
     }
 
@@ -63,7 +69,10 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     term.end = node.end
     term.value = node
 
-    return term */
+    term.line = node.line
+    term.column = node.column
+
+    return term
 }
 
 export function printTerm(token: Term, indent = 0) {

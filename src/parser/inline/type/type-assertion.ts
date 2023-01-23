@@ -1,6 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, skip, skipables, type Node, isOperator } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
+import { generateNonVerbalOperator } from "../expression/operation.ts/non-verbal-operator.js"
 import { generateTypeExpression } from "./type-expression.js"
 
 export function generateTypeAssertion(context: Node, tokens: TokenStream): TypeAssertion | MismatchToken {
@@ -18,23 +19,36 @@ export function generateTypeAssertion(context: Node, tokens: TokenStream): TypeA
     const initialCursor = tokens.cursor
 
     const expression = generateExpression(typeAssertion, tokens)
-    if(expression.type == "MismatchToken") {
+    if (expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
     }
 
     typeAssertion.left = expression
 
-    currentToken = skip(tokens, skipables) // ::
-    if(currentToken.value != "::") {
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    const doubleColon = generateNonVerbalOperator(typeAssertion, tokens)
+
+    if (doubleColon.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return doubleColon
+    }
+
+    if(doubleColon.name != "::") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    currentToken = skip(tokens, skipables) // skip ::
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+    
     const typeExpr = generateTypeExpression(typeAssertion, tokens)
 
-    if(typeExpr.type == "MismatchToken") {
+    if (typeExpr.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return typeExpr
     }

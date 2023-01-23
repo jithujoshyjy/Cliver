@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, type Node, _skipables, operatorPrecedence, createMismatchToken } from "../../../utility.js"
+import { skip, type Node, _skipables, operatorPrecedence, createMismatchToken, skipables } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
 import { generateBracePattern } from "./brace-pattern.js"
@@ -41,6 +41,8 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     }
 
     prefixPattern.start = _operator.start
+    prefixPattern.line = _operator.line
+    prefixPattern.column = _operator.column
 
     const getPrecidence = (op: NonVerbalOperator): number => {
         const isVerbalOperator = /^\p{Letter}+$/gu.test(op.name as string)
@@ -55,8 +57,9 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     _operator.precedence = getPrecidence(_operator)
 
     prefixPattern.operator = _operator
-    currentToken = skip(tokens, _skipables) // skip operator
-    const resetCursorPoint = tokens.cursor
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
     const operandGenerators = [
         generatePrefixPattern, generatePostfixPattern, generateBracePattern,
@@ -73,54 +76,24 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
         | InfixPattern
         | PostfixPattern
         | MismatchToken = null!
-    
+
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(prefixPattern, tokens)
         currentToken = tokens.currentToken
+
         if (operand.type != "MismatchToken") {
             break
+        }
+
+        if (operand.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return operand
         }
     }
 
     if (operand.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return operand
-    }
-
-    const skipNpeek = () => {
-        let idx = 1
-        let nextToken = tokens.peek(idx)
-        while (nextToken && nextToken.type != "EOF" && _skipables.includes(nextToken)) {
-            idx++
-            nextToken = tokens.peek(idx)
-        }
-        return nextToken
-    }
-
-    const nextToken = _skipables.includes(currentToken) ? skipNpeek() : currentToken
-    if (nextToken && nextToken.type == "Operator") {
-
-        const getPrecidence = (op: typeof currentToken) =>
-            operatorPrecedence.infix.left[op.value as string] ??
-            operatorPrecedence.infix.right[op.value as string] ?? 10
-
-        const isRightAssociative = (op: typeof currentToken) =>
-            Object.keys(operatorPrecedence.infix.right).includes(op.value as string)
-
-        const nextOpPrecedence = getPrecidence(nextToken)
-        const nextHasMorePreced = nextOpPrecedence > _operator.precedence
-        const isNextRightAssoc = nextOpPrecedence == _operator.precedence
-            && isRightAssociative(nextToken)
-
-        if (nextHasMorePreced || isNextRightAssoc) {
-            tokens.cursor = resetCursorPoint
-            const infixPattern = generateInfixPattern(prefixPattern, tokens)
-            if (infixPattern.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return infixPattern
-            }
-            operand = infixPattern
-        }
     }
 
     prefixPattern.operand = operand

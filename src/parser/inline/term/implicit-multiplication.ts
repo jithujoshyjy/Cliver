@@ -3,7 +3,6 @@ import { createMismatchToken, type Node } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
-import { generatePropertyAccess } from "./property-access.js"
 
 export function generateImplicitMultiplication(context: Node, tokens: TokenStream): ImplicitMultiplication | MismatchToken {
     const implicitMultiplication: ImplicitMultiplication = {
@@ -26,20 +25,19 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     }
 
     implicitMultiplication.left = number
-    tokens.advance()
     currentToken = tokens.currentToken
 
     const nodeGenerators = [
-        generateGroupExpression, /* generatePropertyAccess,  */generateIdentifier
+        generateGroupExpression, generateIdentifier
     ]
 
-    let multiplier: Identifier | PropertyAccess | GroupExpression | MismatchToken = null!
+    let multiplier: Identifier | GroupExpression | MismatchToken = null!
     for(let nodeGenerator of nodeGenerators) {
         multiplier = nodeGenerator(implicitMultiplication, tokens)
         currentToken = tokens.currentToken
-        if(multiplier.type != "MismatchToken") {
+        
+        if(multiplier.type != "MismatchToken")
             break
-        }
 
         if (multiplier.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
@@ -53,7 +51,5 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     }
 
     implicitMultiplication.right = multiplier
-    tokens.advance()
-
     return implicitMultiplication
 }

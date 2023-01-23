@@ -26,7 +26,6 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
     tupleLiteral.column = currentToken.column
     tupleLiteral.start = currentToken.start
 
-
     currentToken = skip(tokens, skipables)
 
     const captureComma = () => {

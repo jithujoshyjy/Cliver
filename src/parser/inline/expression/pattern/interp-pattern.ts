@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, type Node } from "../../../utility.js"
+import { type Node } from "../../../utility.js"
 import { generateMetaDataInterpolation } from "../../term/meta-data-interpolation.js"
 import { generateTaggedString } from "../../term/tagged-string/tagged-string.js"
 
@@ -29,6 +29,10 @@ export function generateInterpPattern(context: Node, tokens: TokenStream): Inter
         return body
     }
 
+    interpPattern.start = body.start
+    interpPattern.end = body.end
+    interpPattern.line = body.line
+    interpPattern.column = body.column
     interpPattern.body = body
 
     return interpPattern

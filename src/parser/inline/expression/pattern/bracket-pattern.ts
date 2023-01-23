@@ -1,6 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isPunctuator, skip, skipables, type Node } from "../../../utility.js"
-import { generateIdentifier } from "../../literal/identifier.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
@@ -14,7 +13,7 @@ import { generatePrefixPattern } from "./prefix-pattern.js"
 export function generateBracketPattern(context: Node, tokens: TokenStream): BracketPattern | MismatchToken {
     const bracketPattern: BracketPattern = {
         type: "BracketPattern",
-        values: null!,
+        values: [[]],
         line: 0,
         column: 0,
         start: 0,
@@ -24,90 +23,120 @@ export function generateBracketPattern(context: Node, tokens: TokenStream): Brac
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* if (currentToken.type != TokenType.BraceEnclosed) {
+    if (!isPunctuator(currentToken, "[")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
     bracketPattern.start = currentToken.start
-    bracketPattern.end = currentToken.end
+    bracketPattern.line = currentToken.line
+    bracketPattern.column = currentToken.column
 
-    const bracketTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    currentToken = bracketTokens.currentToken
-
-    const captureComma = () => {
-        currentToken = skip(tokens, skipables)
-
-        if (!isPunctuator(currentToken, ",")) {
-            return createMismatchToken(currentToken)
-        }
-
-        return currentToken
-    }
-
-    const nodeGenerators = [
+    const valueGenerators = [
         generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
         generateInterpPattern, generateLiteral
     ]
 
-    const parsePattern = () => {
-        let patternNode: AsExpression
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    const captureComma = () => {
+        const initialToken = tokens.currentToken
+
+        if (!isPunctuator(initialToken, ",")) {
+            return createMismatchToken(initialToken)
+        }
+
+        currentToken = skip(tokens, skipables)
+        return initialToken
+    }
+
+    const captureSemicolon = () => {
+        const initialToken = tokens.currentToken
+
+        if (!isPunctuator(initialToken, ";")) {
+            return createMismatchToken(initialToken)
+        }
+
+        currentToken = skip(tokens, skipables)
+        return initialToken
+    }
+
+    let lastDelim: LexicalToken | MismatchToken | null = null
+    const parseValue = () => {
+
+        let value: AsExpression
+            | InfixPattern
+            | PrefixPattern
+            | PostfixPattern
             | TypeAssertion
             | BracePattern
-            | BracketPattern
             | ParenPattern
-            | PrefixPattern
-            | InfixPattern
-            | PostfixPattern
+            | BracketPattern
             | InterpPattern
             | Literal
             | MismatchToken = null!
-
-        if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
-            currentToken = skip(bracketTokens, skipables)
-
-        for (let nodeGenerator of nodeGenerators) {
-            patternNode = nodeGenerator(bracketPattern, tokens)
+        
+        for (let valueGenerator of valueGenerators) {
+            value = valueGenerator(bracketPattern, tokens)
             currentToken = tokens.currentToken
-            if (patternNode.type != "MismatchToken")
+            if (value.type != "MismatchToken")
                 break
+
+            if (value.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return value
+            }
         }
 
-        currentToken = tokens.currentToken
-        return patternNode
+        lastDelim = null
+        return value
     }
 
-    while (!bracketTokens.isFinished) {
+    let isInitial = true
+    while (!tokens.isFinished) {
 
-        if (bracketTokens.currentToken.type == TokenType.EOF)
+        if (isPunctuator(currentToken, "]")) {
+            bracketPattern.end = currentToken.end
+            tokens.advance()
             break
-
-        const patternNode = parsePattern()
-
-        if (patternNode.type == "MismatchToken" && patternNode.value.type == TokenType.EOF)
-            break
-
-        if (patternNode.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return patternNode
         }
 
-        bracketPattern.values.push(patternNode)
-        if (skipables.includes(currentToken.type))
-            currentToken = skip(bracketTokens, skipables)
-
-        if (currentToken.type == TokenType.EOF)
-            break
-
-        const comma = captureComma()
-
-        if (comma.type == "MismatchToken") {
+        if (!isInitial && lastDelim == null) {
             tokens.cursor = initialCursor
-            return comma
+            return createMismatchToken(currentToken)
         }
 
-        currentToken = bracketTokens.currentToken
-    } */
+        if (lastDelim?.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return lastDelim
+        }
+
+        if (!isPunctuator(currentToken, ";")) {
+            const value = parseValue()
+
+            if (value.type == "MismatchToken") {
+                tokens.cursor = initialCursor
+                return value
+            }
+
+            bracketPattern.values.at(-1)?.push(value)
+        }
+
+        if (skipables.includes(currentToken))
+            currentToken = skip(tokens, skipables)
+
+        lastDelim = captureComma()
+
+        if (lastDelim.type == "MismatchToken")
+            lastDelim = captureSemicolon()
+
+        if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";"))
+            bracketPattern.values.push([])
+
+        isInitial = false
+    }
 
     return bracketPattern
 }

@@ -29,7 +29,7 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
         return importKeyword
     }
 
-    if(!isKeyword(importKeyword, "import")) {
+    if (!isKeyword(importKeyword, "import")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -39,7 +39,10 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
     importDeclr.column = importKeyword.column
 
     const captureComma = () => {
-        currentToken = skip(tokens, skipables)
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
         if (!isPunctuator(currentToken, ",")) {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
@@ -49,7 +52,10 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
     }
 
     const captureSpecifier = () => {
-        currentToken = tokens.currentToken
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+        
         let specifierGenerators = [
             generateObjectExtendNotation, generateAsExpression,
             generateIdentifier, generatePrefixOperation, generateNonVerbalOperator
@@ -109,16 +115,16 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
         const sources: Array<TaggedSymbol | StringLiteral> = []
         while (!tokens.isFinished) {
             const source = parseSource()
-    
+
             if (source.type == "MismatchToken") {
                 tokens.cursor = initialCursor
                 return source
             }
-    
+
             sources.push(source)
 
             const comma = captureComma()
-    
+
             if (comma.type == "MismatchToken") {
                 break
             }
@@ -129,7 +135,7 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
 
     if (importDeclr.specifiers.length === 0) {
         const sources = parseSources()
-        if(!Array.isArray(sources)) {
+        if (!Array.isArray(sources)) {
             tokens.cursor = initialCursor
             return sources
         }
@@ -139,7 +145,7 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
     else {
         currentToken = skip(tokens, skipables) // from
 
-        if(!isKeyword(currentToken, "from") && importDeclr.specifiers.every(x => x.type == "Identifier")) {
+        if (!isKeyword(currentToken, "from") && importDeclr.specifiers.every(x => x.type == "Identifier")) {
             importDeclr.sources = importDeclr.specifiers as Identifier[]
             importDeclr.specifiers = []
         }
@@ -147,7 +153,7 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
         currentToken = skip(tokens, skipables) // skip from
 
         const sources = parseSources()
-        if(!Array.isArray(sources)) {
+        if (!Array.isArray(sources)) {
             tokens.cursor = initialCursor
             return sources
         }

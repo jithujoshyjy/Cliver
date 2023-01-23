@@ -7,7 +7,6 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
     const taggedString: TaggedString = {
         type: "TaggedString",
         value: null!,
-        tag: null!,
         line: 0,
         column: 0,
         start: 0,
@@ -21,10 +20,8 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
         | MultilineTaggedString
         | MismatchToken = generateInlineTaggedString(taggedString, tokens)
     
-    if(taggedStr.type == "MismatchToken") {
+    if(taggedStr.type == "MismatchToken")
         taggedStr = generateMultilineTaggedString(taggedString, tokens)
-        currentToken = tokens.currentToken
-    }
 
     if(taggedStr.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -32,6 +29,10 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
     }
 
     taggedString.value = taggedStr
+    taggedString.start = taggedStr.start
+    taggedString.end = taggedStr.end
+    taggedString.line = taggedStr.line
+    taggedString.column = taggedStr.column
 
     return taggedString
 }

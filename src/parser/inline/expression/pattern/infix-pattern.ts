@@ -1,9 +1,8 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, operatorPrecedence, skip, skipables, type Node, isOperator } from "../../../utility.js"
+import { createMismatchToken, operatorPrecedence, skip, skipables, type Node, isOperator, PartialParse, isRightAssociative } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
-import { generateCaseExpr } from "../case-expression.js"
-import { generateExpression } from "../expression.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
+import { generateVerbalOperator } from "../operation.ts/verbal-operator.js"
 import { generateBracePattern } from "./brace-pattern.js"
 import { generateBracketPattern } from "./bracket-pattern.js"
 import { generateInterpPattern } from "./interp-pattern.js"
@@ -12,7 +11,7 @@ import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
 export function generateInfixPattern(context: Node, tokens: TokenStream): InfixPattern | MismatchToken {
-    const infixPattern: InfixPattern = {
+    let infixPattern: InfixPattern = {
         type: "InfixPattern",
         operator: null!,
         left: null!,
@@ -26,202 +25,152 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    type Operand = BracePattern
-        | BracketPattern
-        | ParenPattern
-        | InterpPattern
-        | InfixPattern
-        | PrefixPattern
-        | PostfixPattern
-        | Literal
-        | MismatchToken
+    type OperandGenerator = Array<(context: Node, tokens: TokenStream) =>
+        typeof infixPattern.left | MismatchToken>
 
-    const nodeGenerators: Array<(context: Node, tokens: TokenStream) => Operand | CaseExpr | Expression> = [
+    let operandGenerators: OperandGenerator = [
         generatePrefixPattern, generatePostfixPattern,
         generateBracePattern, generateBracketPattern, generateParenPattern,
         generateInterpPattern, generateLiteral
     ]
 
-    let lhs: Operand = null!
-    for (let nodeGenerator of nodeGenerators) {
-        lhs = nodeGenerator(infixPattern, tokens) as Operand
+    const generateOperand = () => {
+        let operand: typeof infixPattern.left
+            | MismatchToken = null!
+
+        for (let operandGenerator of operandGenerators) {
+            operand = operandGenerator(infixPattern, tokens)
+            currentToken = tokens.currentToken
+
+            if (operand.type != "MismatchToken")
+                break
+
+            if (operand.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return operand
+            }
+        }
+
+        return operand
+    }
+
+    let operand: typeof infixPattern.left
+        | MismatchToken = generateOperand()
+
+    if (operand.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return operand
+    }
+
+    currentToken = tokens.currentToken
+    infixPattern.left = operand
+
+    infixPattern.start = operand.start
+    infixPattern.line = operand.line
+    infixPattern.column = operand.column
+
+    const getPrecidence = (op: NonVerbalOperator | VerbalOperator) => {
+        return operatorPrecedence.infix.left[op.name]
+            ?? operatorPrecedence.infix.right[op.name]
+            ?? 10
+    }
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    const operatorGenerators = [
+        generateNonVerbalOperator, generateVerbalOperator
+    ]
+
+    let _operator: NonVerbalOperator
+        | VerbalOperator
+        | MismatchToken = null!;
+
+    for (let operatorGenerator of operatorGenerators) {
+        _operator = operatorGenerator(infixPattern, tokens)
         currentToken = tokens.currentToken
-        if (lhs.type != "MismatchToken")
+
+        if (_operator.type != "MismatchToken")
             break
 
-        if (lhs.errorDescription.severity <= 3) {
+        if (_operator.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
-            return lhs
+            return _operator
         }
     }
 
-    if (lhs.type == "MismatchToken") {
+    currentToken = tokens.currentToken
+    if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor
-        return lhs
+        return _operator
     }
 
-    infixPattern.start = lhs.start
-    infixPattern.end = lhs.end
+    _operator.precedence = getPrecidence(_operator)
+    infixPattern.operator = _operator
 
-    const getPrecidence = (op: typeof currentToken) =>
-        operatorPrecedence.infix.left[op.value as string] ??
-        operatorPrecedence.infix.right[op.value as string] ?? 10
+    if (infixPattern.left.type == "PrefixPattern") {
+        const thisOpPreced = _operator.precedence
+        let lhsPrefixOpr = infixPattern.left
 
-    const isRightAssociative = (op: typeof currentToken) =>
-        op.value as string in operatorPrecedence.infix.right
+        const lhsPrefixOprPreced = infixPattern.left.operator.precedence
 
-    const _infixPattern = _generateInfixPattern(lhs)
+        if (thisOpPreced > lhsPrefixOprPreced) {
+            infixPattern.left = lhsPrefixOpr.operand
+            lhsPrefixOpr.operand = infixPattern
 
-    if (_infixPattern.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return _infixPattern
-    }
-
-    return _infixPattern
-
-    function _generateInfixPattern(lhs: Exclude<Operand, MismatchToken>, minPrecedence = 0): InfixPattern | MismatchToken {
-
-        const initialCursor = tokens.cursor
-        let currentToken = tokens.currentToken
-
-        if (skipables.includes(currentToken))
-            currentToken = skip(tokens, skipables)
-
-        let currentOpPrecedence = 0
-        const isOpKind = (op: typeof currentToken) =>
-            op.type == "Operator"
-
-        const decidePreced = (op: typeof currentToken) => {
-            currentOpPrecedence = isOpKind(op) ? getPrecidence(op) : 0
-            return currentOpPrecedence
-        }
-
-        while (isOpKind(currentToken) && decidePreced(currentToken) >= minPrecedence) {
-
-            const andConditionalExprs = [
-                generateCaseExpr, generateExpression
-            ]
-
-            const orConditionalExprs = [
-                generateCaseExpr
-            ]
-
-            let _operator: NonVerbalOperator | MismatchToken = generateNonVerbalOperator(infixPattern, tokens)
-
-            if (_operator.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return _operator
+            const partialParse: PartialParse = {
+                result: lhsPrefixOpr,
+                cursor: tokens.cursor
             }
 
-            const validInfixOp = [
-                "&", "|", "-"
-            ]
-
-            currentToken = tokens.currentToken
-            const isInvalidOp = !validInfixOp.includes(currentToken.value as string)
-
-            let conditionalExprType: "and" | "or" | "none" = "none"
-            if (isInvalidOp && isOperator(currentToken, "&&")) {
-                conditionalExprType = "and"
-                nodeGenerators.unshift(...andConditionalExprs)
-            }
-            else if (isInvalidOp && isOperator(currentToken, "||")) {
-                conditionalExprType = "or"
-                nodeGenerators.unshift(...orConditionalExprs)
-            }
-            else if (isInvalidOp) {
-                tokens.cursor = initialCursor
-                return createMismatchToken(currentToken)
-            }
-
-            _operator.precedence = currentOpPrecedence
-
-            currentToken = skip(tokens, skipables) // skip operator
-
-            let rhs: Operand | CaseExpr | Expression = null!
-
-            for (let nodeGenerator of nodeGenerators) {
-                rhs = nodeGenerator(infixPattern, tokens)
-                if (rhs.type != "MismatchToken")
-                    break
-
-                if (rhs.errorDescription.severity <= 3) {
-                    tokens.cursor = initialCursor
-                    return rhs
-                }
-            }
-
-            if (rhs.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return rhs
-            }
-
-            if (conditionalExprType == "and") {
-                andConditionalExprs.forEach(_ =>
-                    nodeGenerators.shift())
-            }
-            else if (conditionalExprType == "or") {
-                orConditionalExprs.forEach(_ =>
-                    nodeGenerators.shift())
-            }
-
-            let nextOpPrecedence = 0
-
-            const isNextOperator = (nextToken: typeof currentToken) => {
-
-                if (nextToken.type == "Operator") {
-                    nextOpPrecedence = getPrecidence(nextToken)
-
-                    const nextHasMorePreced = nextOpPrecedence > currentOpPrecedence
-                    const isNextRightAssoc = nextOpPrecedence == currentOpPrecedence
-                        && isRightAssociative(nextToken)
-
-                    return nextHasMorePreced || isNextRightAssoc
-                }
-
-                return false
-            }
-
-            const resetCursorPoint = tokens.cursor
-            currentToken = skipables.includes(tokens.currentToken) // operator
-                ? skip(tokens, skipables)
-                : tokens.currentToken
-
-            if (!isNextOperator(currentToken)) {
-                tokens.cursor = resetCursorPoint
-                currentToken = tokens.currentToken
-            }
-            else {
-                nextOpPrecedence = currentOpPrecedence > nextOpPrecedence ? nextOpPrecedence : 0
-                rhs = _generateInfixPattern(rhs as Exclude<Operand, MismatchToken>, nextOpPrecedence)
-
-                if (rhs.type == "MismatchToken") {
-                    tokens.cursor = initialCursor
-                    return rhs
-                }
-            }
-
-            lhs = {
-                type: "InfixPattern",
-                left: lhs,
-                operator: _operator,
-                right: rhs as Exclude<Operand, MismatchToken>,
-                line: lhs.line,
-                column: lhs.column,
-                start: lhs.start,
-                end: rhs.end
-            }
-
-            currentToken = skipables.includes(currentToken)
-                ? skip(tokens, skipables)
-                : tokens.currentToken
-        }
-
-        if (lhs.type != "InfixPattern") {
             tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
+            return createMismatchToken(currentToken, partialParse)
         }
-
-        return lhs as InfixPattern
     }
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    operandGenerators = [
+        generateInfixPattern, ...operandGenerators
+    ]
+
+    operand = generateOperand()
+    if (operand.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return operand
+    }
+
+    infixPattern.end = operand.end
+    currentToken = tokens.currentToken
+
+    if (operand.type == "InfixPattern") {
+        const thisOpPreced = _operator.precedence
+        const otherOpPreced = operand.operator.precedence
+
+        if (thisOpPreced > otherOpPreced || thisOpPreced == otherOpPreced && !isRightAssociative(operand.operator)) {
+
+            operand.line = infixPattern.line
+            operand.column = infixPattern.column
+
+            operand.start = infixPattern.start
+            infixPattern.end = operand.start
+
+            infixPattern.right = operand.left
+            operand.left = infixPattern
+            infixPattern = operand
+        }
+        else {
+            infixPattern.right = operand
+            infixPattern.end = operand.end
+        }
+    }
+    else {
+        infixPattern.right = operand
+        infixPattern.end = operand.end
+    }
+
+    return infixPattern
 }

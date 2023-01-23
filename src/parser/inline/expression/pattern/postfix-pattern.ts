@@ -36,8 +36,14 @@ export function generatePostfixPattern(context: Node, tokens: TokenStream): Post
     for (let operandGenerator of operandGenerators) {
         operand = operandGenerator(postfixPattern, tokens)
         currentToken = tokens.currentToken
+
         if (operand.type != "MismatchToken") {
             break
+        }
+
+        if (operand.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return operand
         }
     }
 
@@ -48,8 +54,13 @@ export function generatePostfixPattern(context: Node, tokens: TokenStream): Post
 
     postfixPattern.operand = operand
     postfixPattern.start = operand.start
+    postfixPattern.line = operand.line
+    postfixPattern.column = operand.column
 
-    currentToken = skip(tokens, _skipables) // operator
+    currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
+    
     let _operator = generateNonVerbalOperator(postfixPattern, tokens)
 
     if (_operator.type == "MismatchToken") {
@@ -62,7 +73,7 @@ export function generatePostfixPattern(context: Node, tokens: TokenStream): Post
     ]
 
     currentToken = tokens.currentToken
-    if (!validPostfixOp.includes(currentToken.value as string)) {
+    if (!validPostfixOp.includes(_operator.name)) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }

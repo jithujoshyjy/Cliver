@@ -3,13 +3,14 @@ import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
-import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateIdentifier } from "../literal/identifier.js"
 
 export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFunction | MismatchToken {
     const unitFunction: UnitFunction = {
         type: "UnitFunction",
-        params: [],
+        positional: [],
+        keyword: [],
+        captured: [],
         signature: null,
         body: null!,
         line: 0,
@@ -21,66 +22,124 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* if (currentToken.type == TokenType.ParenEnclosed) {
+    if (isPunctuator(currentToken, '(')) {
+        currentToken = skip(tokens, skipables)
 
-        const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-        currentToken = parenTokens.currentToken
+        let lastDelim: LexicalToken | MismatchToken | null = null
+        let isInitial = true, argType: "positional" | "keyword" | "captured" = "positional"
 
-        const parseParam = () => {
+        const parseParam = <T extends typeof argType>(argType: T) => {
+            currentToken = skipables.includes(tokens.currentToken)
+                ? skip(tokens, skipables)
+                : tokens.currentToken
 
-            if (skipables.includes(currentToken.type) || isPunctuator(currentToken, ","))
-                currentToken = skip(parenTokens, skipables)
+            let param: AssignExpr
+                | Pattern
+                | Identifier
+                | MismatchToken = null!
 
-            let param: AssignExpr | Pattern | MismatchToken = generateAssignExpr(unitFunction, parenTokens)
+            const positionalParamGenerators = [generateAssignExpr, generatePattern]
+            const keywordParamGenerators = [generateAssignExpr]
+            const captureParamGenerators = [generateIdentifier]
 
-            if (param.type == "MismatchToken")
-                param = generatePattern(unitFunction, parenTokens)
+            const paramGenerators = argType == "positional"
+                ? positionalParamGenerators
+                : argType == "keyword"
+                    ? keywordParamGenerators
+                    : captureParamGenerators
 
+            for (const paramGenerator of paramGenerators) {
+                param = paramGenerator(unitFunction, tokens)
+                currentToken = tokens.currentToken
+
+                if (param.type != "MismatchToken")
+                    break
+
+                if (param.errorDescription.severity <= 3) {
+                    tokens.cursor = initialCursor
+                    return param
+                }
+            }
+
+            lastDelim = null
             return param
         }
 
         const captureComma = () => {
-            currentToken = skip(parenTokens, skipables)
+            const initialToken = tokens.currentToken
 
-            if (!isPunctuator(currentToken, ","))
-                return createMismatchToken(currentToken)
+            if (!isPunctuator(initialToken, ",")) {
+                return createMismatchToken(initialToken)
+            }
 
-            return currentToken
+            currentToken = skip(tokens, skipables)
+            return initialToken
         }
 
-        while (!parenTokens.isFinished) {
+        let semicolonCount = 0
+        const captureSemicolon = () => {
+            const initialToken = tokens.currentToken
 
-            if (parenTokens.currentToken.type == TokenType.EOF)
+            if (!isPunctuator(initialToken, ";")) {
+                return createMismatchToken(initialToken)
+            }
+
+            semicolonCount++
+            currentToken = skip(tokens, skipables)
+            return initialToken
+        }
+
+        while (!tokens.isFinished) {
+
+            if (isPunctuator(currentToken, ")")) {
+                unitFunction.end = currentToken.end
+                tokens.advance()
                 break
+            }
 
-            const param = parseParam()
+            if (!isInitial && lastDelim == null) {
+                tokens.cursor = initialCursor
+                return createMismatchToken(currentToken)
+            }
 
-            if (param.type == "MismatchToken" && param.value.type == TokenType.EOF)
-                break
+            if (lastDelim?.type == "MismatchToken") {
+                tokens.cursor = initialCursor
+                return lastDelim
+            }
+
+            const param = parseParam(argType)
 
             if (param.type == "MismatchToken") {
                 tokens.cursor = initialCursor
                 return param
             }
 
-            unitFunction.params.push(param)
-            if (skipables.includes(currentToken.type))
-                currentToken = skip(parenTokens, skipables)
+            unitFunction[argType].push(param as any)
 
-            if (currentToken.type == TokenType.EOF)
-                break
+            currentToken = skipables.includes(currentToken)
+                ? skip(tokens, skipables)
+                : tokens.currentToken
 
-            const comma = captureComma()
+            lastDelim = captureComma()
 
-            if (comma.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return comma
+            if (lastDelim.type == "MismatchToken")
+                lastDelim = captureSemicolon()
+
+            if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";")) {
+                argType = "keyword"
+                if (semicolonCount == 2) {
+                    argType = "captured"
+                }
+                else if (semicolonCount > 2) {
+                    tokens.cursor = initialCursor
+                    return createMismatchToken(currentToken)
+                }
             }
 
-            currentToken = parenTokens.currentToken
+            isInitial = false
         }
     }
-    else if (currentToken.type == TokenType.Identifier) {
+    else {
 
         let identifier: Identifier
             | MismatchToken = generateIdentifier(unitFunction, tokens)
@@ -93,25 +152,28 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
         const literal: Literal = {
             type: "Literal",
             value: identifier,
-            start: 0,
-            end: 0
+            line: identifier.line,
+            column: identifier.column,
+            start: identifier.start,
+            end: identifier.end
         }
 
-        const _pattern: Pattern = {
+        const pattern: Pattern = {
             type: "Pattern",
             body: literal,
-            start: 0,
-            end: 0,
+            line: literal.line,
+            column: literal.column,
+            start: literal.start,
+            end: literal.end
         }
 
-        unitFunction.params.push(_pattern)
+        unitFunction.positional.push(pattern)
     }
-    else {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
-    
-    currentToken = skip(tokens, _skipables) // ->
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
 
     if (!isOperator(currentToken, "->")) {
         tokens.cursor = initialCursor
@@ -126,7 +188,8 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
         return body
     }
 
-    unitFunction.body = body */
+    unitFunction.end = body.end
+    unitFunction.body = body
 
     return unitFunction
 }

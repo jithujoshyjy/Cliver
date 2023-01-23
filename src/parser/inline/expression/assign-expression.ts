@@ -14,17 +14,17 @@ export function generateAssignExpr(context: Node, tokens: TokenStream): AssignEx
         end: 0
     }
 
-    let currentToken = tokens.currentToken 
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-
+    return createMismatchToken(currentToken)/* 
     const declarator = generateVariableDeclarator(assignExpr, tokens)
-    if(declarator.type == "MismatchToken") {
+    if (declarator.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return declarator
     }
 
     currentToken = tokens.currentToken
-    if(declarator.right == null) {
+    if (declarator.right == null) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -33,5 +33,5 @@ export function generateAssignExpr(context: Node, tokens: TokenStream): AssignEx
     assignExpr.right = declarator.right
     assignExpr.signature = declarator.signature
 
-    return assignExpr
+    return assignExpr */
 }
