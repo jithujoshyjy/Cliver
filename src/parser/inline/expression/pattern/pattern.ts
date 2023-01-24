@@ -64,6 +64,15 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
     return pattern
 }
 
+export function printPattern(token: Pattern, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "Pattern\n"
+}
+
 /*
 case pattern: expression
 

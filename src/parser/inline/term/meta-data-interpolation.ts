@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateProgram } from "../../program.js"
-import { createMismatchToken, isPunctuator, type Node } from "../../utility.js"
+import { createMismatchToken, isPunctuator, skip, type Node, skipables } from "../../utility.js"
 
 export function generateMetaDataInterpolation(context: Node, tokens: TokenStream): MetaDataInterpolation | MismatchToken {
     const metaDataInterpolation: MetaDataInterpolation = {
@@ -14,7 +14,7 @@ export function generateMetaDataInterpolation(context: Node, tokens: TokenStream
 
     let currentToken = tokens.currentToken // $
     const initialCursor = tokens.cursor
-
+return createMismatchToken(currentToken)
     /* if(!isPunctuator(currentToken, "$")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
@@ -23,22 +23,22 @@ export function generateMetaDataInterpolation(context: Node, tokens: TokenStream
     tokens.advance() // skip $
     currentToken = tokens.currentToken
 
-    if (currentToken.type != TokenType.BraceEnclosed) {
+    if (!isPunctuator(currentToken, '{')) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    const braceTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    const nodeGenerator = generateProgram(metaDataInterpolation, braceTokens)
+    currentToken = skip(tokens, skipables)
+    const nodeGenerator = generateProgram(metaDataInterpolation, tokens)
 
     for(const node of nodeGenerator) {
-        currentToken = braceTokens.currentToken
+        currentToken = tokens.currentToken
         if(node.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return node
         }
         metaDataInterpolation.body.push(node)
-    } */
+    }
 
-    return metaDataInterpolation
+    return metaDataInterpolation */
 }

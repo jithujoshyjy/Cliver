@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isKeyword, isPunctuator, skip, _skipables, type Node, skipables, isOperator } from "../../utility.js"
-import { generateAsExpression } from "../expression/as-expression.js"
-import { generateExpression } from "../expression/expression.js"
+import { createMismatchToken, isKeyword, isPunctuator, skip, _skipables, type Node, skipables, isOperator, pickPrinter, NodePrinter } from "../../utility.js"
+import { generateAsExpression, printAsExpression } from "../expression/as-expression.js"
+import { generateExpression, printExpression } from "../expression/expression.js"
 import { generateKeyword } from "../keyword.js"
 
 export function generateIfInline(context: Node, tokens: TokenStream): IfInline | MismatchToken {
@@ -67,7 +67,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
     currentToken = _skipables.includes(tokens.currentToken)
         ? skip(tokens, _skipables)
         : tokens.currentToken
-    
+
     if (!isOperator(currentToken, ":")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
@@ -75,7 +75,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
 
     currentToken = skip(tokens, skipables) // skip :
     const body = generateExpression(ifInline, tokens)
-    
+
     if (body.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return body
@@ -88,7 +88,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
         : tokens.currentToken
 
     const elseKeyword = generateKeyword(ifInline, tokens)
-    
+
     if (elseKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return elseKeyword
@@ -110,7 +110,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
 
     currentToken = skip(tokens, skipables) // skip :
     const fallback = generateExpression(ifInline, tokens)
-    
+
     if (fallback.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return fallback
@@ -120,4 +120,25 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
     ifInline.fallback = fallback
 
     return ifInline
+}
+
+export function printIfInline(token: IfInline, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const printers = [printAsExpression, printExpression] as NodePrinter[]
+    const printer = pickPrinter(printers, token.condition)!
+
+    const space = ' '.repeat(4)
+    return "IfInline" +
+        '\n' + space.repeat(indent) + middleJoiner + "condition\n" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printer(token.condition, indent + 2) +
+        '\n' + space.repeat(indent) + middleJoiner + "body\n" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printExpression(token.body, indent + 2) +
+        '\n' + space.repeat(indent) + endJoiner + "fallback\n" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printExpression(token.fallback, indent + 2)
 }

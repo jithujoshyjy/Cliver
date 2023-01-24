@@ -74,5 +74,6 @@ export function printLiteral(token: Literal, indent = 0) {
 
     const printer = pickPrinter(printers, token.value)!
     const space = ' '.repeat(4)
-    return "Literal\n" + space.repeat(indent) + endJoiner + printer(token.value, indent+1)
+    return "Literal" +
+        '\n' + space.repeat(indent) + endJoiner + printer(token.value, indent+1)
 }

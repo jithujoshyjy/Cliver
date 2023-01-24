@@ -158,3 +158,12 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         return [isOptional, field]
     } */
 }
+
+export function printPropertyAccess(token: PropertyAccess, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "PropertyAccess\n"
+}

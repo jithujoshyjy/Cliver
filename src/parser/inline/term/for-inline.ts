@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../utility.js"
-import { generateExpression } from "../expression/expression.js"
+import { generateExpression, printExpression } from "../expression/expression.js"
 import { generateKeyword } from "../keyword.js"
 
 export function generateForInline(context: Node, tokens: TokenStream): ForInline | MismatchToken {
@@ -63,4 +63,19 @@ export function generateForInline(context: Node, tokens: TokenStream): ForInline
 
     forInline.body = body
     return forInline
+}
+
+export function printForInline(token: ForInline, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "ForInline" +
+        '\n' + space.repeat(indent) + middleJoiner + "condition\n" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printExpression(token.condition, indent + 2) +
+        '\n' + space.repeat(indent) + endJoiner + "body\n" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printExpression(token.body, indent + 2)
 }

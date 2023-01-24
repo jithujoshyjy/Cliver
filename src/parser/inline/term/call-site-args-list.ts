@@ -1,16 +1,16 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
-import { generateExpression } from "../expression/expression.js"
-import { generatePattern } from "../expression/pattern/pattern.js"
-import { generateIdentifier } from "../literal/identifier.js"
-import { generateFunctionPrototype } from "./function-prototype.js"
-import { generatePair } from "./pair.js"
+import { createMismatchToken, isPunctuator, skip, skipables, type Node, NodePrinter, pickPrinter } from "../../utility.js"
+import { generateExpression, printExpression } from "../expression/expression.js"
+import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
+import { generateFunctionPrototype, printFunctionPrototype } from "./function-prototype.js"
+import { generatePair, printPair } from "./pair.js"
 
 export function generateCallSiteArgsList(context: Node, tokens: TokenStream): CallSiteArgsList | MismatchToken {
     const callSiteArgsList: CallSiteArgsList = {
         type: "CallSiteArgsList",
         positional: [],
         keyword: [],
+        captured: [],
         line: 0,
         column: 0,
         start: 0,
@@ -20,128 +20,164 @@ export function generateCallSiteArgsList(context: Node, tokens: TokenStream): Ca
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* const captureComma = () => {
-        currentToken = skip(tokens, skipables)
-        if (!isPunctuator(currentToken, ",")) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
-
-        return currentToken
-    }
-
-    if (currentToken.type != TokenType.ParenEnclosed) {
+    if (!isPunctuator(currentToken, '(')) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    const parseArg = (isKeyword: boolean, parenTokens: TokenStream) => {
-        currentToken = parenTokens.currentToken
+    currentToken = skip(tokens, skipables)
 
-        if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
-            currentToken = skip(parenTokens, skipables)
+    let lastDelim: LexicalToken | MismatchToken | null = null
+    let isInitial = true, argType: "positional" | "keyword" | "captured" = "positional"
 
-        let arg: Pair
+    const parseArg = <T extends typeof argType>(argType: T) => {
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
+        let arg: FunctionPrototype
             | Expression
+            | Pair
             | Identifier
-            | FunctionPrototype
             | MismatchToken = null!
 
-        const positionalGenerators = [generateExpression, generateFunctionPrototype]
-        const keywordGenerators = [generateIdentifier]
-        const nodeGenerators = [
-            generatePair, ...(!isKeyword ? positionalGenerators : keywordGenerators),
-        ]
+        const positionalArgGenerators = [/* generateFunctionPrototype, */ generatePair, generateExpression]
+        const keywordArgGenerators = [generatePair]
+        const captureArgGenerators = [generateIdentifier]
 
-        for (const nodeGenerator of nodeGenerators) {
-            arg = nodeGenerator(callSiteArgsList, tokens)
+        const argGenerators = argType == "positional"
+            ? positionalArgGenerators
+            : argType == "keyword"
+                ? keywordArgGenerators
+                : captureArgGenerators
+
+        for (const argGenerator of argGenerators) {
+            arg = argGenerator(callSiteArgsList, tokens)
             currentToken = tokens.currentToken
+
             if (arg.type != "MismatchToken")
                 break
-        }
 
-        return arg
-    }
-
-    const parseArgs = (isKeyword = false, parenTokens: TokenStream) => {
-        const args: Array<Pair
-            | Identifier
-            | Expression
-            | FunctionPrototype> = []
-
-        while (!parenTokens.isFinished) {
-            const arg = parseArg(isKeyword, parenTokens)
-
-            if (arg.type == "MismatchToken" && isPunctuator(currentToken, ";")) {
-                return args
-            }
-
-            if (arg.type == "MismatchToken") {
+            if (arg.errorDescription.severity <= 3) {
                 tokens.cursor = initialCursor
                 return arg
             }
+        }
 
-            args.push(arg)
-            if (!tokens.isFinished) {
-                const comma = captureComma()
+        lastDelim = null
+        return arg
+    }
 
-                if (comma.type == "MismatchToken" && isPunctuator(currentToken, ";")) {
-                    return args
-                }
+    const captureComma = () => {
+        const initialToken = tokens.currentToken
 
-                if (comma.type == "MismatchToken") {
-                    tokens.cursor = initialCursor
-                    return comma
-                }
+        if (!isPunctuator(initialToken, ","))
+            return createMismatchToken(initialToken)
+
+        currentToken = skip(tokens, skipables)
+        return initialToken
+    }
+
+    let semicolonCount = 0
+    const captureSemicolon = () => {
+        const initialToken = tokens.currentToken
+
+        if (!isPunctuator(initialToken, ";"))
+            return createMismatchToken(initialToken)
+
+        semicolonCount++
+        currentToken = skip(tokens, skipables)
+        return initialToken
+    }
+
+    while (!tokens.isFinished) {
+
+        if (isPunctuator(currentToken, ")")) {
+            callSiteArgsList.end = currentToken.end
+            tokens.advance()
+            break
+        }
+
+        if (!isInitial && lastDelim == null) {
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken)
+        }
+
+        if (lastDelim?.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return lastDelim
+        }
+
+        const param = parseArg(argType)
+
+        if (param.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return param
+        }
+
+        callSiteArgsList[argType].push(param as any)
+
+        currentToken = skipables.includes(currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
+        lastDelim = captureComma()
+
+        if (lastDelim.type == "MismatchToken")
+            lastDelim = captureSemicolon()
+
+        if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";")) {
+            argType = "keyword"
+            if (semicolonCount == 2) {
+                argType = "captured"
+            }
+            else if (semicolonCount > 2) {
+                tokens.cursor = initialCursor
+                return createMismatchToken(currentToken)
             }
         }
 
-        return args
+        isInitial = false
     }
-
-    const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    const positionalArgs = parseArgs(false, parenTokens)
-
-    if (!Array.isArray(positionalArgs)) {
-        tokens.cursor = initialCursor
-        return positionalArgs
-    }
-
-    callSiteArgsList.positional = positionalArgs as Array<Pair | Expression | FunctionPrototype>
-
-    if (isPunctuator(currentToken, ";")) {
-        currentToken = skip(parenTokens, skipables) // skip ;
-        const keywordArgs = parseArgs(true, parenTokens)
-
-        if (!Array.isArray(keywordArgs)) {
-            tokens.cursor = initialCursor
-            return keywordArgs
-        }
-
-        const areValidKwargs = keywordArgs.every(x => {
-            if (x.type == "Pair") {
-                const maybeLiteral = x.key
-                if (maybeLiteral.type != "Literal")
-                    return false
-
-                const maybeIdentifier = maybeLiteral.value
-                if (maybeIdentifier.type != "Identifier")
-                    return false
-
-                return true
-            }
-
-            return true
-        })
-
-        if (!areValidKwargs) {
-            tokens.cursor = initialCursor
-            const error = `Invalid keyword arguments on ${currentToken.line}:${currentToken.column}`
-            return createMismatchToken(currentToken, error)
-        }
-
-        callSiteArgsList.keyword = keywordArgs as Array<Pair | Identifier>
-    } */
 
     return callSiteArgsList
+}
+
+export function printCallSiteArgsList(token: CallSiteArgsList, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const posArgPrinters = [
+        printPair, printExpression, printFunctionPrototype
+    ] as NodePrinter[]
+    const kwArgPrinters = [
+        printPair, printIdentifier
+    ] as NodePrinter[]
+
+    const space = ' '.repeat(4)
+    return "CallSiteArgsList\n" + space.repeat(indent) +
+
+        (!!token.positional.length && !!token.keyword.length && !!token.captured.length
+            ? middleJoiner
+            : endJoiner) +
+
+        (token.positional.length ? "positional\n" +
+            token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) +
+                pickPrinter(posArgPrinters, c)!(c, indent + 2) + '\n', '') : "") +
+
+        (token.keyword.length ? (token.positional.length ? space.repeat(indent) + endJoiner : "") + "keyword\n" +
+            token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) +
+                pickPrinter(kwArgPrinters, c)!(c, indent + 2) + '\n', '') : "") +
+
+        (token.captured.length ? (token.positional.length && token.keyword.length
+            ? space.repeat(indent) + endJoiner
+            : "") +
+            "captured\n" +
+            token.captured.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) +
+                printIdentifier(c, indent + 2) + '\n', '') : "")
+
 }

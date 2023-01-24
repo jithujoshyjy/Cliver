@@ -129,3 +129,12 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
 
     return functionPrototype
 }
+
+export function printFunctionPrototype(token: FunctionPrototype, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "FunctionPrototype\n"
+}

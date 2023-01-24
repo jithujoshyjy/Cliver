@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { skip, _skipables, type Node, isKeyword, createMismatchToken } from "../../utility.js"
 import { generateKeyword } from "../keyword.js"
-import { generatePattern } from "./pattern/pattern.js"
+import { generatePattern, printPattern } from "./pattern/pattern.js"
 
 export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr | MismatchToken {
     const caseExpr: CaseExpr = {
@@ -40,4 +40,15 @@ export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr |
     caseExpr.end = pattern.end
 
     return caseExpr
+}
+
+export function printCaseExpr(token: CaseExpr, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "CaseExpr" +
+        '\n' + space.repeat(indent) + endJoiner +
+        printPattern(token.pattern, indent+1)
 }

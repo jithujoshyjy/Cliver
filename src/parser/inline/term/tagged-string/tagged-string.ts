@@ -1,7 +1,8 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { type Node } from "../../../utility.js"
-import { generateInlineTaggedString } from "./inline-tagged-string.js"
-import { generateMultilineTaggedString } from "./multiline-tagged-string.js"
+import { NodePrinter, pickPrinter, type Node } from "../../../utility.js"
+import { printSymbolLiteral } from "../../literal/symbol-literal.js"
+import { generateInlineTaggedString, printInlineTaggedString } from "./inline-tagged-string.js"
+import { generateMultilineTaggedString, printMultilineTaggedString } from "./multiline-tagged-string.js"
 
 export function generateTaggedString(context: Node, tokens: TokenStream): TaggedString | MismatchToken {
     const taggedString: TaggedString = {
@@ -18,12 +19,12 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
 
     let taggedStr: InlineTaggedString
         | MultilineTaggedString
-        | MismatchToken = generateInlineTaggedString(taggedString, tokens)
-    
-    if(taggedStr.type == "MismatchToken")
-        taggedStr = generateMultilineTaggedString(taggedString, tokens)
+        | MismatchToken = generateMultilineTaggedString(taggedString, tokens)
 
-    if(taggedStr.type == "MismatchToken") {
+    if (taggedStr.type == "MismatchToken")
+        taggedStr = generateInlineTaggedString(taggedString, tokens)
+
+    if (taggedStr.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return taggedStr
     }
@@ -35,4 +36,19 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
     taggedString.column = taggedStr.column
 
     return taggedString
+}
+
+export function printTaggedString(token: TaggedString, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const printers = [
+        printInlineTaggedString, printMultilineTaggedString
+    ] as NodePrinter[]
+
+    const printer = pickPrinter(printers, token.value)!
+    const space = ' '.repeat(4)
+    return "TaggedString" +
+        '\n' + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

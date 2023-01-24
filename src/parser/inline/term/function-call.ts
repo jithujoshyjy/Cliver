@@ -63,3 +63,12 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
 
     return functionCall
 }
+
+export function printFunctionCall(token: FunctionCall, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "FunctionCall\n"
+}

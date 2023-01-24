@@ -1,1 +1,10 @@
-f"""ab{cd}"""
+component@("Main") do
+    markup"""
+        <html>
+            <head>
+            </head>
+            <body>
+            </body>
+        </html>
+    """
+end

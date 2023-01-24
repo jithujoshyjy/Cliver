@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator } from "../../utility.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
-import { generateExpression } from "../expression/expression.js"
+import { generateExpression, printExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
 import { generateIdentifier } from "../literal/identifier.js"
 
@@ -192,4 +192,42 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
     unitFunction.body = body
 
     return unitFunction
+}
+
+export function printUnitFunction(token: UnitFunction, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    const space = ' '.repeat(4)
+    return "UnitFunction" +
+        (token.positional.length
+            ? '\n' + space.repeat(indent) +
+            (token.keyword.length == 0 && token.captured.length == 0
+                ? endJoiner : middleJoiner) +
+            token.positional.reduce((a, c, i, arr) => a +
+                '\n' + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) + c
+                , "")
+            : "") +
+        (token.keyword.length
+            ? '\n' + space.repeat(indent) +
+            (token.positional.length == 0 && token.captured.length == 0
+                ? endJoiner : middleJoiner) +
+            token.keyword.reduce((a, c, i, arr) => a +
+                '\n' + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) + c
+                , "")
+            : "") +
+        (token.captured.length
+            ? '\n' + space.repeat(indent) +
+            (token.positional.length == 0 && token.keyword.length == 0
+                ? endJoiner : middleJoiner) +
+            token.captured.reduce((a, c, i, arr) => a +
+                '\n' + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) + c
+                , "")
+            : "") +
+        '\n' + space.repeat(indent) +
+        (token.positional.length == 0 && token.keyword.length && token.captured.length == 0
+            ? endJoiner : middleJoiner) + printExpression(token.body, indent+1)
 }

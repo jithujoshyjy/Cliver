@@ -1,8 +1,8 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, type Node } from "../../utility.js"
-import { generateGroupExpression } from "../expression/group-expression.js"
-import { generateIdentifier } from "../literal/identifier.js"
-import { generateNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
+import { createMismatchToken, NodePrinter, pickPrinter, type Node } from "../../utility.js"
+import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
+import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
+import { generateNumericLiteral, printNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
 
 export function generateImplicitMultiplication(context: Node, tokens: TokenStream): ImplicitMultiplication | MismatchToken {
     const implicitMultiplication: ImplicitMultiplication = {
@@ -19,7 +19,7 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     const initialCursor = tokens.cursor
 
     const number = generateNumericLiteral(implicitMultiplication, tokens)
-    if(number.type == "MismatchToken") {
+    if (number.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return number
     }
@@ -32,11 +32,11 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     ]
 
     let multiplier: Identifier | GroupExpression | MismatchToken = null!
-    for(let nodeGenerator of nodeGenerators) {
+    for (let nodeGenerator of nodeGenerators) {
         multiplier = nodeGenerator(implicitMultiplication, tokens)
         currentToken = tokens.currentToken
-        
-        if(multiplier.type != "MismatchToken")
+
+        if (multiplier.type != "MismatchToken")
             break
 
         if (multiplier.errorDescription.severity <= 3) {
@@ -45,11 +45,30 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
         }
     }
 
-    if(multiplier.type == "MismatchToken") {
+    if (multiplier.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return multiplier
     }
 
     implicitMultiplication.right = multiplier
     return implicitMultiplication
+}
+
+export function printImplicitMultiplication(token: ImplicitMultiplication, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const printers = [
+        printIdentifier, printGroupExpression
+    ] as NodePrinter[]
+
+    const printer = pickPrinter(printers, token.right)!
+
+    const space = ' '.repeat(4)
+    return "ImplicitMultiplication" +
+        '\n' + space.repeat(indent) + middleJoiner +
+        printNumericLiteral(token.left, indent + 1) +
+        '\n' + space.repeat(indent) + endJoiner +
+        printer(token.right, indent + 1)
 }

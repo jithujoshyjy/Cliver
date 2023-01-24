@@ -1,9 +1,9 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isKeyword, skip, _skipables, type Node, PartialParse } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, _skipables, type Node, PartialParse, pickPrinter, NodePrinter } from "../../utility.js"
 import { generateKeyword } from "../keyword.js"
 import { generateIdentifier } from "../literal/identifier.js"
-import { generateCaseExpr } from "./case-expression.js"
-import { generateExpression } from "./expression.js"
+import { generateCaseExpr, printCaseExpr } from "./case-expression.js"
+import { generateExpression, printExpression } from "./expression.js"
 
 export function generateAsExpression(context: Node, tokens: TokenStream): AsExpression | MismatchToken {
     const asExpression: AsExpression = {
@@ -44,7 +44,7 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
     currentToken = _skipables.includes(tokens.currentToken)
         ? skip(tokens, _skipables)
         : tokens.currentToken
-    
+
     let right: Identifier
         | CaseExpr
         | MismatchToken = null!
@@ -58,4 +58,22 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
 
     asExpression.right = right
     return asExpression
+}
+
+export function printAsExpression(token: AsExpression, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const printers = [printCaseExpr, printExpression] as NodePrinter[]
+    const printer = pickPrinter(printers, token.right)!
+
+    const space = ' '.repeat(4)
+    return "AsExpression" +
+        '\n' + space.repeat(indent) + middleJoiner + "left" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printExpression(token.left, indent + 2) +
+        '\n' + space.repeat(indent) + endJoiner + "body" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printer(token.right, indent + 1)
 }

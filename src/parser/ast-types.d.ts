@@ -260,6 +260,7 @@ type CallSiteArgsList = {
     type: "CallSiteArgsList",
     positional: Array<Pair | Expression | FunctionPrototype>,
     keyword: Array<Pair | Identifier>,
+    captured: Array<Identifier>,
     line: number,
     column: number,
     start: number,
@@ -658,7 +659,7 @@ type Literal = {
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | AssignExpr | GroupExpression,
+    value: MetaDataInterpolation | TaggedSymbol | SymbolFragment | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | AssignExpr | GroupExpression,
     line: number,
     column: number,
     start: number,
@@ -714,7 +715,7 @@ type LabelDeclaration = {
 
 type TaggedNumber = {
     type: "TaggedNumber",
-    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+    tag: Identifier | GroupExpression,
     number: NumericLiteral,
     line: number,
     column: number,
@@ -861,6 +862,15 @@ type TaggedString = {
 type TaggedSymbol = {
     type: "TaggedSymbol",
     tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+    fragments: Array<SymbolLiteral>,
+    line: number,
+    column: number,
+    start: number,
+    end: number
+}
+
+type SymbolFragment = {
+    type: "SymbolFragment",
     fragments: Array<SymbolLiteral>,
     line: number,
     column: number,

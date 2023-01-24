@@ -1,8 +1,8 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, type Node } from "../../utility.js"
-import { generateGroupExpression } from "../expression/group-expression.js"
-import { generateIdentifier } from "../literal/identifier.js"
-import { generateNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
+import { createMismatchToken, isOperator, skip, type Node, _skipables, NodePrinter, pickPrinter } from "../../utility.js"
+import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
+import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
+import { generateNumericLiteral, printNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
 import { generateFunctionCall } from "./function-call.js"
 import { generatePropertyAccess } from "./property-access.js"
 
@@ -26,9 +26,14 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
         return number
     }
 
+    taggedNumber.start = number.start
+    taggedNumber.line = number.line
+    taggedNumber.column = number.column
     taggedNumber.number = number
-    tokens.advance()
-    currentToken = tokens.currentToken
+
+    currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
 
     if (!isOperator(currentToken, "!")) {
         tokens.cursor = initialCursor
@@ -36,10 +41,12 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
     }
 
     tokens.advance()
-    currentToken = tokens.currentToken
+    currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
 
     const nodeGenerators = [
-        generateFunctionCall, generatePropertyAccess,
+        // generateFunctionCall, generatePropertyAccess,
         generateIdentifier, generateGroupExpression
     ]
 
@@ -67,6 +74,27 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
     }
 
     taggedNumber.tag = tag
+    taggedNumber.end = tag.end
 
     return taggedNumber
+}
+
+export function printTaggedNumber(token: TaggedNumber, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const printers = [
+        printIdentifier, printGroupExpression
+    ] as NodePrinter[]
+
+    const printer = pickPrinter(printers, token.tag)!
+
+    const space = ' '.repeat(4)
+    return "TaggedNumber" +
+        '\n' + space.repeat(indent) + middleJoiner + "tag" +
+        '\n' + space.repeat(indent + 1) + endJoiner +
+        printer(token.tag, indent + 2) +
+        '\n' + space.repeat(indent) + endJoiner +
+        printNumericLiteral(token.number, indent + 1)
 }
