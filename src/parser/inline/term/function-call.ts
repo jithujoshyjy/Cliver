@@ -1,13 +1,19 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, skip, _skipables, type Node } from "../../utility.js"
+import { skip, _skipables, type Node, createMismatchToken, isOperator, isPunctuator, skipables, PartialParse, lookAheadForPropertyAccess, lookAheadForSymbolLiteral, lookAheadForStringLiteral } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
+import { generateKeyword } from "../keyword.js"
+import { generateDoExpr } from "../literal/do-expr.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateOperatorRef } from "../literal/operator-ref.js"
 import { generateCallSiteArgsList } from "./call-site-args-list.js"
+import { generateImplicitMultiplication } from "./implicit-multiplication.js"
 import { generatePropertyAccess } from "./property-access.js"
+import { generateTaggedNumber } from "./tagged-number.js"
+import { generateTaggedString } from "./tagged-string/tagged-string.js"
+import { generateTaggedSymbol } from "./tagged-symbol.js"
 
 export function generateFunctionCall(context: Node, tokens: TokenStream): FunctionCall | MismatchToken {
-    const functionCall: FunctionCall = {
+    let functionCall: FunctionCall = {
         type: "FunctionCall",
         arguments: null!,
         caller: null!,
@@ -21,45 +27,121 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    /* const nodeGenerators = [
-        generatePropertyAccess, generateIdentifier,
-        generateGroupExpression, generateOperatorRef
-    ]
+    const nodeGenerators = [
+        generateDoExpr, generateTaggedNumber, generateImplicitMultiplication,
+        generateIdentifier, generateKeyword, generateGroupExpression, generateOperatorRef
+    ] as Array<(context: Node, tokens: TokenStream) => typeof functionCall.caller | MismatchToken>
 
     let caller: Identifier
+        | Keyword
+        | DoExpr
         | PropertyAccess
         | OperatorRef
+        | TaggedSymbol
+        | TaggedNumber
+        | TaggedString
+        | ImplicitMultiplication
         | GroupExpression
+        | FunctionCall
         | MismatchToken = null!
 
-    for (const nodeGenerator of nodeGenerators) {
-        caller = nodeGenerator(functionCall, tokens)
-        currentToken = tokens.currentToken
-        if (caller.type != "MismatchToken")
+    if (lookAheadForSymbolLiteral(tokens))
+        nodeGenerators.unshift(generateTaggedSymbol)
+    else if (lookAheadForStringLiteral(tokens))
+        nodeGenerators.unshift(generateTaggedString)
+
+    const callbackKws = ["import", "export", "use", "from", "type"]
+    if (!context.meta?.resumeFrom) {
+        for (const nodeGenerator of nodeGenerators) {
+
+            if (nodeGenerator.name.endsWith(context.type))
+                continue
+
+            caller = nodeGenerator(functionCall, tokens)
+            currentToken = tokens.currentToken
+
+            if (caller.type != "MismatchToken") {
+                if (caller.type == "Keyword" && !callbackKws.includes(caller.name)) {
+                    tokens.cursor = initialCursor
+                    return createMismatchToken(currentToken)
+                }
+                break
+            }
+
+            if (caller.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return caller
+            }
+        }
+
+        if (caller.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return caller
+        }
+
+        functionCall.caller = caller
+    }
+
+    tokens.cursor = context.meta?.resumeFrom ?? tokens.cursor
+
+    let isInitial = true
+    while (!tokens.isFinished) {
+        currentToken = _skipables.includes(tokens.currentToken)
+            ? skip(tokens, _skipables)
+            : tokens.currentToken
+
+        if (!isPunctuator(currentToken, '(') && !isInitial)
             break
+
+        if (!isPunctuator(currentToken, '(')) {
+            tokens.cursor = initialCursor
+            return createMismatchToken(currentToken)
+        }
+
+        const args = generateCallSiteArgsList(functionCall, tokens)
+        if (args.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return args
+        }
+
+        isInitial = false
+        if (functionCall.arguments) {
+            const parentFunctionCall = Object.assign({}, functionCall)
+            parentFunctionCall.caller = functionCall
+
+            parentFunctionCall.arguments = args
+            parentFunctionCall.end = args.end
+            parentFunctionCall.externcallback = args.positional.some(x => x.type == "FunctionPrototype")
+
+            functionCall = parentFunctionCall
+            continue
+        }
+
+        functionCall.arguments = args
+        functionCall.end = args.end
+        functionCall.externcallback = args.positional.some(x => x.type == "FunctionPrototype")
     }
 
-    if (caller.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return caller
+    const isPropertyAccessAhead = lookAheadForPropertyAccess(tokens)
+    const isStringLiteralAhead = lookAheadForStringLiteral(tokens)
+    const isSymbolLiteralAhead = lookAheadForSymbolLiteral(tokens)
+
+    if ([isPropertyAccessAhead, isStringLiteralAhead, isSymbolLiteralAhead].some(x => x)) {
+        const partialParse: PartialParse = {
+            result: functionCall,
+            cursor: tokens.cursor,
+            meta: {
+                parentType: isPropertyAccessAhead
+                    ? "PropertyAccess"
+                    : isStringLiteralAhead
+                        ? "TaggedString"
+                        : "TaggedSymbol"
+            }
+        }
+
+        /* tokens.cursor = initialCursor */
+        return createMismatchToken(currentToken, partialParse)
     }
-
-    functionCall.caller = caller
-
-    currentToken = skip(tokens, _skipables)
-    if (currentToken.type != TokenType.ParenEnclosed) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
-
-    const args = generateCallSiteArgsList(functionCall, tokens)
-    if (args.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return args
-    }
-
-    functionCall.arguments = args
-    functionCall.externcallback = args.positional.some(x => x.type == "FunctionPrototype") */
 
     return functionCall
 }

@@ -46,13 +46,10 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
         : tokens.currentToken
 
     const nodeGenerators = [
-        // generateFunctionCall, generatePropertyAccess,
         generateIdentifier, generateGroupExpression
     ]
 
     let tag: Identifier
-        | PropertyAccess
-        | FunctionCall
         | GroupExpression
         | MismatchToken = null!
 

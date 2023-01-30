@@ -41,7 +41,7 @@ export function generateCallSiteArgsList(context: Node, tokens: TokenStream): Ca
             | Identifier
             | MismatchToken = null!
 
-        const positionalArgGenerators = [/* generateFunctionPrototype, */ generatePair, generateExpression]
+        const positionalArgGenerators = [generateFunctionPrototype, generatePair, generateExpression]
         const keywordArgGenerators = [generatePair]
         const captureArgGenerators = [generateIdentifier]
 

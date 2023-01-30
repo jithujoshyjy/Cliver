@@ -1,71 +1,30 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, pickPrinter, NodePrinter } from "../../../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, pickPrinter, NodePrinter } from "../../../utility.js"
 import { generateExpression, printExpression } from "../../expression/expression.js"
-import { generateGroupExpression, printGroupExpression } from "../../expression/group-expression.js"
 import { generateEscapeSequence } from "../../literal/escape-sequence.js"
 import { generateIdentifier, printIdentifier } from "../../literal/identifier.js"
 import { printStringLiteral } from "../../literal/string-literal.js"
-import { generateFunctionCall, printFunctionCall } from "../function-call.js"
 import { generatePair, printPair } from "../pair.js"
-import { generatePropertyAccess, printPropertyAccess } from "../property-access.js"
+import { printInStringExpr, printInStringId } from "./tagged-string.js"
 
-export function generateInlineTaggedString(context: Node, tokens: TokenStream): InlineTaggedString | MismatchToken {
+export function generateInlineFStringFragment(context: Node, tokens: TokenStream): InlineFStringFragment | MismatchToken {
 
-    const inlineTaggedString: InlineTaggedString = {
-        type: "InlineTaggedString",
+    const inlineFStringFragment: InlineFStringFragment = {
+        type: "InlineFStringFragment",
         fragments: [],
-        tag: null!,
         line: 0,
         column: 0,
         start: 0,
-        end: 0
+        end: 0,
     }
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const nodeGenerators = [
-        /* generateFunctionCall, generatePropertyAccess, */
-        generateIdentifier, generateGroupExpression
-    ]
-
-    let tag: Identifier
-        | PropertyAccess
-        | FunctionCall
-        | GroupExpression
-        | MismatchToken = null!
-
-    for (let nodeGenerator of nodeGenerators) {
-        tag = nodeGenerator(inlineTaggedString, tokens)
-        currentToken = tokens.currentToken
-
-        if (tag.type != "MismatchToken")
-            break
-
-        if (tag.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return tag
-        }
-    }
-
-    if (tag.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return tag
-    }
-
-    inlineTaggedString.start = tag.start
-    inlineTaggedString.line = tag.line
-    inlineTaggedString.column = tag.column
-    inlineTaggedString.tag = tag
-
-    currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
-
     while (!tokens.isFinished) {
 
         const fstring = parseFstring()
-        if (fstring.type == "MismatchToken" && inlineTaggedString.fragments.length == 0) {
+        if (fstring.type == "MismatchToken" && inlineFStringFragment.fragments.length == 0) {
             tokens.cursor = initialCursor
             return fstring
         }
@@ -78,15 +37,15 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
         if (fstring.type == "MismatchToken")
             break
 
-        inlineTaggedString.fragments.push(fstring)
+        inlineFStringFragment.fragments.push(fstring)
     }
 
-    if (inlineTaggedString.fragments.length == 0) {
+    if (inlineFStringFragment.fragments.length == 0) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    return inlineTaggedString
+    return inlineFStringFragment
 
     function parseFstring() {
 
@@ -442,46 +401,26 @@ export function generateInlineTaggedString(context: Node, tokens: TokenStream): 
     }
 }
 
-export function printInlineTaggedString(token: InlineTaggedString, indent = 0) {
+export function printInlineFStringFragment(token: InlineFStringFragment, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-
-    const tagPrinters = [
-        printIdentifier, printPropertyAccess, printFunctionCall, printGroupExpression
-    ] as NodePrinter[]
-
+    
     const instringElementPrinters = [
-        printStringLiteral, printIdentifier
+        printStringLiteral, printInStringId
     ] as NodePrinter[]
-
-    const tagPrinter = pickPrinter(tagPrinters, token.tag)!
 
     const space = ' '.repeat(4)
-    return "InlineTaggedString" +
-        '\n' + space.repeat(indent) + endJoiner + "tag" +
-        '\n' + space.repeat(indent + 1) + endJoiner + tagPrinter(token.tag, indent + 2) +
+    return "InlineFStringFragment" +
         '\n' + space.repeat(indent) + endJoiner + "fragments" +
         token.fragments.reduce((a, c, i, arr) =>
-            a + '\n' + space.repeat(indent + 2) +
+            a + '\n' + space.repeat(indent + 1) +
             (i < arr.length - 1 ? middleJoiner : endJoiner) + "sub-fragments" +
             c.fragments.reduce((a, c, i, arr) =>
-                a + '\n' + space.repeat(indent + 3) +
+                a + '\n' + space.repeat(indent + 2) +
                 (i < arr.length - 1 ? middleJoiner : endJoiner) +
                 (c.type == "InStringExpr"
-                    ? "InStringExpr\n" + space.repeat(indent + 4) +
-
-                    (!!c.positional.length && !!c.keyword.length ? middleJoiner : endJoiner) +
-
-                    (c.positional.length ? "positional\n" +
-                        c.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 5) +
-                            (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                            printExpression(c, indent + 6) + '\n', '') : "") +
-
-                    (c.keyword.length ? (c.positional.length ? space.repeat(indent + 5) + endJoiner : "") + "keyword\n" +
-                        c.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 6) +
-                            (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                            printPair(c, indent + 7) + '\n', '') : "")
-                    : pickPrinter(instringElementPrinters, c)!(c, indent + 6)), "")
+                    ? printInStringExpr(c, indent + 3)
+                    : pickPrinter(instringElementPrinters, c)!(c, indent + 3)), "")
             , "")
 }

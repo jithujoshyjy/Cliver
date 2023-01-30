@@ -23,6 +23,7 @@ export function generateKeyword(context: Node, tokens: TokenStream): Keyword | M
 
     tokens.cursor = maybeKeyword.partialParse.cursor
     const identifier = maybeKeyword.partialParse.result as Identifier
+    
     keyword.name = identifier.name
     keyword.start = identifier.start
     keyword.end = identifier.end

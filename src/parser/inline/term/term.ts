@@ -1,11 +1,11 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, NodePrinter, pickPrinter, type Node } from "../../utility.js"
+import { createMismatchToken, NodePrinter, pickPrinter, type Node, PartialParse, reparseIfNeeded } from "../../utility.js"
 import { generateAnonFunction } from "./anon-function/anon-function.js"
 import { generateUnitFunction, printUnitFunction } from "./unit-function.js"
 import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateExternalCallbackNotation } from "./external-callback-notation.js"
 import { generateForInline, printForInline } from "./for-inline.js"
-import { generateFunctionCall } from "./function-call.js"
+import { generateFunctionCall, printFunctionCall } from "./function-call.js"
 import { generateIfInline, printIfInline } from "./if-inline.js"
 import { generateImplicitMultiplication, printImplicitMultiplication } from "./implicit-multiplication.js"
 import { generateInlineMacroApplication, printInlineMacroApplication } from "./inline-macro-application.js"
@@ -30,7 +30,8 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
         line: 0,
         column: 0,
         start: 0,
-        end: 0
+        end: 0,
+        meta: {}
     }
 
     let currentToken = tokens.currentToken
@@ -43,7 +44,7 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
         /* generateAssignExpr, generateMetaDataInterpolation,*/ generateTaggedSymbol,
         generateSymbolFragment, generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
         /* generateMatchInline, */ generateIfInline, generateGroupExpression, generateInlineMacroApplication,
-        // generateFunctionCall, generatePropertyAccess
+        generateFunctionCall, generatePropertyAccess
     ]
 
     let node: typeof term.value | MismatchToken = null!
@@ -51,9 +52,30 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
         node = nodeGenerator(term, tokens)
         currentToken = tokens.currentToken
 
-        if (node.type != "MismatchToken") {
-            break
+        if (node.type == "MismatchToken" && node.partialParse) {
+            tokens.cursor = node.partialParse.cursor
+
+            const nodeGenerators = [
+                generateTaggedSymbol, generateTaggedString,
+                generateFunctionCall, generatePropertyAccess
+            ]
+            
+            const [child, parent] = reparseIfNeeded(term, tokens, node.partialParse, nodeGenerators)
+
+            if (parent.type == "FunctionCall")
+                parent.caller = child as any
+            else if (parent.type == "PropertyAccess")
+                parent.accessor = child as any
+            else if(parent.type == "TaggedSymbol")
+                parent.tag = child as any
+            else if(parent.type == "TaggedString")
+                parent.tag = child as any
+            
+            node = parent
         }
+
+        if (node.type != "MismatchToken")
+            break
 
         if (node.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
@@ -82,7 +104,7 @@ export function printTerm(token: Term, indent = 0) {
     const trailJoiner = "│\t"
 
     const printers = [
-        /* printMetaDataInterpolation, */ printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, /* printMatchInline, */ printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, printFunctionCall, */ printInlineMacroApplication, printPropertyAccess, /* printTypeAssertion, printAssignExpr, */ printGroupExpression
+        /* printMetaDataInterpolation, */ printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, /* printMatchInline, */ printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printPropertyAccess, /* printTypeAssertion, printAssignExpr, */ printGroupExpression
     ] as NodePrinter[]
 
     const printer = pickPrinter(printers, token.value)!

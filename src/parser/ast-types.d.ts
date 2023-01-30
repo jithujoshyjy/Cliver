@@ -132,11 +132,9 @@ type InlineAnonFunction = {
     end: number
 }
 
-type FunctionKind = "self" | "trait" | "macro" | "yield" | "payload" | "return" | "getter" | "setter"
-
 type BlockAnonFunction = {
     type: "BlockAnonFunction",
-    kind: FunctionKind[],
+    kind: string[],
     params: Array<AssignExpr | Pattern>,
     signature: TypeExpression | null,
     body: Array<Inline | Block>,
@@ -162,7 +160,9 @@ type NamedFunction = {
 type FunctionPrototype = {
     type: "FunctionPrototype",
     kind: FunctionKind[],
-    params: Array<AssignExpr | Pattern>,
+    positional: Array<AssignExpr | Pattern>,
+    keyword: AssignExpr[],
+    captured: Identifier[],
     signature: TypeExpression | null,
     line: number,
     column: number,
@@ -239,7 +239,7 @@ type InlineMacroApplication = {
 type FunctionCall = {
     type: "FunctionCall",
     arguments: CallSiteArgsList,
-    caller: Identifier | PropertyAccess | OperatorRef | GroupExpression,
+    caller: Identifier | Keyword | DoExpr | PropertyAccess | OperatorRef | GroupExpression | TaggedSymbol | TaggedNumber | TaggedString | ImplicitMultiplication | FunctionCall,
     externcallback: boolean,
     line: number,
     column: number,
@@ -663,7 +663,10 @@ type Term = {
     line: number,
     column: number,
     start: number,
-    end: number
+    end: number,
+    meta: {
+        resumeFrom?: number
+    }
 }
 
 type Expression = {
@@ -775,9 +778,8 @@ type StringLiteral = {
 type InlineStringLiteral = StringLiteral & { kind: "inline" }
 type MultilineStringLiteral = StringLiteral & { kind: "multiline" }
 
-type InlineTaggedString = {
-    type: "InlineTaggedString",
-    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+type InlineFStringFragment = {
+    type: "InlineFStringFragment"
     fragments: InlineFString[],
     line: number,
     column: number,
@@ -840,9 +842,8 @@ type MultilineUnicodeString = {
     end: number
 }
 
-type MultilineTaggedString = {
-    type: "MultilineTaggedString",
-    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+type MultilineFString = {
+    type: "MultilineFString",
     fragments: Array<MultilineStringLiteral | InStringExpr | InStringId>,
     line: number,
     column: number,
@@ -852,21 +853,28 @@ type MultilineTaggedString = {
 
 type TaggedString = {
     type: "TaggedString",
-    value: InlineTaggedString | MultilineTaggedString,
+    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression | TaggedSymbol | TaggedString,
+    value: InlineFStringFragment | MultilineFString,
     line: number,
     column: number,
     start: number,
-    end: number
+    end: number,
+    meta: {
+        resumeFrom?: number 
+    }
 }
 
 type TaggedSymbol = {
     type: "TaggedSymbol",
-    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression,
+    tag: Identifier | PropertyAccess | FunctionCall | GroupExpression | TaggedSymbol | TaggedString,
     fragments: Array<SymbolLiteral>,
     line: number,
     column: number,
     start: number,
-    end: number
+    end: number,
+    meta: {
+        resumeFrom?: number
+    }
 }
 
 type SymbolFragment = {
@@ -1096,7 +1104,7 @@ type FunctionCallType = {
 type PropertyAccess = {
     type: "PropertyAccess",
     accessor: Literal | TaggedSymbol | TaggedString | ImplicitMultiplication | TaggedNumber | FunctionCall | GroupExpression | PropertyAccess,
-    field: NumericLiteral | Identifier | ArrayLiteral,
+    field: IntegerLiteral | Identifier | Keyword | ArrayLiteral,
     optional: boolean,
     computed: boolean,
     line: number,

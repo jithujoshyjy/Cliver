@@ -1,66 +1,25 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, NodePrinter, pickPrinter } from "../../../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, NodePrinter, pickPrinter } from "../../../utility.js"
 import { generateExpression, printExpression } from "../../expression/expression.js"
-import { generateGroupExpression, printGroupExpression } from "../../expression/group-expression.js"
 import { generateEscapeSequence } from "../../literal/escape-sequence.js"
 import { generateIdentifier, printIdentifier } from "../../literal/identifier.js"
 import { printStringLiteral } from "../../literal/string-literal.js"
-import { generateFunctionCall, printFunctionCall } from "../function-call.js"
 import { generatePair, printPair } from "../pair.js"
-import { generatePropertyAccess, printPropertyAccess } from "../property-access.js"
+import { printInStringExpr, printInStringId } from "./tagged-string.js"
 
-export function generateMultilineTaggedString(context: Node, tokens: TokenStream): MultilineTaggedString | MismatchToken {
+export function generateMultilineFString(context: Node, tokens: TokenStream): MultilineFString | MismatchToken {
 
-    const multilineTaggedString: MultilineTaggedString = {
-        type: "MultilineTaggedString",
+    const multilineFString: MultilineFString = {
+        type: "MultilineFString",
         fragments: [],
-        tag: null!,
         line: 0,
         column: 0,
         start: 0,
-        end: 0
+        end: 0,
     }
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-
-    const nodeGenerators = [
-        /* generateFunctionCall, generatePropertyAccess, */
-        generateIdentifier, generateGroupExpression
-    ]
-
-    let tag: Identifier
-        | PropertyAccess
-        | FunctionCall
-        | GroupExpression
-        | MismatchToken = null!
-
-    for (let nodeGenerator of nodeGenerators) {
-        tag = nodeGenerator(multilineTaggedString, tokens)
-        currentToken = tokens.currentToken
-
-        if (tag.type != "MismatchToken")
-            break
-
-        if (tag.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return tag
-        }
-    }
-
-    if (tag.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return tag
-    }
-
-    multilineTaggedString.start = tag.start
-    multilineTaggedString.line = tag.line
-    multilineTaggedString.column = tag.column
-    multilineTaggedString.tag = tag
-
-    currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
 
     let startQuoteCount = 0
     while (isPunctuator(currentToken, '"')) {
@@ -107,7 +66,7 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
         }
 
         if (endQuoteCount == 0) {
-            multilineTaggedString.end = currentToken.end
+            multilineFString.end = currentToken.end
             break
         }
 
@@ -133,11 +92,10 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
         }
 
         if (fragment.type != "StringLiteral")
-            multilineTaggedString.fragments.push(fragment)
+            multilineFString.fragments.push(fragment)
     }
 
-
-    return multilineTaggedString
+    return multilineFString
 
     function createStringLiteral(): MultilineStringLiteral {
         return {
@@ -155,13 +113,13 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
     function parseString() {
         let currentToken = tokens.currentToken
 
-        const lastFragment = multilineTaggedString.fragments.at(-1)
+        const lastFragment = multilineFString.fragments.at(-1)
         const stringLiteral = lastFragment?.type == "StringLiteral"
             ? lastFragment
             : createStringLiteral()
 
         if (lastFragment?.type != "StringLiteral") {
-            multilineTaggedString.fragments.push(stringLiteral)
+            multilineFString.fragments.push(stringLiteral)
             stringLiteral.start = currentToken.start
             stringLiteral.line = currentToken.line
             stringLiteral.column = currentToken.column
@@ -187,20 +145,20 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
             return createMismatchToken(currentToken)
         }
 
-        const escapeSequence = generateEscapeSequence(multilineTaggedString, tokens)
+        const escapeSequence = generateEscapeSequence(multilineFString, tokens)
 
         if (escapeSequence.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return escapeSequence
         }
 
-        const lastFragment = multilineTaggedString.fragments.at(-1)
+        const lastFragment = multilineFString.fragments.at(-1)
         const stringLiteral = lastFragment?.type == "StringLiteral"
             ? lastFragment
             : createStringLiteral()
 
         if (lastFragment?.type != "StringLiteral") {
-            multilineTaggedString.fragments.push(stringLiteral)
+            multilineFString.fragments.push(stringLiteral)
 
             stringLiteral.start = escapeSequence.start
             stringLiteral.line = escapeSequence.line
@@ -419,42 +377,22 @@ export function generateMultilineTaggedString(context: Node, tokens: TokenStream
     }
 }
 
-export function printMultilineTaggedString(token: MultilineTaggedString, indent = 0) {
+export function printMultilineFString(token: MultilineFString, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
 
-    const tagPrinters = [
-        printIdentifier, printPropertyAccess, printFunctionCall, printGroupExpression
-    ] as NodePrinter[]
-
     const instringElementPrinters = [
-        printStringLiteral, printIdentifier
+        printStringLiteral, printInStringId
     ] as NodePrinter[]
-
-    const tagPrinter = pickPrinter(tagPrinters, token.tag)!
 
     const space = ' '.repeat(4)
-    return "MultilineTaggedString" +
-        '\n' + space.repeat(indent) + endJoiner + "tag" +
-        '\n' + space.repeat(indent + 1) + endJoiner + tagPrinter(token.tag, indent + 2) +
+    return "MultilineFString" +
         '\n' + space.repeat(indent) + endJoiner + "fragments" +
         token.fragments.reduce((a, c, i, arr) =>
-            a + '\n' + space.repeat(indent + 2) +
+            a + '\n' + space.repeat(indent + 1) +
             (i < arr.length - 1 ? middleJoiner : endJoiner) +
             (c.type == "InStringExpr"
-                ? "InStringExpr\n" + space.repeat(indent + 3) +
-
-                (!!c.positional.length && !!c.keyword.length ? middleJoiner : endJoiner) +
-
-                (c.positional.length ? "positional\n" +
-                    c.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 4) +
-                        (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                        printExpression(c, indent + 5) + '\n', '') : "") +
-
-                (c.keyword.length ? (c.positional.length ? space.repeat(indent + 4) + endJoiner : "") + "keyword\n" +
-                    c.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 5) +
-                        (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                        printPair(c, indent + 6) + '\n', '') : "")
-                : pickPrinter(instringElementPrinters, c)!(c, indent + 5)), "")
+                ? printInStringExpr(c, indent + 2)
+                : pickPrinter(instringElementPrinters, c)!(c, indent + 2)), "")
 }

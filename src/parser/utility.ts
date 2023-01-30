@@ -67,7 +67,7 @@ export const isRightAssociative = (op: InfixCallOperator | NonVerbalOperator | V
     return value in operatorPrecedence.infix.right
 }
 
-export type PartialParse = { result: Node, cursor: number }
+export type PartialParse = { result: Node, cursor: number, meta?: { [x: string]: any } }
 export type DiagnosticDescriptionObj = Partial<DiagnosticDescription> & { message: DiagnosticMessage, args: any[] }
 
 type DiagnosticObj = {
@@ -192,4 +192,96 @@ export const operatorPrecedence: PrecidenceType = {
     postfix: {
         "?": 2,
     }
+}
+
+export const lookAheadForStringLiteral = (tokens: TokenStream) => {
+    const initialCursor = tokens.cursor
+    let currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
+
+    const stringLiteralAhead = isPunctuator(currentToken, '"')
+    tokens.cursor = initialCursor
+
+    return stringLiteralAhead
+}
+
+export const lookAheadForSymbolLiteral = (tokens: TokenStream) => {
+    const initialCursor = tokens.cursor
+    let currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
+
+    const symbolLiteralAhead = isPunctuator(currentToken, '\\')
+    tokens.cursor = initialCursor
+
+    return symbolLiteralAhead
+}
+
+export const lookAheadForFunctionCall = (tokens: TokenStream) => {
+    const initialCursor = tokens.cursor
+    let currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
+
+    const functionCallAhead = isPunctuator(currentToken, '(')
+    tokens.cursor = initialCursor
+
+    return functionCallAhead
+}
+
+export const lookAheadForPropertyAccess = (tokens: TokenStream) => {
+    const initialCursor = tokens.cursor
+    let currentToken = _skipables.includes(tokens.currentToken)
+        ? skip(tokens, _skipables)
+        : tokens.currentToken
+
+    let propertyAccessAhead = false
+    if (isOperator(currentToken, '?'))
+        currentToken = skip(tokens, _skipables)
+
+    if (isPunctuator(currentToken, '['))
+        propertyAccessAhead = true
+
+    else {
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
+        const isDotOperator = isOperator(currentToken, '.') || isOperator(currentToken, '?.')
+        if (isDotOperator)
+            propertyAccessAhead = true
+    }
+
+    tokens.cursor = initialCursor
+    return propertyAccessAhead
+}
+
+type NodeGenerator = (context: Node, tokens: TokenStream) => Node
+export const reparseIfNeeded = <T extends NodeGenerator>(context: Node, tokens: TokenStream, partialParse: PartialParse, nodeGenerators: T[]): [Node, ReturnType<(typeof nodeGenerators)[0]> | MismatchToken] => {
+    const initialCursor = tokens.cursor
+    let currentToken = tokens.currentToken
+
+    const { result, cursor } = partialParse
+    context.meta.resumeFrom = cursor
+
+    let node: ReturnType<(typeof nodeGenerators)[0]> | MismatchToken = createMismatchToken(currentToken)
+
+    if (!partialParse.meta?.parentType)
+        return [result, node]
+
+    const nodeGenerator = nodeGenerators
+        .find(x => x.name.endsWith(partialParse.meta?.parentType))!
+
+    node = nodeGenerator(context, tokens) as ReturnType<(typeof nodeGenerators)[0]> | MismatchToken
+
+    node.line = result.line
+    node.column = result.column
+    node.start = result.start
+
+    currentToken = tokens.currentToken
+    if (!node.partialParse)
+        return [result, node]
+
+    return reparseIfNeeded(context, tokens, node.partialParse, nodeGenerators)
 }
