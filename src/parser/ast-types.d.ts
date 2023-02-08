@@ -1,6 +1,6 @@
 type Program = {
     type: "Program",
-    value: Array<Inline | Block>,
+    body: Array<Inline | Block>,
     line: number,
     column: number,
     start: number,
@@ -449,7 +449,7 @@ type ElseInline = {
 
 type MatchInline = {
     type: "MatchInline",
-    head: Expression,
+    matchers: Expression[],
     cases: MatchCaseExpr[],
     line: number,
     column: number,
@@ -460,7 +460,7 @@ type MatchInline = {
 type MatchCaseExpr = {
     type: "MatchCaseExpr",
     patterns: Pattern[],
-    body: Array<Inline | Block>,
+    body: Inline | Block,
     line: number,
     column: number,
     start: number,

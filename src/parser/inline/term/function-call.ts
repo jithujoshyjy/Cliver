@@ -51,6 +51,7 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
         nodeGenerators.unshift(generateTaggedString)
 
     const callbackKws = ["import", "export", "use", "from", "type"]
+    
     if (!context.meta?.resumeFrom) {
         for (const nodeGenerator of nodeGenerators) {
 
@@ -82,9 +83,14 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
         functionCall.caller = caller
     }
 
-    tokens.cursor = context.meta?.resumeFrom ?? tokens.cursor
+    if(currentToken.type == "EOF") {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
 
+    tokens.cursor = context.meta?.resumeFrom ?? tokens.cursor
     let isInitial = true
+    
     while (!tokens.isFinished) {
         currentToken = _skipables.includes(tokens.currentToken)
             ? skip(tokens, _skipables)

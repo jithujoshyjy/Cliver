@@ -1,12 +1,14 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { generateProgram } from "../../../program.js"
+import { generateBlock } from "../../../block/block.js"
 import { createMismatchToken, isKeyword, isOperator, isPunctuator, skip, skipables, _skipables, type Node } from "../../../utility.js"
 import { generatePattern } from "../../expression/pattern/pattern.js"
+import { generateInline } from "../../inline.js"
+import { generateKeyword } from "../../keyword.js"
 
 export function generateMatchCaseExpr(context: Node, tokens: TokenStream): MatchCaseExpr | MismatchToken {
     const matchCaseExpr: MatchCaseExpr = {
         type: "MatchCaseExpr",
-        patterns: null!,
+        patterns: [],
         body: null!,
         line: 0,
         column: 0,
@@ -14,28 +16,67 @@ export function generateMatchCaseExpr(context: Node, tokens: TokenStream): Match
         end: 0
     }
 
-    let currentToken = tokens.currentToken // case
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    if (!isKeyword(currentToken, "case")) {
+    const caseKeyword = generateKeyword(matchCaseExpr, tokens)
+
+    if (caseKeyword.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return caseKeyword
+    }
+
+    if (!isKeyword(caseKeyword, "case")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    currentToken = skip(tokens, skipables) // skip case
+    matchCaseExpr.start = caseKeyword.start
+    matchCaseExpr.line = caseKeyword.line
+    matchCaseExpr.column = caseKeyword.column
 
-    const captureComma = () => {
-        currentToken = skip(tokens, skipables)
+    const captureComma = (tokens: TokenStream) => {
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
         if (!isPunctuator(currentToken, ",")) {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }
 
+        currentToken = skip(tokens, skipables)
         return currentToken
     }
 
-    while (!tokens.isFinished) {
+    let isInitial = true, lastDelim: LexicalToken | MismatchToken | null = null
+    const parsePattern = (tokens: TokenStream) => {
+
         const pattern = generatePattern(matchCaseExpr, tokens)
+        lastDelim = null
+
+        currentToken = tokens.currentToken
+        
+        return pattern
+    }
+
+    while (!tokens.isFinished) {
+
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
+        if (isOperator(currentToken, ":")) {
+            currentToken = skip(tokens, skipables)
+            break
+        }
+
+        if (lastDelim?.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return lastDelim
+        }
+
+        const pattern = parsePattern(tokens)
         if (pattern.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return pattern
@@ -43,42 +84,37 @@ export function generateMatchCaseExpr(context: Node, tokens: TokenStream): Match
 
         matchCaseExpr.patterns.push(pattern)
 
-        const comma = captureComma()
-        if (comma.type == "MismatchToken" && isPunctuator(currentToken, ":")) {
-            break
-        }
-
-        if (comma.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
-
-        currentToken = skip(tokens, skipables) // skip ,
+        lastDelim = captureComma(tokens)
+        isInitial = false
     }
 
-    if (!isPunctuator(currentToken, ":")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+    const nodeGenerators = [generateBlock, generateInline] as any[]
 
-    currentToken = skip(tokens, _skipables) // skip :
+    let node: Block
+        | Inline
+        | MismatchToken = null!
 
-    const nodeGenerator = generateProgram(matchCaseExpr, tokens)
-
-    for (let node of nodeGenerator) {
-
+    for (const nodeGenerator of nodeGenerators) {
+        node = nodeGenerator(matchCaseExpr, tokens)
         currentToken = tokens.currentToken
 
-        if (node.type == "MismatchToken" && isKeyword(currentToken, "case"))
+        if (node.type != "MismatchToken")
             break
 
-        if (node.type == "MismatchToken") {
+        if (node.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
             return node
         }
-
-        matchCaseExpr.body.push(node)
     }
+
+    currentToken = tokens.currentToken
+    if (node.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return node
+    }
+
+    matchCaseExpr.body = node
+    matchCaseExpr.end = node.end
 
     return matchCaseExpr
 }

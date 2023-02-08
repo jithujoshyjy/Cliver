@@ -10,7 +10,7 @@ import { generateIfInline, printIfInline } from "./if-inline.js"
 import { generateImplicitMultiplication, printImplicitMultiplication } from "./implicit-multiplication.js"
 import { generateInlineMacroApplication, printInlineMacroApplication } from "./inline-macro-application.js"
 import { generateInlineStringFragment, printInlineStringFragment } from "./inline-string-fragment.js"
-import { generateMatchInline } from "./match-inline/match-inline.js"
+import { generateMatchInline, printMatchInline } from "./match-inline/match-inline.js"
 import { generateMetaDataInterpolation } from "./meta-data-interpolation.js"
 import { generateObjectCascadeNotation } from "./object-cascade-notation.js"
 import { generateObjectExtendNotation } from "./object-extend-notation.js"
@@ -37,49 +37,60 @@ export function generateTerm(context: Node, tokens: TokenStream): Term | Mismatc
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
+    const partialParsables = [
+        "FunctionCall", "PropertyAccess",
+        "TaggedSymbol", "TaggedString"
+    ]
+
     const nodeGenerators = [
         // generateTypeAssertion,
         // generatePipelineNotation, generateObjectCascadeNotation, generateObjectExtendNotation,
         /* generateExternalCallbackNotation, generateAnonFunction, */ generateUnitFunction,
-        /* generateAssignExpr, generateMetaDataInterpolation,*/ generateTaggedSymbol,
-        generateSymbolFragment, generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
-        /* generateMatchInline, */ generateIfInline, generateGroupExpression, generateInlineMacroApplication,
-        generateFunctionCall, generatePropertyAccess
+        /* generateAssignExpr, generateMetaDataInterpolation,*/ /* generateTaggedSymbol, */
+        generateSymbolFragment, /* generateTaggedString, */ generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
+        generateMatchInline, generateIfInline, generateGroupExpression, generateInlineMacroApplication,
+        /* generateFunctionCall, generatePropertyAccess */
     ]
 
     let node: typeof term.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
+
         node = nodeGenerator(term, tokens)
         currentToken = tokens.currentToken
 
-        if (node.type == "MismatchToken" && node.partialParse) {
-            tokens.cursor = node.partialParse.cursor
+        if (node.type != "MismatchToken")
+            break
+        
+        if (node.errorDescription.severity <= 3) {
+            tokens.cursor = initialCursor
+            return node
+        }
+
+        if (partialParsables.includes(node.partialParse?.result?.type)) {
+
+            tokens.cursor = node.partialParse!.cursor
 
             const nodeGenerators = [
                 generateTaggedSymbol, generateTaggedString,
                 generateFunctionCall, generatePropertyAccess
             ]
-            
-            const [child, parent] = reparseIfNeeded(term, tokens, node.partialParse, nodeGenerators)
+
+            const [child, parent] = reparseIfNeeded(term, tokens, node.partialParse!, nodeGenerators)
 
             if (parent.type == "FunctionCall")
                 parent.caller = child as any
             else if (parent.type == "PropertyAccess")
                 parent.accessor = child as any
-            else if(parent.type == "TaggedSymbol")
+            else if (parent.type == "TaggedSymbol")
                 parent.tag = child as any
-            else if(parent.type == "TaggedString")
+            else if (parent.type == "TaggedString")
                 parent.tag = child as any
-            
+            else {
+                tokens.cursor = initialCursor
+                return createMismatchToken(currentToken)
+            }
+
             node = parent
-        }
-
-        if (node.type != "MismatchToken")
-            break
-
-        if (node.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return node
         }
     }
 
@@ -104,7 +115,7 @@ export function printTerm(token: Term, indent = 0) {
     const trailJoiner = "│\t"
 
     const printers = [
-        /* printMetaDataInterpolation, */ printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, /* printMatchInline, */ printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printPropertyAccess, /* printTypeAssertion, printAssignExpr, */ printGroupExpression
+        /* printMetaDataInterpolation, */ printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, printMatchInline, printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printPropertyAccess, /* printTypeAssertion, printAssignExpr, */ printGroupExpression
     ] as NodePrinter[]
 
     const printer = pickPrinter(printers, token.value)!

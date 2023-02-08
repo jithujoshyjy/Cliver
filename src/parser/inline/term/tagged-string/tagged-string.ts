@@ -26,8 +26,13 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
+    const partialParsables = [
+        "FunctionCall", "PropertyAccess",
+        "TaggedSymbol", "TaggedString"
+    ]
+
     const nodeGenerators = [
-        generateFunctionCall, generatePropertyAccess, generateIdentifier, generateGroupExpression
+        /* generateFunctionCall, generatePropertyAccess, */ generateIdentifier, generateGroupExpression
     ] as Array<(context: Node, tokens: TokenStream) => typeof taggedString.tag | MismatchToken>
 
     let tag: Identifier
@@ -44,13 +49,21 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
             tag = nodeGenerator(taggedString, tokens)
             currentToken = tokens.currentToken
 
-            if (tag.type == "MismatchToken" && tag.partialParse) {
+            if (tag.type != "MismatchToken")
+                break
+
+            if (tag.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return tag
+            }
+
+            if (tag.type == "MismatchToken" && partialParsables.includes(tag.partialParse?.result?.type)) {
 
                 const tagGenerators = [
                     generateTaggedSymbol, generateTaggedString,
                     generateFunctionCall, generatePropertyAccess
                 ]
-                const [child, parent] = reparseIfNeeded(taggedString, tokens, tag.partialParse, tagGenerators)
+                const [child, parent] = reparseIfNeeded(taggedString, tokens, tag.partialParse!, tagGenerators)
 
                 if (parent.type == "FunctionCall")
                     parent.caller = child as any
@@ -60,16 +73,12 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
                     parent.tag = child as any
                 else if (parent.type == "TaggedString")
                     parent.tag = child as any
+                else {
+                    tokens.cursor = initialCursor
+                    return createMismatchToken(currentToken)
+                }
 
                 tag = parent
-            }
-
-            if (tag.type != "MismatchToken")
-                break
-
-            if (tag.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return tag
             }
         }
 
@@ -122,7 +131,7 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
                             : "TaggedString"
             }
         }
-        
+
         // tokens.cursor = initialCursor
         return createMismatchToken(currentToken, partialParse)
     }

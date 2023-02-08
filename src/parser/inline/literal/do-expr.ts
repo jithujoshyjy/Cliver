@@ -25,15 +25,13 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
     }
 
     if (!isKeyword(doKeyword, "do")) {
-        const error: DiagnosticMessage = "Unexpected Keyword '{0}' on {1}:{2}"
         tokens.cursor = initialCursor
-        return createMismatchToken(currentToken, [error, doKeyword.name, doKeyword.line, doExpr.column])
+        return createMismatchToken(currentToken)
     }
 
     doExpr.start = doKeyword.start
     doExpr.line = doKeyword.line
     doExpr.column = doKeyword.column
-
 
     const nodeGenerators = [
         generateBlock, generateInline

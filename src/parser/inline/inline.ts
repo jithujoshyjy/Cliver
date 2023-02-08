@@ -1,6 +1,7 @@
 import { TokenStream } from "../../lexer/token.js"
 import { createMismatchToken, isKeyword, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 import { generateExpression, printExpression } from "./expression/expression.js"
+import { generateKeyword } from "./keyword.js"
 
 export function generateInline(context: Node, tokens: TokenStream): Inline | MismatchToken {
     const inline: Inline = {
@@ -30,10 +31,13 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         if (_skipables.includes(currentToken))
             currentToken = skip(tokens, _skipables)
 
-        const isDelimited = currentToken.type == "Newline"
+        let isDelimited = currentToken.type == "Newline"
             || isPunctuator(currentToken, ";")
-            || isKeyword(currentToken, "end")
             || currentToken.type == "EOF"
+        
+        const resetCursorPoint = tokens.cursor
+        isDelimited ||= generateKeyword(inline, tokens).type == "Keyword"
+        tokens.cursor = resetCursorPoint
 
         if (!isDelimited)
             return createMismatchToken(currentToken)

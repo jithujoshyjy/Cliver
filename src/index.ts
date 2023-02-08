@@ -14,8 +14,11 @@ void async function main() {
     const code = await readFile(filepath, "utf-8");
     
     const tokens = tokenize(code, filepath);
-    const ast = generateAST(tokens);
+    const ast = generateAST(tokens)!;
 
     console.log("=== AST ===");
     console.log(printProgram(ast));
 }()
+
+// uniqueness in function parameters
+// precondition, postcondition

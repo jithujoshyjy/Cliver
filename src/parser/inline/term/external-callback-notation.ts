@@ -1,9 +1,9 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { skip, skipables, type Node } from "../../utility.js"
+import { skip, skipables, type Node, PartialParse, createMismatchToken } from "../../utility.js"
 import { generateDoExpr } from "../literal/do-expr.js"
 import { generateFunctionCall } from "./function-call.js"
 
-export function generateExternalCallbackNotation(context: Node, tokens: TokenStream): FunctionCall | ExternalCallbackNotation | MismatchToken {
+export function generateExternalCallbackNotation(context: Node, tokens: TokenStream): ExternalCallbackNotation | MismatchToken {
     const externalCallbackNotation: ExternalCallbackNotation = {
         type: "ExternalCallbackNotation",
         callback: null!,
@@ -23,9 +23,17 @@ export function generateExternalCallbackNotation(context: Node, tokens: TokenStr
         return functionCall
     }
 
-    currentToken = skip(tokens, skipables)
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+    
     if(!functionCall.externcallback) {
-        return functionCall
+        const partialParse: PartialParse = {
+            result: functionCall,
+            cursor: tokens.cursor
+        }
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken, partialParse)
     }
 
     externalCallbackNotation.caller = functionCall
@@ -37,6 +45,5 @@ export function generateExternalCallbackNotation(context: Node, tokens: TokenStr
     }
 
     externalCallbackNotation.callback = doExpr
-    
     return externalCallbackNotation
 }

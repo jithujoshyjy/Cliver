@@ -1,5 +1,5 @@
 import { TokenStream } from "../../lexer/token.js"
-import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isOperator, isPunctuator, keywords, PartialParse, type Node } from "../utility.js"
+import { createMismatchToken, type Node } from "../utility.js"
 import { generateIdentifier } from "./literal/identifier.js"
 
 export function generateKeyword(context: Node, tokens: TokenStream): Keyword | MismatchToken {

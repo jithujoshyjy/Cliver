@@ -80,9 +80,14 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         propertyAccess.accessor = accessor
     }
 
-    tokens.cursor = context.meta?.resumeFrom ?? tokens.cursor
+    if (currentToken.type == "EOF") {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
+    }
 
+    tokens.cursor = context.meta?.resumeFrom ?? tokens.cursor
     let isInitial = true
+    
     while (!tokens.isFinished) {
         currentToken = _skipables.includes(tokens.currentToken)
             ? skip(tokens, _skipables)

@@ -1,62 +1,59 @@
 import { TokenStream } from "../lexer/token.js"
 import { generateBlock, printBlock } from "./block/block.js"
 import { generateInline, printInline } from "./inline/inline.js"
-import { type Node } from "./utility.js"
+import { skip, skipables, type Node } from "./utility.js"
 
-export type ProgramGenerator = Generator<Inline | Block | MismatchToken, Array<Inline | Block> | MismatchToken>
-export function* generateProgram(context: Node, tokens: TokenStream): ProgramGenerator {
-    const values: Array<Block | Inline> = []
-    const baseContext = context
-    const initialCursor = tokens.cursor
+export function generateProgram(context: Node | null, tokens: TokenStream): Program | MismatchToken {
+    const program: Program = {
+        type: "Program",
+        body: [],
+        start: 0,
+        end: 0,
+        column: 0,
+        line: 0
+    }
+
     let currentToken = tokens.currentToken
+    const initialCursor = tokens.cursor
 
-    baseContext.start = currentToken.start
-    baseContext.line = currentToken.line
-    baseContext.column = currentToken.column
+    const nodeGenerators = [
+        generateBlock, generateInline
+    ]
 
-    while (currentToken.type != "EOF") {
+    while (!tokens.isFinished) {
 
-        const block = generateBlock(context, tokens)
-        let value: Block | Inline | MismatchToken = block
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
 
-        // is not block
-        if (value.type == "MismatchToken") {
-            const inline = generateInline(context, tokens)
-            value = inline
-        }
-        else { // is macro-block
-            const block = value.value
-            if (block.type == "BlockMacroApplication") {
-                block.left = [...values]
-                values.length = 0
-                values.push(value)
-                context = block
+        if (currentToken.type == "EOF")
+            break
+
+        let node: Block
+            | Inline
+            | MismatchToken = null!
+
+        for (const nodeGenerator of nodeGenerators) {
+            node = nodeGenerator(program, tokens)
+            currentToken = tokens.currentToken
+            if (node.type != "MismatchToken")
+                break
+
+            if (node.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return node
             }
         }
 
-        // is not inline
-        if (value.type == "MismatchToken") {
+        if (node.type == "MismatchToken") {
             tokens.cursor = initialCursor
-            yield value
+            return node
         }
 
-        // is macro-block
-        if (context.type == "BlockMacroApplication")
-            (context as BlockMacroApplication).right.push(value as Block | Inline)
-        else {// is block or inline
-            values.push(value as Block | Inline)
-            yield value
-        }
-        currentToken = tokens.currentToken
+        program.body.push(node)
     }
-    baseContext.end = currentToken.end
 
-    if (context.type == "BlockMacroApplication")
-        yield values.at(-1) as Block
-
-    context = baseContext // Program
-
-    return values
+    return program
 }
 
 export function printProgram(token: Program, indent = 0) {
@@ -65,7 +62,7 @@ export function printProgram(token: Program, indent = 0) {
     const trailJoiner = "│\t"
     const space = ' '.repeat(4)
     return "Program\n" + space.repeat(indent) +
-        token.value.reduce((a, c, i, arr) => a +
+        token.body.reduce((a, c, i, arr) => a +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
             (c.type == "Block" ? printBlock(c, indent + 1) : printInline(c, indent + 1)) +
             (i == arr.length - 1 ? '' : '\n'), '')

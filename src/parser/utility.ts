@@ -48,7 +48,7 @@ export const operators = [
 ]
 export const keywords = [
     "done", "do", "fun", "var", "val", "type",
-    "end", "ref", "case", "if", "elseif", "else", "for", "catch",
+    "end", "ref", "match", "case", "if", "elseif", "else", "for", "catch",
     "throw", "in!", "in", "of", "use", "import", "export", "from",
     "to", "is!", "is", "as"
 ]

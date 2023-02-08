@@ -34,6 +34,7 @@ export function generateBlock(context: Node, tokens: TokenStream): Inline | Bloc
 
     let node: typeof block.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
+        
         node = nodeGenerator(block, tokens)
         currentToken = tokens.currentToken
 
