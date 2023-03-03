@@ -1,5 +1,5 @@
 import { TokenStream } from "../../lexer/token.js"
-import { createMismatchToken, isKeyword, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 import { generateExpression, printExpression } from "./expression/expression.js"
 import { generateKeyword } from "./keyword.js"
 
@@ -24,7 +24,7 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         tokens.cursor = initialCursor
         return expression
     }
-    
+
     const captureDelimiter = () => {
         currentToken = tokens.currentToken
 
@@ -34,19 +34,22 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
         let isDelimited = currentToken.type == "Newline"
             || isPunctuator(currentToken, ";")
             || currentToken.type == "EOF"
-        
+
         const resetCursorPoint = tokens.cursor
         isDelimited ||= generateKeyword(inline, tokens).type == "Keyword"
         tokens.cursor = resetCursorPoint
 
         if (!isDelimited)
             return createMismatchToken(currentToken)
-        
+
         return currentToken
     }
 
     inline.start = expression.start
+    inline.line = expression.line
+    inline.column = expression.column
     inline.value = expression
+
     const delimiter = captureDelimiter()
 
     if (delimiter.type == "MismatchToken") {
@@ -56,7 +59,7 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
 
     currentToken = skip(tokens, skipables)
     inline.end = delimiter.end
-    
+
     return inline
 }
 
@@ -65,5 +68,5 @@ export function printInline(token: Inline, indent = 0) {
     const endJoiner = "└── "
     const trailJoiner = "│\t"
     const space = ' '.repeat(4)
-    return "Inline\n" + space.repeat(indent) + endJoiner + printExpression(token.value, indent+1)
+    return "Inline\n" + space.repeat(indent) + endJoiner + printExpression(token.value, indent + 1)
 }

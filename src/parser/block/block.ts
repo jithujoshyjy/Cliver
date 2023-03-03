@@ -10,7 +10,7 @@ import { generateNamedFunction, printNamedFunction } from "./named-function.js"
 import { generateUseDeclaration, printUseDeclaration } from "./use-declaration.js"
 import { generateVariableDeclaration, printVariableDeclaration } from "./variable-declaration/variable-declaration.js"
 
-export function generateBlock(context: Node, tokens: TokenStream): Inline | Block | MismatchToken {
+export function generateBlock(context: Node, tokens: TokenStream): Block | MismatchToken {
     const block: Block = {
         type: "Block",
         value: null!,

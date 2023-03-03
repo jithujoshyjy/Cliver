@@ -449,18 +449,8 @@ type ElseInline = {
 
 type MatchInline = {
     type: "MatchInline",
-    matchers: Expression[],
-    cases: MatchCaseExpr[],
-    line: number,
-    column: number,
-    start: number,
-    end: number
-}
-
-type MatchCaseExpr = {
-    type: "MatchCaseExpr",
-    patterns: Pattern[],
-    body: Inline | Block,
+    matcher: Expression,
+    cases: Array<(CaseExpr & {body: Expression | Block})>,
     line: number,
     column: number,
     start: number,
@@ -470,6 +460,7 @@ type MatchCaseExpr = {
 type CaseExpr = {
     type: "CaseExpr",
     pattern: Pattern,
+    body?: Expression | Block,
     line: number,
     column: number,
     start: number,

@@ -48,7 +48,7 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
             | MismatchToken = null!
 
         const nodeGenerators = [
-            /* generatePropertyAccess, */ generateIdentifier
+            generatePropertyAccess, generateIdentifier
         ]
 
         for (let nodeGenerator of nodeGenerators) {

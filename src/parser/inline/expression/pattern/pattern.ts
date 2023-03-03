@@ -25,7 +25,7 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern,generateTypeAssertion, generateBracePattern,  generateParenPattern, generateBracketPattern,
+        generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern,  generateParenPattern, generateBracketPattern,
         generateInterpPattern, generateLiteral
     ]
 
@@ -81,9 +81,6 @@ case pattern: expression
 
 case pattern ||
 case pattern: expression
-
-case pattern &&
-expression: expression
 
 x
 x :: Type

@@ -1,6 +1,8 @@
 import { TokenStream } from "../../../lexer/token.js"
+import { printBlock } from "../../block/block.js"
 import { skip, _skipables, type Node, isKeyword, createMismatchToken } from "../../utility.js"
 import { generateKeyword } from "../keyword.js"
+import { printExpression } from "./expression.js"
 import { generatePattern, printPattern } from "./pattern/pattern.js"
 
 export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr | MismatchToken {
@@ -17,7 +19,7 @@ export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr |
     const initialCursor = tokens.cursor
 
     const maybeKeyword = generateKeyword(caseExpr, tokens)
-    if(!isKeyword(maybeKeyword, "case")) {
+    if (!isKeyword(maybeKeyword, "case")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -49,6 +51,14 @@ export function printCaseExpr(token: CaseExpr, indent = 0) {
 
     const space = ' '.repeat(4)
     return "CaseExpr" +
-        '\n' + space.repeat(indent) + endJoiner +
-        printPattern(token.pattern, indent+1)
+        '\n' + space.repeat(indent) + middleJoiner + "pattern\n" +
+        '\n' + space.repeat(indent + 1) + (token.body ? middleJoiner : endJoiner) +
+        printPattern(token.pattern, indent + 2) +
+        (token.body
+            ? '\n' + space.repeat(indent) + endJoiner + "body\n" +
+            '\n' + space.repeat(indent + 1) + endJoiner +
+            (token.body.type == "Block"
+                ? printBlock(token.body, indent + 2)
+                : printExpression(token.body, indent + 2))
+            : '')
 }

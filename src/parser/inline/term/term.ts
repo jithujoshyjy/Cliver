@@ -10,7 +10,6 @@ import { generateIfInline, printIfInline } from "./if-inline.js"
 import { generateImplicitMultiplication, printImplicitMultiplication } from "./implicit-multiplication.js"
 import { generateInlineMacroApplication, printInlineMacroApplication } from "./inline-macro-application.js"
 import { generateInlineStringFragment, printInlineStringFragment } from "./inline-string-fragment.js"
-import { generateMatchInline, printMatchInline } from "./match-inline/match-inline.js"
 import { generateMetaDataInterpolation } from "./meta-data-interpolation.js"
 import { generateObjectCascadeNotation } from "./object-cascade-notation.js"
 import { generateObjectExtendNotation } from "./object-extend-notation.js"
@@ -22,6 +21,7 @@ import { generateTaggedSymbol, printTaggedSymbol } from "./tagged-symbol.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateSymbolFragment, printSymbolFragment } from "./symbol-fragment.js"
+import { generateMatchInline, printMatchInline } from "./match-inline.js"
 
 export function generateTerm(context: Node, tokens: TokenStream): Term | MismatchToken {
     const term: Term = {
