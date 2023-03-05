@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { operatorPrecedence, skip, skipables, type Node, createMismatchToken, pickPrinter, NodePrinter, PartialParse } from "../../../utility.js"
+import { operatorPrecedence, skip, skipables, type Node, createMismatchToken, pickPrinter, NodePrinter, PartialParse, isBlockedType } from "../../../utility.js"
 import { generateLiteral, printLiteral } from "../../literal/literal.js"
 import { generateTerm, printTerm } from "../../term/term.js"
 import { printGroupExpression } from "../group-expression.js"
@@ -8,7 +8,7 @@ import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-
 import { printPrefixOperation } from "./prefix-operation.js"
 import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
-export function generatePostfixOperation(context: Node, tokens: TokenStream): PostfixOperation | MismatchToken {
+export function generatePostfixOperation(context: string[], tokens: TokenStream): PostfixOperation | MismatchToken {
     const postfixOperation: PostfixOperation = {
         type: "PostfixOperation",
         operand: null!,
@@ -28,7 +28,9 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
 
     let operand: Literal | Term | MismatchToken = null!
     for (let operandGenerator of operandGenerators) {
-        operand = operandGenerator(postfixOperation, tokens)
+        if (isBlockedType(operandGenerator.name.replace("generate", '')))
+            continue
+        operand = operandGenerator(["PostfixOperation", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (operand.type != "MismatchToken")
@@ -61,10 +63,10 @@ export function generatePostfixOperation(context: Node, tokens: TokenStream): Po
 
     let _operator: NonVerbalOperator
         | VerbalOperator
-        | MismatchToken = generateNonVerbalOperator(postfixOperation, tokens)
+        | MismatchToken = generateNonVerbalOperator(["PostfixOperation", ...context], tokens)
 
     if (_operator.type == "MismatchToken")
-        _operator = generateVerbalOperator(postfixOperation, tokens)
+        _operator = generateVerbalOperator(["PostfixOperation", ...context], tokens)
         
     if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor

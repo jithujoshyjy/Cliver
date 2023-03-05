@@ -1,10 +1,10 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, NodePrinter, pickPrinter, type Node } from "../../utility.js"
+import { createMismatchToken, isBlockedType, NodePrinter, pickPrinter, type Node } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateNumericLiteral, printNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
 
-export function generateImplicitMultiplication(context: Node, tokens: TokenStream): ImplicitMultiplication | MismatchToken {
+export function generateImplicitMultiplication(context: string[], tokens: TokenStream): ImplicitMultiplication | MismatchToken {
     const implicitMultiplication: ImplicitMultiplication = {
         type: "ImplicitMultiplication",
         left: null!,
@@ -18,7 +18,7 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const number = generateNumericLiteral(implicitMultiplication, tokens)
+    const number = generateNumericLiteral(["ImplicitMultiplication", ...context], tokens)
     if (number.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return number
@@ -33,7 +33,10 @@ export function generateImplicitMultiplication(context: Node, tokens: TokenStrea
 
     let multiplier: Identifier | GroupExpression | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
-        multiplier = nodeGenerator(implicitMultiplication, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        
+        multiplier = nodeGenerator(["ImplicitMultiplication", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (multiplier.type != "MismatchToken")

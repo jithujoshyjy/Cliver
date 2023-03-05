@@ -3,7 +3,7 @@ import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type No
 import { generateExpression, printExpression } from "./expression/expression.js"
 import { generateKeyword } from "./keyword.js"
 
-export function generateInline(context: Node, tokens: TokenStream): Inline | MismatchToken {
+export function generateInline(context: string[], tokens: TokenStream): Inline | MismatchToken {
     const inline: Inline = {
         type: "Inline",
         value: null!,
@@ -19,7 +19,7 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
     if (skipables.includes(currentToken))
         currentToken = skip(tokens, skipables)
 
-    const expression = generateExpression(inline, tokens)
+    const expression = generateExpression(["Inline", ...context], tokens)
     if (expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
@@ -32,11 +32,11 @@ export function generateInline(context: Node, tokens: TokenStream): Inline | Mis
             currentToken = skip(tokens, _skipables)
 
         let isDelimited = currentToken.type == "Newline"
-            || isPunctuator(currentToken, ";")
+            || [')', ']', '}', ';', ','].some(x => isPunctuator(currentToken, x))
             || currentToken.type == "EOF"
 
         const resetCursorPoint = tokens.cursor
-        isDelimited ||= generateKeyword(inline, tokens).type == "Keyword"
+        isDelimited ||= generateKeyword(["Inline", ...context], tokens).type == "Keyword"
         tokens.cursor = resetCursorPoint
 
         if (!isDelimited)

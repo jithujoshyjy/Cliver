@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, skipables, type Node, DiagnosticDescriptionObj, DiagnosticMessage, PartialParse } from "../../../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables, type Node, DiagnosticDescriptionObj, DiagnosticMessage, PartialParse, isBlockedType } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
@@ -11,7 +11,7 @@ import { generatePairPattern } from "./pair-pattern.js"
 import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
-export function generateParenPattern(context: Node, tokens: TokenStream): ParenPattern | MismatchToken {
+export function generateParenPattern(context: string[], tokens: TokenStream): ParenPattern | MismatchToken {
     const parenPattern: ParenPattern = {
         type: "ParenPattern",
         positional: [],
@@ -83,7 +83,10 @@ export function generateParenPattern(context: Node, tokens: TokenStream): ParenP
 
         for (const nodeGenerator of nodeGenerators) {
 
-            value = nodeGenerator(parenPattern, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+
+            value = nodeGenerator(["ParenPattern", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (value.type != "MismatchToken")

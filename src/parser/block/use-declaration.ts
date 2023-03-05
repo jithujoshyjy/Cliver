@@ -3,7 +3,7 @@ import { generateKeyword } from "../inline/keyword.js"
 import { generateStringLiteral, printStringLiteral } from "../inline/literal/string-literal.js"
 import { createMismatchToken, isPunctuator, skip, _skipables, type Node, isKeyword } from "../utility.js"
 
-export function generateUseDeclaration(context: Node, tokens: TokenStream): UseDeclaration | MismatchToken {
+export function generateUseDeclaration(context: string[], tokens: TokenStream): UseDeclaration | MismatchToken {
     const useDeclar: UseDeclaration = {
         type: "UseDeclaration",
         rules: [],
@@ -16,7 +16,7 @@ export function generateUseDeclaration(context: Node, tokens: TokenStream): UseD
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const useKeyword = generateKeyword(useDeclar, tokens)
+    const useKeyword = generateKeyword(["UseDeclaration", ...context], tokens)
     if (useKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return useKeyword
@@ -37,7 +37,7 @@ export function generateUseDeclaration(context: Node, tokens: TokenStream): UseD
             ? skip(tokens, _skipables)
             : tokens.currentToken
 
-        let rule = generateStringLiteral(useDeclar, tokens)
+        let rule = generateStringLiteral(["UseDeclaration", ...context], tokens)
 
         if (rule.type == "MismatchToken" || rule.kind == "inline")
             return rule

@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { generateVariableDeclarator } from "../../block/variable-declaration/variable-declarator.js"
 import { createMismatchToken, type Node } from "../../utility.js"
 
-export function generateAssignExpr(context: Node, tokens: TokenStream): AssignExpr | MismatchToken {
+export function generateAssignExpr(context: string[], tokens: TokenStream): AssignExpr | MismatchToken {
     const assignExpr: AssignExpr = {
         type: "AssignExpr",
         left: null!,
@@ -16,8 +16,9 @@ export function generateAssignExpr(context: Node, tokens: TokenStream): AssignEx
 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
-    return createMismatchToken(currentToken)/* 
-    const declarator = generateVariableDeclarator(assignExpr, tokens)
+    
+    const declarator = generateVariableDeclarator(["AssignExpr", ...context], tokens)
+    
     if (declarator.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return declarator
@@ -33,5 +34,25 @@ export function generateAssignExpr(context: Node, tokens: TokenStream): AssignEx
     assignExpr.right = declarator.right
     assignExpr.signature = declarator.signature
 
-    return assignExpr */
+    return assignExpr
 }
+
+export function printAssignExpr(token: Expression, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+
+    const space = ' '.repeat(4)
+    return "AssignExpr\n"
+}
+
+/* 
+AssignExpr ::= (Pattern = Expression)
+Expression ::= (AssignExpr | Operation | Term)
+Pattern ::= ...
+*/
+
+/*
+AssignExpr ::= Pattern _AssignExpr
+_AssignExpr ::= '=' Expression _AssignExpr | e
+*/

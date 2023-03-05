@@ -1,9 +1,9 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, _skipables, type Node } from "../../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, isPunctuator, skip, _skipables, type Node } from "../../../utility.js"
 import { generateIdentifier } from "../../literal/identifier.js"
 import { generatePropertyAccess } from "../../term/property-access.js"
 
-export function generateInfixCallOperator(context: Node, tokens: TokenStream): InfixCallOperator | MismatchToken {
+export function generateInfixCallOperator(context: string[], tokens: TokenStream): InfixCallOperator | MismatchToken {
     const infixCallOperator: InfixCallOperator = {
         type: "InfixCallOperator",
         precedence: 9,
@@ -32,7 +32,10 @@ export function generateInfixCallOperator(context: Node, tokens: TokenStream): I
         | MismatchToken = null!
 
     for (let nodeGenerator of nodeGenerators) {
-        caller = nodeGenerator(infixCallOperator, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+
+        caller = nodeGenerator(["InfixCallOperator", ...context], tokens)
         currentToken = tokens.currentToken
         if (caller.type != "MismatchToken")
             break
@@ -63,6 +66,6 @@ export function printInfixCallOperator(token: InfixCallOperator, indent = 0) {
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    
+
     return "InfixCallOperator\n"
 }

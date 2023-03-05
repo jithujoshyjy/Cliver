@@ -1,9 +1,9 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, PartialParse, DiagnosticMessage, createDiagnosticMessage, DiagnosticDescription, DiagnosticDescriptionObj } from "../../utility.js"
+import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, PartialParse, DiagnosticMessage, createDiagnosticMessage, DiagnosticDescription, DiagnosticDescriptionObj, isBlockedType } from "../../utility.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generatePair, printPair } from "../term/pair.js"
 
-export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleLiteral | GroupExpression | MismatchToken {
+export function generateTupleLiteral(context: string[], tokens: TokenStream): TupleLiteral | GroupExpression | MismatchToken {
     const tupleLiteral: TupleLiteral = {
         type: "TupleLiteral",
         positional: [],
@@ -60,7 +60,10 @@ export function generateTupleLiteral(context: Node, tokens: TokenStream): TupleL
         let value: Pair | Expression | MismatchToken = null!
         for (const nodeGenerator of nodeGenerators) {
 
-            value = nodeGenerator(tupleLiteral, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+
+            value = nodeGenerator(["TupleLiteral", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (value.type != "MismatchToken")
@@ -202,17 +205,17 @@ export function printTupleLiteral(token: TupleLiteral, indent = 0) {
     const trailJoiner = "│\t"
     const space = ' '.repeat(4)
     return "TupleLiteral\n" + space.repeat(indent) +
-    
+
         (!!token.positional.length && !!token.keyword.length ? middleJoiner : endJoiner) +
 
         (token.positional.length ? "positional\n" +
-        token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
-            (i == arr.length - 1 ? endJoiner : middleJoiner) +
-            printExpression(c, indent + 2) + '\n', '') : "") +
-        
+            token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) +
+                printExpression(c, indent + 2) + '\n', '') : "") +
+
         (token.keyword.length ? (token.positional.length ? space.repeat(indent) + endJoiner : "") + "keyword\n" +
-        token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
-            (i == arr.length - 1 ? endJoiner : middleJoiner) +
-            (c.type == "Expression" ? printExpression(c, indent + 2) : printPair(c, indent + 2)) + '\n', '') : "")
+            token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+                (i == arr.length - 1 ? endJoiner : middleJoiner) +
+                (c.type == "Expression" ? printExpression(c, indent + 2) : printPair(c, indent + 2)) + '\n', '') : "")
 
 }

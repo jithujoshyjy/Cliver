@@ -4,7 +4,7 @@ import { generateTypeExpression } from "../../inline/type/type-expression.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, isKeyword } from "../../utility.js"
 import { generateVariableDeclarator } from "./variable-declarator.js"
 
-export function generateVariableDeclaration(context: Node, tokens: TokenStream): VariableDeclaration | MismatchToken {
+export function generateVariableDeclaration(context: string[], tokens: TokenStream): VariableDeclaration | MismatchToken {
     const variableDeclaration: VariableDeclaration = {
         type: "VariableDeclaration",
         declarations: [],
@@ -19,7 +19,7 @@ export function generateVariableDeclaration(context: Node, tokens: TokenStream):
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const varOrValKeyword = generateIdentifier(variableDeclaration, tokens)
+    const varOrValKeyword = generateIdentifier(["VariableDeclaration", ...context], tokens)
     if (varOrValKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return varOrValKeyword
@@ -37,30 +37,44 @@ export function generateVariableDeclaration(context: Node, tokens: TokenStream):
 
     const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
-        const signature = generateTypeExpression(variableDeclaration, tokens)
+        const signature = generateTypeExpression(["VariableDeclaration", ...context], tokens)
         return signature
     }
 
     if (isOperator(currentToken, "::")) {
         const signature = captureSignature()
-        if (signature.type == "MismatchToken")
+        if (signature.type == "MismatchToken") {
+            tokens.cursor = initialCursor
             return signature
+        }
         variableDeclaration.signature = signature
-        currentToken = skip(tokens, skipables)
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
     }
 
     const captureDeclarator = () => {
-        const declarator = generateVariableDeclarator(variableDeclaration, tokens)
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+        
+        const declarator = generateVariableDeclarator(["VariableDeclaration", ...context], tokens)
+    
+        currentToken = tokens.currentToken
         return declarator
     }
 
     const captureComma = () => {
-        currentToken = skip(tokens, skipables)
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
+
         if (!isPunctuator(currentToken, ",")) {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }
 
+        currentToken = skip(tokens, skipables)
         return currentToken
     }
 
@@ -68,21 +82,21 @@ export function generateVariableDeclaration(context: Node, tokens: TokenStream):
         const declarators: VariableDeclarator[] = []
         while (!tokens.isFinished) {
             const declarator = captureDeclarator()
-    
+
             if (declarator.type == "MismatchToken") {
                 tokens.cursor = initialCursor
                 return declarator
             }
-    
-            declarators.push(declarator)
 
+            declarators.push(declarator)
             const comma = captureComma()
-    
-            if (comma.type == "MismatchToken") {
+
+            if (comma.type == "MismatchToken")
                 break
-            }
+
             currentToken = skip(tokens, skipables)
         }
+
         return declarators
     }
 
@@ -103,5 +117,5 @@ export function printVariableDeclaration(token: VariableDeclaration, indent = 0)
     const trailJoiner = "│\t"
 
     const space = ' '.repeat(4)
-    return "VariableDeclaration\n"
+    return "VariableDeclaration" + '\n'
 }

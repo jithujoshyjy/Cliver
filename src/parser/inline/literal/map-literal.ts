@@ -3,7 +3,7 @@ import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type No
 import { generatePair, printPair } from "../term/pair.js"
 import { generateIdentifier, printIdentifier } from "./identifier.js"
 
-export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiteral | MismatchToken {
+export function generateMapLiteral(context: string[], tokens: TokenStream): MapLiteral | MismatchToken {
     const mapLiteral: MapLiteral = {
         type: "MapLiteral",
         pairs: [],
@@ -44,10 +44,10 @@ export function generateMapLiteral(context: Node, tokens: TokenStream): MapLiter
 
         let pair: Pair
             | Identifier
-            | MismatchToken = generatePair(mapLiteral, tokens)
+            | MismatchToken = generatePair(["MapLiteral", ...context], tokens)
 
         if(!isInitial && pair.type == "MismatchToken")
-            pair = generateIdentifier(mapLiteral, tokens)
+            pair = generateIdentifier(["MapLiteral", ...context], tokens)
 
         currentToken = tokens.currentToken
 

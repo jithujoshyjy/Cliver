@@ -4,7 +4,7 @@ import { generateExpression } from "../expression/expression.js"
 import { generateNonVerbalOperator } from "../expression/operation.ts/non-verbal-operator.js"
 import { generateTypeExpression } from "./type-expression.js"
 
-export function generateTypeAssertion(context: Node, tokens: TokenStream): TypeAssertion | MismatchToken {
+export function generateTypeAssertion(context: string[], tokens: TokenStream): TypeAssertion | MismatchToken {
     const typeAssertion: TypeAssertion = {
         type: "TypeAssertion",
         left: null!,
@@ -18,7 +18,7 @@ export function generateTypeAssertion(context: Node, tokens: TokenStream): TypeA
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const expression = generateExpression(typeAssertion, tokens)
+    const expression = generateExpression(["TypeAssertion", ...context], tokens)
     if (expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
@@ -30,7 +30,7 @@ export function generateTypeAssertion(context: Node, tokens: TokenStream): TypeA
         ? skip(tokens, skipables)
         : tokens.currentToken
 
-    const doubleColon = generateNonVerbalOperator(typeAssertion, tokens)
+    const doubleColon = generateNonVerbalOperator(["TypeAssertion", ...context], tokens)
 
     if (doubleColon.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -46,7 +46,7 @@ export function generateTypeAssertion(context: Node, tokens: TokenStream): TypeA
         ? skip(tokens, skipables)
         : tokens.currentToken
     
-    const typeExpr = generateTypeExpression(typeAssertion, tokens)
+    const typeExpr = generateTypeExpression(["TypeAssertion", ...context], tokens)
 
     if (typeExpr.type == "MismatchToken") {
         tokens.cursor = initialCursor

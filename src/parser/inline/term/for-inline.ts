@@ -3,7 +3,7 @@ import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node 
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generateKeyword } from "../keyword.js"
 
-export function generateForInline(context: Node, tokens: TokenStream): ForInline | MismatchToken {
+export function generateForInline(context: string[], tokens: TokenStream): ForInline | MismatchToken {
     const forInline: ForInline = {
         type: "ForInline",
         body: null!,
@@ -17,7 +17,7 @@ export function generateForInline(context: Node, tokens: TokenStream): ForInline
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const forKeyword = generateKeyword(forInline, tokens)
+    const forKeyword = generateKeyword(["FunctionCall", ...context], tokens)
 
     if (forKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -37,7 +37,7 @@ export function generateForInline(context: Node, tokens: TokenStream): ForInline
         ? skip(tokens, skipables)
         : tokens.currentToken
 
-    const condition = generateExpression(forInline, tokens)
+    const condition = generateExpression(["FunctionCall", ...context], tokens)
     if (condition.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return condition
@@ -54,7 +54,7 @@ export function generateForInline(context: Node, tokens: TokenStream): ForInline
     }
 
     currentToken = skip(tokens, skipables) // skip :
-    const body = generateExpression(forInline, tokens)
+    const body = generateExpression(["FunctionCall", ...context], tokens)
 
     if (body.type == "MismatchToken") {
         tokens.cursor = initialCursor

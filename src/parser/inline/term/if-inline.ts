@@ -1,10 +1,10 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isKeyword, isPunctuator, skip, _skipables, type Node, skipables, isOperator, pickPrinter, NodePrinter } from "../../utility.js"
+import { createMismatchToken, isKeyword, isPunctuator, skip, _skipables, type Node, skipables, isOperator, pickPrinter, NodePrinter, isBlockedType } from "../../utility.js"
 import { generateAsExpression, printAsExpression } from "../expression/as-expression.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generateKeyword } from "../keyword.js"
 
-export function generateIfInline(context: Node, tokens: TokenStream): IfInline | MismatchToken {
+export function generateIfInline(context: string[], tokens: TokenStream): IfInline | MismatchToken {
     const ifInline: IfInline = {
         type: "IfInline",
         body: null!,
@@ -19,7 +19,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const ifKeyword = generateKeyword(ifInline, tokens)
+    const ifKeyword = generateKeyword(["IfInline", ...context], tokens)
 
     if (ifKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -46,7 +46,10 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
         | MismatchToken = null!
 
     for (const conditionGenerator of conditionGenerators) {
-        condition = conditionGenerator(ifInline, tokens)
+        if (isBlockedType(conditionGenerator.name.replace("generate", '')))
+            continue
+        
+        condition = conditionGenerator(["IfInline", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (condition.type != "MismatchToken")
@@ -74,7 +77,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
     }
 
     currentToken = skip(tokens, skipables) // skip :
-    const body = generateExpression(ifInline, tokens)
+    const body = generateExpression(["IfInline", ...context], tokens)
 
     if (body.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -87,7 +90,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
         ? skip(tokens, skipables)
         : tokens.currentToken
 
-    const elseKeyword = generateKeyword(ifInline, tokens)
+    const elseKeyword = generateKeyword(["IfInline", ...context], tokens)
 
     if (elseKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -109,7 +112,7 @@ export function generateIfInline(context: Node, tokens: TokenStream): IfInline |
     }
 
     currentToken = skip(tokens, skipables) // skip :
-    const fallback = generateExpression(ifInline, tokens)
+    const fallback = generateExpression(["IfInline", ...context], tokens)
 
     if (fallback.type == "MismatchToken") {
         tokens.cursor = initialCursor

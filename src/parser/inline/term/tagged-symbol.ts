@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, skip, _skipables, type Node, NodePrinter, pickPrinter, PartialParse, isOperator, isPunctuator, skipables, lookAheadForFunctionCall, lookAheadForPropertyAccess, reparseIfNeeded, lookAheadForSymbolLiteral, lookAheadForStringLiteral } from "../../utility.js"
+import { createMismatchToken, skip, _skipables, type Node, NodePrinter, pickPrinter, PartialParse, isOperator, isPunctuator, skipables, lookAheadForFunctionCall, lookAheadForPropertyAccess, lookAheadForSymbolLiteral, lookAheadForStringLiteral, isBlockedType } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateSymbolLiteral, printSymbolLiteral } from "../literal/symbol-literal.js"
@@ -7,7 +7,7 @@ import { generateFunctionCall, printFunctionCall } from "./function-call.js"
 import { generatePropertyAccess, printPropertyAccess } from "./property-access.js"
 import { generateTaggedString, printTaggedString } from "./tagged-string/tagged-string.js"
 
-export function generateTaggedSymbol(context: Node, tokens: TokenStream): TaggedSymbol | MismatchToken {
+export function generateTaggedSymbol(context: string[], tokens: TokenStream): TaggedSymbol | MismatchToken {
     const taggedSymbol: TaggedSymbol = {
         type: "TaggedSymbol",
         fragments: [],
@@ -29,7 +29,7 @@ export function generateTaggedSymbol(context: Node, tokens: TokenStream): Tagged
 
     const nodeGenerators = [
         /* generateFunctionCall, generatePropertyAccess, */ generateIdentifier, generateGroupExpression
-    ] as Array<(context: Node, tokens: TokenStream) => typeof taggedSymbol.tag | MismatchToken>
+    ] as Array<(context: string[], tokens: TokenStream) => typeof taggedSymbol.tag | MismatchToken>
 
     let tag: Identifier
         | PropertyAccess
@@ -39,57 +39,33 @@ export function generateTaggedSymbol(context: Node, tokens: TokenStream): Tagged
         | TaggedString
         | MismatchToken = null!
 
-    if (!context.meta?.resumeFrom) {
-        for (let nodeGenerator of nodeGenerators) {
 
-            tag = nodeGenerator(taggedSymbol, tokens)
-            currentToken = tokens.currentToken
+    for (let nodeGenerator of nodeGenerators) {
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
 
-            if (tag.type != "MismatchToken")
-                break
+        tag = nodeGenerator(["TaggedSymbol", ...context], tokens)
+        currentToken = tokens.currentToken
 
-            if (tag.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return tag
-            }
+        if (tag.type != "MismatchToken")
+            break
 
-            if (tag.type == "MismatchToken" && partialParsables.includes(tag.partialParse?.result?.type)) {
-
-                const tagGenerators = [
-                    generateTaggedSymbol, generateTaggedString,
-                    generateFunctionCall, generatePropertyAccess
-                ]
-                
-                const [child, parent] = reparseIfNeeded(taggedSymbol, tokens, tag.partialParse!, tagGenerators)
-                currentToken = tokens.currentToken
-
-                if (parent.type == "FunctionCall")
-                    parent.caller = child as any
-                else if (parent.type == "PropertyAccess")
-                    parent.accessor = child as any
-                else if (parent.type == "TaggedSymbol")
-                    parent.tag = child as any
-                else if (parent.type == "TaggedString")
-                    parent.tag = child as any
-                else {
-                    tokens.cursor = initialCursor
-                    return tag
-                }
-
-                tag = parent
-            }
-        }
-
-        if (tag.type == "MismatchToken") {
+        if (tag.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
             return tag
         }
-
-        taggedSymbol.start = tag.start
-        taggedSymbol.line = tag.line
-        taggedSymbol.column = tag.column
-        taggedSymbol.tag = tag
     }
+
+    if (tag.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return tag
+    }
+
+    taggedSymbol.start = tag.start
+    taggedSymbol.line = tag.line
+    taggedSymbol.column = tag.column
+    taggedSymbol.tag = tag
+
 
     while (!tokens.isFinished) {
 
@@ -97,7 +73,7 @@ export function generateTaggedSymbol(context: Node, tokens: TokenStream): Tagged
             ? skip(tokens, _skipables)
             : tokens.currentToken
 
-        const fragment = generateSymbolLiteral(taggedSymbol, tokens)
+        const fragment = generateSymbolLiteral(["TaggedSymbol", ...context], tokens)
 
         if (fragment.type == "MismatchToken" && taggedSymbol.fragments.length == 0) {
             tokens.cursor = initialCursor

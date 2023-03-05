@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, _skipables, type Node } from "../../utility.js"
 import { generateTypeExpression } from "./type-expression.js"
 
-export function generateNegateType(context: Node, tokens: TokenStream): NegateType | MismatchToken {
+export function generateNegateType(context: string[], tokens: TokenStream): NegateType | MismatchToken {
     const negateType: NegateType = {
         type: "NegateType",
         operand: null!,
@@ -21,7 +21,7 @@ export function generateNegateType(context: Node, tokens: TokenStream): NegateTy
     }
 
     currentToken = skip(tokens, _skipables)
-    const typeMember = generateTypeExpression(negateType, tokens) // buggy :(
+    const typeMember = generateTypeExpression(["NegateType", ...context], tokens) // buggy :(
 
     if(typeMember.type == "MismatchToken") {
         tokens.cursor = initialCursor

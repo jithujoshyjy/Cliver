@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isPunctuator, type Node } from "../../utility.js"
 
-export function generateSymbolLiteral(context: Node, tokens: TokenStream): SymbolLiteral | MismatchToken {
+export function generateSymbolLiteral(context: string[], tokens: TokenStream): SymbolLiteral | MismatchToken {
     const symbolLiteral: SymbolLiteral = {
         type: "SymbolLiteral",
         text: "",

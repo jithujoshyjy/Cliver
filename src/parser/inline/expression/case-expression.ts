@@ -5,7 +5,7 @@ import { generateKeyword } from "../keyword.js"
 import { printExpression } from "./expression.js"
 import { generatePattern, printPattern } from "./pattern/pattern.js"
 
-export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr | MismatchToken {
+export function generateCaseExpr(context: string[], tokens: TokenStream): CaseExpr | MismatchToken {
     const caseExpr: CaseExpr = {
         type: "CaseExpr",
         pattern: null!,
@@ -18,7 +18,7 @@ export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr |
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const maybeKeyword = generateKeyword(caseExpr, tokens)
+    const maybeKeyword = generateKeyword(["CaseExpr", ...context], tokens)
     if (!isKeyword(maybeKeyword, "case")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
@@ -32,7 +32,7 @@ export function generateCaseExpr(context: Node, tokens: TokenStream): CaseExpr |
         ? skip(tokens, _skipables)
         : tokens.currentToken
 
-    const pattern = generatePattern(caseExpr, tokens)
+    const pattern = generatePattern(["CaseExpr", ...context], tokens)
     if (pattern.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return pattern

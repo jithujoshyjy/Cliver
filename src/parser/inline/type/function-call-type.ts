@@ -3,7 +3,7 @@ import { createMismatchToken, skip, _skipables, type Node } from "../../utility.
 import { generateTupleType } from "./tuple-type.js"
 import { generateTypeName } from "./type-name.js"
 
-export function generateFunctionCallType(context: Node, tokens: TokenStream): FunctionCallType | MismatchToken {
+export function generateFunctionCallType(context: string[], tokens: TokenStream): FunctionCallType | MismatchToken {
     const functionCallType: FunctionCallType = {
         type: "FunctionCallType",
         args: null!,

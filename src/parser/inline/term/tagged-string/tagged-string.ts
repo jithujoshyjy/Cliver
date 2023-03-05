@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { NodePrinter, pickPrinter, type Node, PartialParse, _skipables, createMismatchToken, isOperator, isPunctuator, skip, skipables, lookAheadForFunctionCall, lookAheadForPropertyAccess, reparseIfNeeded, lookAheadForStringLiteral, lookAheadForSymbolLiteral } from "../../../utility.js"
+import { NodePrinter, pickPrinter, type Node, PartialParse, _skipables, createMismatchToken, isOperator, isPunctuator, skip, skipables, lookAheadForFunctionCall, lookAheadForPropertyAccess, lookAheadForStringLiteral, lookAheadForSymbolLiteral, isBlockedType } from "../../../utility.js"
 import { printExpression } from "../../expression/expression.js"
 import { generateGroupExpression, printGroupExpression } from "../../expression/group-expression.js"
 import { generateIdentifier, printIdentifier } from "../../literal/identifier.js"
@@ -11,7 +11,7 @@ import { generateTaggedSymbol, printTaggedSymbol } from "../tagged-symbol.js"
 import { generateInlineFStringFragment, printInlineFStringFragment } from "./inline-f-string.js"
 import { generateMultilineFString, printMultilineFString } from "./multiline-f-string.js"
 
-export function generateTaggedString(context: Node, tokens: TokenStream): TaggedString | MismatchToken {
+export function generateTaggedString(context: string[], tokens: TokenStream): TaggedString | MismatchToken {
     const taggedString: TaggedString = {
         type: "TaggedString",
         tag: null!,
@@ -33,7 +33,7 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
 
     const nodeGenerators = [
         /* generateFunctionCall, generatePropertyAccess, */ generateIdentifier, generateGroupExpression
-    ] as Array<(context: Node, tokens: TokenStream) => typeof taggedString.tag | MismatchToken>
+    ] as Array<(context: string[], tokens: TokenStream) => typeof taggedString.tag | MismatchToken>
 
     let tag: Identifier
         | PropertyAccess
@@ -43,55 +43,33 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
         | TaggedSymbol
         | MismatchToken = null!
 
-    if (!context.meta?.resumeFrom) {
-        for (let nodeGenerator of nodeGenerators) {
+    for (let nodeGenerator of nodeGenerators) {
 
-            tag = nodeGenerator(taggedString, tokens)
-            currentToken = tokens.currentToken
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
 
-            if (tag.type != "MismatchToken")
-                break
+        tag = nodeGenerator(["TaggedString", ...context], tokens)
+        currentToken = tokens.currentToken
 
-            if (tag.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return tag
-            }
+        if (tag.type != "MismatchToken")
+            break
 
-            if (tag.type == "MismatchToken" && partialParsables.includes(tag.partialParse?.result?.type)) {
-
-                const tagGenerators = [
-                    generateTaggedSymbol, generateTaggedString,
-                    generateFunctionCall, generatePropertyAccess
-                ]
-                const [child, parent] = reparseIfNeeded(taggedString, tokens, tag.partialParse!, tagGenerators)
-
-                if (parent.type == "FunctionCall")
-                    parent.caller = child as any
-                else if (parent.type == "PropertyAccess")
-                    parent.accessor = child as any
-                else if (parent.type == "TaggedSymbol")
-                    parent.tag = child as any
-                else if (parent.type == "TaggedString")
-                    parent.tag = child as any
-                else {
-                    tokens.cursor = initialCursor
-                    return createMismatchToken(currentToken)
-                }
-
-                tag = parent
-            }
-        }
-
-        if (tag.type == "MismatchToken") {
+        if (tag.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
             return tag
         }
-
-        taggedString.start = tag.start
-        taggedString.line = tag.line
-        taggedString.column = tag.column
-        taggedString.tag = tag
     }
+
+    if (tag.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return tag
+    }
+
+    taggedString.start = tag.start
+    taggedString.line = tag.line
+    taggedString.column = tag.column
+    taggedString.tag = tag
+
 
     currentToken = _skipables.includes(tokens.currentToken)
         ? skip(tokens, _skipables)
@@ -99,10 +77,10 @@ export function generateTaggedString(context: Node, tokens: TokenStream): Tagged
 
     let taggedStr: InlineFStringFragment
         | MultilineFString
-        | MismatchToken = generateMultilineFString(taggedString, tokens)
+        | MismatchToken = generateMultilineFString(["TaggedString", ...context], tokens)
 
     if (taggedStr.type == "MismatchToken")
-        taggedStr = generateInlineFStringFragment(taggedString, tokens)
+        taggedStr = generateInlineFStringFragment(["TaggedString", ...context], tokens)
 
     if (taggedStr.type == "MismatchToken") {
         tokens.cursor = initialCursor

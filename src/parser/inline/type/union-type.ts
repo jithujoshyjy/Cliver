@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateDifferenceType } from "./difference-type.js"
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateFunctionType } from "./function-type.js"
@@ -9,7 +9,7 @@ import { generateStructureType } from "./structure-type.js"
 import { generateTypeExpression } from "./type-expression.js"
 import { generateTypeName } from "./type-name.js"
 
-export function generateUnionType(context: Node, tokens: TokenStream): UnionType | MismatchToken {
+export function generateUnionType(context: string[], tokens: TokenStream): UnionType | MismatchToken {
     const unionType: UnionType = {
         type: "UnionType",
         left: null!,
@@ -30,7 +30,10 @@ export function generateUnionType(context: Node, tokens: TokenStream): UnionType
     let typeMember: TypeName | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
 
     for (let typeGenerator of typeGenerators) {
-        typeMember = typeGenerator(unionType, tokens)
+        if (isBlockedType(typeGenerator.name.replace("generate", '')))
+            continue
+        
+        typeMember = typeGenerator(["UnionType", ...context], tokens)
         currentToken = tokens.currentToken
         if (typeMember.type != "MismatchToken")
             break
@@ -51,7 +54,7 @@ export function generateUnionType(context: Node, tokens: TokenStream): UnionType
 
     currentToken = skip(tokens, skipables) // skip |
 
-    const right = generateTypeExpression(unionType, tokens) // buggy :(
+    const right = generateTypeExpression(["UnionType", ...context], tokens) // buggy :(
 
     if (right.type == "MismatchToken")
         return right

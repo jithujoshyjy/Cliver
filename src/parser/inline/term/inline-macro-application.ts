@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, _skipables, type Node, skipables, NodePrinter, pickPrinter } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, _skipables, type Node, skipables, NodePrinter, pickPrinter, isBlockedType } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { printInfixOperation } from "../expression/operation.ts/infix-operation.js"
 import { generatePostfixOperation, printPostfixOperation } from "../expression/operation.ts/postfix-operation.js"
@@ -10,7 +10,7 @@ import { generateCallSiteArgsList, printCallSiteArgsList } from "./call-site-arg
 import { generatePropertyAccess, printPropertyAccess } from "./property-access.js"
 import { generateTerm, printTerm } from "./term.js"
 
-export function generateInlineMacroApplication(context: Node, tokens: TokenStream): InlineMacroApplication | MismatchToken {
+export function generateInlineMacroApplication(context: string[], tokens: TokenStream): InlineMacroApplication | MismatchToken {
     const inlineMacroApplication: InlineMacroApplication = {
         type: "InlineMacroApplication",
         arguments: null,
@@ -32,7 +32,7 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
         inlineMacroApplication.column = currentToken.column
 
         currentToken = skip(tokens, _skipables) // skip @
-        const identifier = generateIdentifier(inlineMacroApplication, tokens)
+        const identifier = generateIdentifier(["InlineMacroApplication", ...context], tokens)
 
         if (identifier.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -52,7 +52,9 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
         ]
 
         for (let nodeGenerator of nodeGenerators) {
-            caller = nodeGenerator(inlineMacroApplication, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+            caller = nodeGenerator(["InlineMacroApplication", ...context], tokens)
             currentToken = tokens.currentToken
             if (caller.type != "MismatchToken") {
                 break
@@ -84,7 +86,7 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
         }
         currentToken = skip(tokens, _skipables) // skip @
 
-        const args = generateCallSiteArgsList(inlineMacroApplication, tokens)
+        const args = generateCallSiteArgsList(["InlineMacroApplication", ...context], tokens)
 
         if (args.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -111,7 +113,9 @@ export function generateInlineMacroApplication(context: Node, tokens: TokenStrea
         | MismatchToken = null!
 
     for (let nodeGenerator of nodeGenerators) {
-        body = nodeGenerator(inlineMacroApplication, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        body = nodeGenerator(["InlineMacroApplication", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (body.type != "MismatchToken")

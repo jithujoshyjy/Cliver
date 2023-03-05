@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isPunctuator, type Node } from "../../utility.js"
 import { generateEscapeSequence } from "./escape-sequence.js"
 
-export function generateCharLiteral(context: Node, tokens: TokenStream): CharLiteral | MismatchToken {
+export function generateCharLiteral(context: string[], tokens: TokenStream): CharLiteral | MismatchToken {
     const charLiteral: CharLiteral = {
         type: "CharLiteral",
         charset: "ascii",
@@ -29,7 +29,7 @@ export function generateCharLiteral(context: Node, tokens: TokenStream): CharLit
 
     currentToken = tokens.currentToken
     if(isPunctuator(currentToken, '\\')) {
-        const escapeSequence = generateEscapeSequence(charLiteral, tokens)
+        const escapeSequence = generateEscapeSequence(["CharLiteral", ...context], tokens)
         
         if(escapeSequence.type == "MismatchToken") {
             tokens.cursor = initialCursor

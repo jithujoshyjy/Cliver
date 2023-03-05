@@ -257,31 +257,18 @@ export const lookAheadForPropertyAccess = (tokens: TokenStream) => {
     return propertyAccessAhead
 }
 
-type NodeGenerator = (context: Node, tokens: TokenStream) => Node
-export const reparseIfNeeded = <T extends NodeGenerator>(context: Node, tokens: TokenStream, partialParse: PartialParse, nodeGenerators: T[]): [Node, ReturnType<(typeof nodeGenerators)[0]> | MismatchToken] => {
-    const initialCursor = tokens.cursor
-    let currentToken = tokens.currentToken
-
-    const { result, cursor } = partialParse
-    context.meta.resumeFrom = cursor
-
-    let node: ReturnType<(typeof nodeGenerators)[0]> | MismatchToken = createMismatchToken(currentToken)
-
-    if (!partialParse.meta?.parentType)
-        return [result, node]
-
-    const nodeGenerator = nodeGenerators
-        .find(x => x.name.endsWith(partialParse.meta?.parentType))!
-
-    node = nodeGenerator(context, tokens) as ReturnType<(typeof nodeGenerators)[0]> | MismatchToken
-
-    node.line = result.line
-    node.column = result.column
-    node.start = result.start
-
-    currentToken = tokens.currentToken
-    if (!node.partialParse)
-        return [result, node]
-
-    return reparseIfNeeded(context, tokens, node.partialParse, nodeGenerators)
+export const blockedTypes: string[] = []
+export const isBlockedType = (type: string) => blockedTypes.includes(type)
+export const withBlocked = <T>(blocked: string[], callback: Function): T => {
+    blocked.forEach(x => blockedTypes.unshift(x))
+    const res: T = callback()
+    blocked.forEach(() => blockedTypes.shift())
+    return res
+}
+export const withUnblocked = <T>(blocked: string[], callback: Function): T => {
+    blocked.forEach(x =>
+        blockedTypes.splice(((y = blockedTypes.indexOf(x)) => y == -1 ? Infinity : y)(), 1))
+    const res: T = callback()
+    blocked.forEach(x => blockedTypes.unshift(x))
+    return res
 }

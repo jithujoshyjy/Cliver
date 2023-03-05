@@ -5,7 +5,7 @@ import { generateExpression } from "../../expression/expression.js"
 import { generateErrorPipeline } from "./error-pipeline.js"
 import { generateTransformPipeline } from "./transform-pipeline.js"
 
-export function generatePipelineNotation(context: Node, tokens: TokenStream): PipelineNotation | MismatchToken {
+export function generatePipelineNotation(context: string[], tokens: TokenStream): PipelineNotation | MismatchToken {
     const pipelineNotation: PipelineNotation = {
         type: "PipelineNotation",
         expression: null!,
@@ -20,9 +20,9 @@ export function generatePipelineNotation(context: Node, tokens: TokenStream): Pi
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    let expression: AsExpression | Expression | MismatchToken = generateAsExpression(pipelineNotation, tokens)
+    let expression: AsExpression | Expression | MismatchToken = generateAsExpression(["PipelineNotation", ...context], tokens)
     if (expression.type == "MismatchToken") {
-        expression = generateExpression(pipelineNotation, tokens)
+        expression = generateExpression(["PipelineNotation", ...context], tokens)
     }
 
     if (expression.type == "MismatchToken") {
@@ -55,10 +55,10 @@ export function generatePipelineNotation(context: Node, tokens: TokenStream): Pi
         currentToken = skip(tokens, skipables) // `` | .`` | ??
         let pipe: TransformPipeline
             | ErrorPipeline
-            | MismatchToken = generateTransformPipeline(pipelineNotation, tokens)
+            | MismatchToken = generateTransformPipeline(["PipelineNotation", ...context], tokens)
 
         if(pipe.type == "MismatchToken") {
-            pipe = generateErrorPipeline(pipelineNotation, tokens)
+            pipe = generateErrorPipeline(["PipelineNotation", ...context], tokens)
         }
 
         return pipe

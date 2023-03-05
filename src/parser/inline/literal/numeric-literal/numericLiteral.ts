@@ -2,7 +2,7 @@ import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../../utility.js"
 import { generateFloatLiteral } from "./float-literal.js"
 
-export function generateNumericLiteral(context: Node, tokens: TokenStream): NumericLiteral | MismatchToken {
+export function generateNumericLiteral(context: string[], tokens: TokenStream): NumericLiteral | MismatchToken {
     const numericLiteral: NumericLiteral = {
         type: "NumericLiteral",
         kind: "float",
@@ -18,7 +18,7 @@ export function generateNumericLiteral(context: Node, tokens: TokenStream): Nume
 
     let number: IntegerLiteral
         | FloatLiteral
-        | MismatchToken = generateFloatLiteral(numericLiteral, tokens)
+        | MismatchToken = generateFloatLiteral(["NumericLiteral", ...context], tokens)
 
     if (number.type == "MismatchToken") {
         numericLiteral.kind = "integer"

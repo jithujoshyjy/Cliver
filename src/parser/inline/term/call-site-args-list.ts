@@ -1,11 +1,11 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, skipables, type Node, NodePrinter, pickPrinter } from "../../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables, type Node, NodePrinter, pickPrinter, isBlockedType } from "../../utility.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateFunctionPrototype, printFunctionPrototype } from "./function-prototype.js"
 import { generatePair, printPair } from "./pair.js"
 
-export function generateCallSiteArgsList(context: Node, tokens: TokenStream): CallSiteArgsList | MismatchToken {
+export function generateCallSiteArgsList(context: string[], tokens: TokenStream): CallSiteArgsList | MismatchToken {
     const callSiteArgsList: CallSiteArgsList = {
         type: "CallSiteArgsList",
         positional: [],
@@ -52,7 +52,10 @@ export function generateCallSiteArgsList(context: Node, tokens: TokenStream): Ca
                 : captureArgGenerators
 
         for (const argGenerator of argGenerators) {
-            arg = argGenerator(callSiteArgsList, tokens)
+            if (isBlockedType(argGenerator.name.replace("generate", '')))
+                continue
+            
+            arg = argGenerator(["CallSiteArgsList", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (arg.type != "MismatchToken")

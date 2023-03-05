@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, skip, _skipables, type Node, PartialParse } from "../../utility.js"
 import { generateStringLiteral, printStringLiteral } from "../literal/string-literal.js"
 
-export function generateInlineStringFragment(context: Node, tokens: TokenStream): InlineStringFragment | MismatchToken {
+export function generateInlineStringFragment(context: string[], tokens: TokenStream): InlineStringFragment | MismatchToken {
     const inlineStringFragment: InlineStringFragment = {
         type: "InlineStringFragment",
         fragments: [],
@@ -16,7 +16,7 @@ export function generateInlineStringFragment(context: Node, tokens: TokenStream)
     const initialCursor = tokens.cursor
 
     while (!tokens.isFinished) {
-        const stringLiteral = generateStringLiteral(inlineStringFragment, tokens)
+        const stringLiteral = generateStringLiteral(["InlineStringFragment", ...context], tokens)
         const isNotStringFragment = stringLiteral.type == "MismatchToken"
             && inlineStringFragment.fragments.length == 0
 

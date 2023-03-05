@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, skipables, operatorPrecedence, type Node, createMismatchToken, PartialParse, NodePrinter, pickPrinter, isRightAssociative } from "../../../utility.js"
+import { skip, skipables, operatorPrecedence, type Node, createMismatchToken, PartialParse, NodePrinter, pickPrinter, isRightAssociative, isBlockedType } from "../../../utility.js"
 import { generateLiteral, printLiteral } from "../../literal/literal.js"
 import { generateTerm, printTerm } from "../../term/term.js"
 import { generateInfixCallOperator, printInfixCallOperator } from "./infix-call-operator.js"
@@ -8,7 +8,7 @@ import { generatePostfixOperation, printPostfixOperation } from "./postfix-opera
 import { generatePrefixOperation, printPrefixOperation } from "./prefix-operation.js"
 import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
-export function generateInfixOperation(context: Node, tokens: TokenStream): InfixOperation | MismatchToken {
+export function generateInfixOperation(context: string[], tokens: TokenStream): InfixOperation | MismatchToken {
     let infixOperation: InfixOperation = {
         type: "InfixOperation",
         left: null!,
@@ -23,7 +23,7 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    type OperandGenerator = Array<(context: Node, tokens: TokenStream) => typeof infixOperation.left | MismatchToken>
+    type OperandGenerator = Array<(context: string[], tokens: TokenStream) => typeof infixOperation.left | MismatchToken>
 
     let operandGenerators: OperandGenerator = [
         generatePrefixOperation, generatePostfixOperation, generateTerm, generateLiteral
@@ -34,7 +34,10 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
             | MismatchToken = null!
 
         for (let operandGenerator of operandGenerators) {
-            operand = operandGenerator(infixOperation, tokens)
+            if (isBlockedType(operandGenerator.name.replace("generate", '')))
+                continue
+
+            operand = operandGenerator(["InfixOperation", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (operand.type != "MismatchToken")
@@ -85,7 +88,10 @@ export function generateInfixOperation(context: Node, tokens: TokenStream): Infi
         | MismatchToken = null!;
 
     for (let operatorGenerator of operatorGenerators) {
-        _operator = operatorGenerator(infixOperation, tokens)
+        if (isBlockedType(operatorGenerator.name.replace("generate", '')))
+            continue
+        
+        _operator = operatorGenerator(["InfixOperation", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (_operator.type != "MismatchToken")

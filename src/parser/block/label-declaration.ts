@@ -5,7 +5,7 @@ import { generateDoCatchBlock } from "./do-catch-block.js"
 import { generateForBlock } from "./for-block.js"
 import { generateIfBlock } from "./if-block.js"
 
-export function generateLabelDeclaration(context: Node, tokens: TokenStream): LabelDeclaration | MismatchToken {
+export function generateLabelDeclaration(context: string[], tokens: TokenStream): LabelDeclaration | MismatchToken {
     const labelDeclar: LabelDeclaration = {
         type: "LabelDeclaration",
         body: null!,

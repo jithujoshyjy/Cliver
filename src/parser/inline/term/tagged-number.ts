@@ -1,12 +1,12 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, type Node, _skipables, NodePrinter, pickPrinter } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, type Node, _skipables, NodePrinter, pickPrinter, isBlockedType } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateNumericLiteral, printNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
 import { generateFunctionCall } from "./function-call.js"
 import { generatePropertyAccess } from "./property-access.js"
 
-export function generateTaggedNumber(context: Node, tokens: TokenStream): TaggedNumber | MismatchToken {
+export function generateTaggedNumber(context: string[], tokens: TokenStream): TaggedNumber | MismatchToken {
     const taggedNumber: TaggedNumber = {
         type: "TaggedNumber",
         tag: null!,
@@ -20,7 +20,7 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const number = generateNumericLiteral(taggedNumber, tokens)
+    const number = generateNumericLiteral(["TaggedNumber", ...context], tokens)
     if (number.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return number
@@ -54,7 +54,10 @@ export function generateTaggedNumber(context: Node, tokens: TokenStream): Tagged
         | MismatchToken = null!
 
     for (let nodeGenerator of nodeGenerators) {
-        tag = nodeGenerator(taggedNumber, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        
+        tag = nodeGenerator(["TaggedNumber", ...context], tokens)
         currentToken = tokens.currentToken
         if (tag.type != "MismatchToken")
             break

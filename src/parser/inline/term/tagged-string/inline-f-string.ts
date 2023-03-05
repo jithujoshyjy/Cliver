@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, pickPrinter, NodePrinter } from "../../../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, pickPrinter, NodePrinter, isBlockedType } from "../../../utility.js"
 import { generateExpression, printExpression } from "../../expression/expression.js"
 import { generateEscapeSequence } from "../../literal/escape-sequence.js"
 import { generateIdentifier, printIdentifier } from "../../literal/identifier.js"
@@ -7,7 +7,7 @@ import { printStringLiteral } from "../../literal/string-literal.js"
 import { generatePair, printPair } from "../pair.js"
 import { printInStringExpr, printInStringId } from "./tagged-string.js"
 
-export function generateInlineFStringFragment(context: Node, tokens: TokenStream): InlineFStringFragment | MismatchToken {
+export function generateInlineFStringFragment(context: string[], tokens: TokenStream): InlineFStringFragment | MismatchToken {
 
     const inlineFStringFragment: InlineFStringFragment = {
         type: "InlineFStringFragment",
@@ -98,6 +98,9 @@ export function generateInlineFStringFragment(context: Node, tokens: TokenStream
             }
 
             for (let fragmentGenerator of fragmentGenerators) {
+                if (isBlockedType(fragmentGenerator.name.replace("generate", '')))
+                    continue
+                
                 fragment = fragmentGenerator()
                 currentToken = tokens.currentToken
 
@@ -167,7 +170,7 @@ export function generateInlineFStringFragment(context: Node, tokens: TokenStream
                 return createMismatchToken(currentToken)
             }
 
-            const escapeSequence = generateEscapeSequence(fstring, tokens)
+            const escapeSequence = generateEscapeSequence(["InlineFString", ...context], tokens)
 
             if (escapeSequence.type == "MismatchToken") {
                 tokens.cursor = initialCursor
@@ -220,7 +223,7 @@ export function generateInlineFStringFragment(context: Node, tokens: TokenStream
             instringId.column = currentToken.column
 
             tokens.advance()
-            const identifier = generateIdentifier(instringId, tokens)
+            const identifier = generateIdentifier(["InStringId", ...context], tokens)
 
             if (identifier.type == "MismatchToken") {
                 tokens.cursor = initialCursor
@@ -288,7 +291,7 @@ export function generateInlineFStringFragment(context: Node, tokens: TokenStream
                 let value: Pair | Expression | MismatchToken = null!
                 for (const nodeGenerator of nodeGenerators) {
 
-                    value = nodeGenerator(instringExpr, tokens)
+                    value = nodeGenerator(["InStringExpr", ...context], tokens)
                     currentToken = tokens.currentToken
 
                     if (value.type != "MismatchToken")
@@ -405,7 +408,7 @@ export function printInlineFStringFragment(token: InlineFStringFragment, indent 
     const middleJoiner = "├── "
     const endJoiner = "└── "
     const trailJoiner = "│\t"
-    
+
     const instringElementPrinters = [
         printStringLiteral, printInStringId
     ] as NodePrinter[]

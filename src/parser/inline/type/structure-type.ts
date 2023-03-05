@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateTypeAssertion } from "./type-assertion.js"
 
-export function generateStructureType(context: Node, tokens: TokenStream): StructureType | MismatchToken {
+export function generateStructureType(context: string[], tokens: TokenStream): StructureType | MismatchToken {
     const structureType: StructureType = {
         type: "StructureType",
         fields: [],

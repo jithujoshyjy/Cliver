@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, operatorPrecedence, skip, skipables, type Node, isOperator, PartialParse, isRightAssociative } from "../../../utility.js"
+import { createMismatchToken, operatorPrecedence, skip, skipables, type Node, isOperator, PartialParse, isRightAssociative, isBlockedType } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
 import { generateVerbalOperator } from "../operation.ts/verbal-operator.js"
@@ -10,7 +10,7 @@ import { generateParenPattern } from "./paren-pattern.js"
 import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
-export function generateInfixPattern(context: Node, tokens: TokenStream): InfixPattern | MismatchToken {
+export function generateInfixPattern(context: string[], tokens: TokenStream): InfixPattern | MismatchToken {
     let infixPattern: InfixPattern = {
         type: "InfixPattern",
         operator: null!,
@@ -25,7 +25,7 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    type OperandGenerator = Array<(context: Node, tokens: TokenStream) =>
+    type OperandGenerator = Array<(context: string[], tokens: TokenStream) =>
         typeof infixPattern.left | MismatchToken>
 
     let operandGenerators: OperandGenerator = [
@@ -39,7 +39,10 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
             | MismatchToken = null!
 
         for (let operandGenerator of operandGenerators) {
-            operand = operandGenerator(infixPattern, tokens)
+            if (isBlockedType(operandGenerator.name.replace("generate", '')))
+                continue
+
+            operand = operandGenerator(["InfixPattern", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (operand.type != "MismatchToken")
@@ -88,7 +91,10 @@ export function generateInfixPattern(context: Node, tokens: TokenStream): InfixP
         | MismatchToken = null!;
 
     for (let operatorGenerator of operatorGenerators) {
-        _operator = operatorGenerator(infixPattern, tokens)
+        if (isBlockedType(operatorGenerator.name.replace("generate", '')))
+            continue
+
+        _operator = operatorGenerator(["InfixPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (_operator.type != "MismatchToken")

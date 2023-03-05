@@ -1,13 +1,13 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateBlock } from "../../block/block.js"
-import { createMismatchToken, isKeyword, skip, type Node, _skipables, skipables, isPunctuator, isOperator } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, type Node, _skipables, skipables, isPunctuator, isOperator, isBlockedType } from "../../utility.js"
 import { printCaseExpr } from "../expression/case-expression.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
 import { generateInline } from "../inline.js"
 import { generateKeyword } from "../keyword.js"
 
-export function generateMatchInline(context: Node, tokens: TokenStream): MatchInline | MismatchToken {
+export function generateMatchInline(context: string[], tokens: TokenStream): MatchInline | MismatchToken {
     const matchInline: MatchInline = {
         type: "MatchInline",
         cases: [],
@@ -21,7 +21,7 @@ export function generateMatchInline(context: Node, tokens: TokenStream): MatchIn
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const matchKeyword = generateKeyword(matchInline, tokens)
+    const matchKeyword = generateKeyword(["MatchInline", ...context], tokens)
 
     if (matchKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -41,7 +41,7 @@ export function generateMatchInline(context: Node, tokens: TokenStream): MatchIn
         ? skip(tokens, skipables)
         : tokens.currentToken
 
-    const expression = generateExpression(matchInline, tokens)
+    const expression = generateExpression(["MatchInline", ...context], tokens)
     currentToken = tokens.currentToken
 
     if (expression.type == "MismatchToken") {
@@ -67,7 +67,7 @@ export function generateMatchInline(context: Node, tokens: TokenStream): MatchIn
             ? skip(tokens, skipables)
             : tokens.currentToken
 
-        const pattern = generatePattern(matchInline, tokens)
+        const pattern = generatePattern(["MatchInline", ...context], tokens)
         if (pattern.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return pattern
@@ -91,7 +91,9 @@ export function generateMatchInline(context: Node, tokens: TokenStream): MatchIn
             | MismatchToken = null!
 
         for (const nodeGenerator of nodeGenerators) {
-            node = nodeGenerator(caseExpr, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+            node = nodeGenerator(["MatchInline", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (node.type != "MismatchToken")
@@ -120,7 +122,7 @@ export function generateMatchInline(context: Node, tokens: TokenStream): MatchIn
             ? skip(tokens, skipables)
             : tokens.currentToken
 
-        const caseKeyword = generateKeyword(matchInline, tokens)
+        const caseKeyword = generateKeyword(["MatchInline", ...context], tokens)
         const isCaseKw = isKeyword(caseKeyword, "case")
 
         if (isInitial && !isCaseKw) {

@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateFunctionType } from "./function-type.js"
 import { generateIntersectionType } from "./intersection-type.js"
@@ -10,7 +10,7 @@ import { generateTypeName } from "./type-name.js"
 import { generateUnionType } from "./union-type.js"
 
 
-export function generateDifferenceType(context: Node, tokens: TokenStream): DifferenceType | MismatchToken {
+export function generateDifferenceType(context: string[], tokens: TokenStream): DifferenceType | MismatchToken {
     const differenceType: DifferenceType = {
         type: "DifferenceType",
         left: null!,
@@ -31,7 +31,9 @@ export function generateDifferenceType(context: Node, tokens: TokenStream): Diff
     let typeMember: TypeName | IntersectionType | NegateType | UnionType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
 
     for (let typeGenerator of typeGenerators) {
-        typeMember = typeGenerator(differenceType, tokens)
+        if (isBlockedType(typeGenerator.name.replace("generate", '')))
+            continue
+        typeMember = typeGenerator(["DifferenceType", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (typeMember.type != "MismatchToken")
@@ -59,7 +61,7 @@ export function generateDifferenceType(context: Node, tokens: TokenStream): Diff
 
     currentToken = skip(tokens, skipables) // skip -
 
-    const right = generateTypeExpression(differenceType, tokens)
+    const right = generateTypeExpression(["DifferenceType", ...context], tokens)
 
     if (right.type == "MismatchToken") {
         tokens.cursor = initialCursor

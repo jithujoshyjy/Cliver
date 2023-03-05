@@ -3,7 +3,7 @@ import { skip, skipables, type Node, PartialParse, createMismatchToken } from ".
 import { generateDoExpr } from "../literal/do-expr.js"
 import { generateFunctionCall } from "./function-call.js"
 
-export function generateExternalCallbackNotation(context: Node, tokens: TokenStream): ExternalCallbackNotation | MismatchToken {
+export function generateExternalCallbackNotation(context: string[], tokens: TokenStream): ExternalCallbackNotation | MismatchToken {
     const externalCallbackNotation: ExternalCallbackNotation = {
         type: "ExternalCallbackNotation",
         callback: null!,
@@ -17,7 +17,7 @@ export function generateExternalCallbackNotation(context: Node, tokens: TokenStr
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const functionCall = generateFunctionCall(externalCallbackNotation, tokens)
+    const functionCall = generateFunctionCall(["ExternalCallbackNotation", ...context], tokens)
     if(functionCall.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return functionCall
@@ -38,7 +38,7 @@ export function generateExternalCallbackNotation(context: Node, tokens: TokenStr
 
     externalCallbackNotation.caller = functionCall
 
-    const doExpr = generateDoExpr(externalCallbackNotation, tokens)
+    const doExpr = generateDoExpr(["ExternalCallbackNotation", ...context], tokens)
     if(doExpr.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return doExpr

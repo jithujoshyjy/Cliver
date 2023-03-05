@@ -1,12 +1,12 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, isKeyword } from "../../utility.js"
+import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, isKeyword, isBlockedType } from "../../utility.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
 import { generateKeyword } from "../keyword.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateTypeExpression } from "../type/type-expression.js"
 
-export function generateFunctionPrototype(context: Node, tokens: TokenStream): FunctionPrototype | MismatchToken {
+export function generateFunctionPrototype(context: string[], tokens: TokenStream): FunctionPrototype | MismatchToken {
     const functionPrototype: FunctionPrototype = {
         type: "FunctionPrototype",
         kind: ["return"],
@@ -23,7 +23,7 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const funKeyword = generateKeyword(functionPrototype, tokens)
+    const funKeyword = generateKeyword(["FunctionPrototype", ...context], tokens)
 
     if (funKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -41,7 +41,7 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
 
     const captureSignature = () => {
         currentToken = skip(tokens, skipables)
-        const signature = generateTypeExpression(functionPrototype, tokens)
+        const signature = generateTypeExpression(["FunctionPrototype", ...context], tokens)
         return signature
     }
 
@@ -51,7 +51,7 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
             tokens.cursor = initialCursor
             return signature
         }
-        
+
         functionPrototype.signature = signature
     }
 
@@ -81,7 +81,10 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
             | MismatchToken = null!
 
         for (const nodeGenerator of nodeGenerators) {
-            kind = nodeGenerator(functionPrototype, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+            
+            kind = nodeGenerator(["FunctionPrototype", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (kind.type != "MismatchToken")
@@ -163,7 +166,7 @@ export function generateFunctionPrototype(context: Node, tokens: TokenStream): F
                 : captureParamGenerators
 
         for (const paramGenerator of paramGenerators) {
-            param = paramGenerator(functionPrototype, tokens)
+            param = paramGenerator(["FunctionPrototype", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (param.type != "MismatchToken")

@@ -3,7 +3,7 @@ import { createMismatchToken, skip, _skipables, type Node, PartialParse } from "
 import { generateStringLiteral } from "../literal/string-literal.js"
 import { generateSymbolLiteral, printSymbolLiteral } from "../literal/symbol-literal.js"
 
-export function generateSymbolFragment(context: Node, tokens: TokenStream): SymbolFragment | MismatchToken {
+export function generateSymbolFragment(context: string[], tokens: TokenStream): SymbolFragment | MismatchToken {
     const symbolFragment: SymbolFragment = {
         type: "SymbolFragment",
         fragments: [],
@@ -17,7 +17,7 @@ export function generateSymbolFragment(context: Node, tokens: TokenStream): Symb
     const initialCursor = tokens.cursor
 
     while (!tokens.isFinished) {
-        const symbolLiteral = generateSymbolLiteral(symbolFragment, tokens)
+        const symbolLiteral = generateSymbolLiteral(["SymbolFragment", ...context], tokens)
         const isNotStringFragment = symbolLiteral.type == "MismatchToken"
             && symbolFragment.fragments.length == 0
 

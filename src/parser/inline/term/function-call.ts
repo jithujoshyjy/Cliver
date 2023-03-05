@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { skip, _skipables, type Node, createMismatchToken, isOperator, isPunctuator, skipables, PartialParse, lookAheadForPropertyAccess, lookAheadForSymbolLiteral, lookAheadForStringLiteral } from "../../utility.js"
+import { skip, _skipables, type Node, createMismatchToken, isOperator, isPunctuator, skipables, PartialParse, lookAheadForPropertyAccess, lookAheadForSymbolLiteral, lookAheadForStringLiteral, isBlockedType } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateKeyword } from "../keyword.js"
 import { generateDoExpr } from "../literal/do-expr.js"
@@ -12,7 +12,7 @@ import { generateTaggedNumber } from "./tagged-number.js"
 import { generateTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol } from "./tagged-symbol.js"
 
-export function generateFunctionCall(context: Node, tokens: TokenStream): FunctionCall | MismatchToken {
+export function generateFunctionCall(context: string[], tokens: TokenStream): FunctionCall | MismatchToken {
     let functionCall: FunctionCall = {
         type: "FunctionCall",
         arguments: null!,
@@ -30,7 +30,7 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
     const nodeGenerators = [
         generateDoExpr, generateTaggedNumber, generateImplicitMultiplication,
         generateIdentifier, generateKeyword, generateGroupExpression, generateOperatorRef
-    ] as Array<(context: Node, tokens: TokenStream) => typeof functionCall.caller | MismatchToken>
+    ] as Array<(context: string[], tokens: TokenStream) => typeof functionCall.caller | MismatchToken>
 
     let caller: Identifier
         | Keyword
@@ -51,46 +51,48 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
         nodeGenerators.unshift(generateTaggedString)
 
     const callbackKws = ["import", "export", "use", "from", "type"]
-    
-    if (!context.meta?.resumeFrom) {
-        for (const nodeGenerator of nodeGenerators) {
 
-            if (nodeGenerator.name.endsWith(context.type))
-                continue
 
-            caller = nodeGenerator(functionCall, tokens)
-            currentToken = tokens.currentToken
+    for (const nodeGenerator of nodeGenerators) {
 
-            if (caller.type != "MismatchToken") {
-                if (caller.type == "Keyword" && !callbackKws.includes(caller.name)) {
-                    tokens.cursor = initialCursor
-                    return createMismatchToken(currentToken)
-                }
-                break
-            }
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
 
-            if (caller.errorDescription.severity <= 3) {
+        if (nodeGenerator.name.endsWith("FunctionCall"))
+            continue
+
+        caller = nodeGenerator(["FunctionCall", ...context], tokens)
+        currentToken = tokens.currentToken
+
+        if (caller.type != "MismatchToken") {
+            if (caller.type == "Keyword" && !callbackKws.includes(caller.name)) {
                 tokens.cursor = initialCursor
-                return caller
+                return createMismatchToken(currentToken)
             }
+            break
         }
 
-        if (caller.type == "MismatchToken") {
+        if (caller.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
             return caller
         }
-
-        functionCall.caller = caller
     }
 
-    if(currentToken.type == "EOF") {
+    if (caller.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return caller
+    }
+
+    functionCall.caller = caller
+
+
+    if (currentToken.type == "EOF") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
-
-    tokens.cursor = context.meta?.resumeFrom ?? tokens.cursor
-    let isInitial = true
     
+    let isInitial = true
+
     while (!tokens.isFinished) {
         currentToken = _skipables.includes(tokens.currentToken)
             ? skip(tokens, _skipables)
@@ -104,7 +106,7 @@ export function generateFunctionCall(context: Node, tokens: TokenStream): Functi
             return createMismatchToken(currentToken)
         }
 
-        const args = generateCallSiteArgsList(functionCall, tokens)
+        const args = generateCallSiteArgsList(["FunctionCall", ...context], tokens)
         if (args.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return args

@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isPunctuator, skip, skipables, type Node } from "../../utility.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 
-export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayLiteral | MismatchToken {
+export function generateArrayLiteral(context: string[], tokens: TokenStream): ArrayLiteral | MismatchToken {
     const arrayLiteral: ArrayLiteral = {
         type: "ArrayLiteral",
         values: [[]],
@@ -51,7 +51,7 @@ export function generateArrayLiteral(context: Node, tokens: TokenStream): ArrayL
     let lastDelim: LexicalToken | MismatchToken | null = null
     const parseValue = () => {
 
-        let value: Expression | MismatchToken = generateExpression(arrayLiteral, tokens)
+        let value: Expression | MismatchToken = generateExpression(["ArrayLiteral", ...context], tokens)
         currentToken = tokens.currentToken
 
         lastDelim = null

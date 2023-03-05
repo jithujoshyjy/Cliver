@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, type Node, _skipables, operatorPrecedence, createMismatchToken, skipables } from "../../../utility.js"
+import { skip, type Node, _skipables, operatorPrecedence, createMismatchToken, skipables, isBlockedType } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
 import { generateBracePattern } from "./brace-pattern.js"
@@ -9,7 +9,7 @@ import { generateInterpPattern } from "./interp-pattern.js"
 import { generateParenPattern } from "./paren-pattern.js"
 import { generatePostfixPattern } from "./postfix-pattern.js"
 
-export function generatePrefixPattern(context: Node, tokens: TokenStream): PrefixPattern | MismatchToken {
+export function generatePrefixPattern(context: string[], tokens: TokenStream): PrefixPattern | MismatchToken {
     const prefixPattern: PrefixPattern = {
         type: "PrefixPattern",
         operand: null!,
@@ -23,7 +23,7 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    let _operator = generateNonVerbalOperator(prefixPattern, tokens)
+    let _operator = generateNonVerbalOperator(["PrefixPattern", ...context], tokens)
 
     if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -78,7 +78,10 @@ export function generatePrefixPattern(context: Node, tokens: TokenStream): Prefi
         | MismatchToken = null!
 
     for (let operandGenerator of operandGenerators) {
-        operand = operandGenerator(prefixPattern, tokens)
+        if (isBlockedType(operandGenerator.name.replace("generate", '')))
+            continue
+        
+        operand = operandGenerator(["PrefixPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (operand.type != "MismatchToken") {

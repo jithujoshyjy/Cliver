@@ -1,11 +1,11 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator, isBlockedType } from "../../utility.js"
 import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
 import { generateIdentifier } from "../literal/identifier.js"
 
-export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFunction | MismatchToken {
+export function generateUnitFunction(context: string[], tokens: TokenStream): UnitFunction | MismatchToken {
     const unitFunction: UnitFunction = {
         type: "UnitFunction",
         positional: [],
@@ -49,7 +49,9 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
                     : captureParamGenerators
 
             for (const paramGenerator of paramGenerators) {
-                param = paramGenerator(unitFunction, tokens)
+                if (isBlockedType(paramGenerator.name.replace("generate", '')))
+                    continue
+                param = paramGenerator(["UnitFunction", ...context], tokens)
                 currentToken = tokens.currentToken
 
                 if (param.type != "MismatchToken")
@@ -142,7 +144,7 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
     else {
 
         let identifier: Identifier
-            | MismatchToken = generateIdentifier(unitFunction, tokens)
+            | MismatchToken = generateIdentifier(["UnitFunction", ...context], tokens)
 
         if (identifier.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -182,7 +184,7 @@ export function generateUnitFunction(context: Node, tokens: TokenStream): UnitFu
 
     currentToken = skip(tokens, skipables) // skip ->
 
-    const body = generateExpression(unitFunction, tokens)
+    const body = generateExpression(["UnitFunction", ...context], tokens)
     if (body.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return body
@@ -229,5 +231,5 @@ export function printUnitFunction(token: UnitFunction, indent = 0) {
             : "") +
         '\n' + space.repeat(indent) +
         (token.positional.length == 0 && token.keyword.length && token.captured.length == 0
-            ? endJoiner : middleJoiner) + printExpression(token.body, indent+1)
+            ? endJoiner : middleJoiner) + printExpression(token.body, indent + 1)
 }

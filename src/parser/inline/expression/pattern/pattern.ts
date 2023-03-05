@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { type Node } from "../../../utility.js"
+import { isBlockedType, type Node } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
@@ -11,7 +11,7 @@ import { generateParenPattern } from "./paren-pattern.js"
 import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
-export function generatePattern(context: Node, tokens: TokenStream): Pattern | MismatchToken {
+export function generatePattern(context: string[], tokens: TokenStream): Pattern | MismatchToken {
     const pattern: Pattern = {
         type: "Pattern",
         body: null!,
@@ -42,7 +42,10 @@ export function generatePattern(context: Node, tokens: TokenStream): Pattern | M
         | MismatchToken = null!
 
     for (let nodeGenerator of nodeGenerators) {
-        patternNode = nodeGenerator(pattern, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        
+        patternNode = nodeGenerator(["Pattern", ...context], tokens)
         currentToken = tokens.currentToken
         if (patternNode.type != "MismatchToken") {
             break

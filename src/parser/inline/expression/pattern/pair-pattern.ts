@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, skip, skipables, type Node } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
@@ -11,7 +11,7 @@ import { generateParenPattern } from "./paren-pattern.js"
 import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
-export function generatePairPattern(context: Node, tokens: TokenStream): PairPattern | MismatchToken {
+export function generatePairPattern(context: string[], tokens: TokenStream): PairPattern | MismatchToken {
     const pairPattern: PairPattern = {
         type: "PairPattern",
         key: null!,
@@ -40,7 +40,10 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
         | MismatchToken = null!
 
     for (let keyGenerator of keyGenerators) {
-        key = keyGenerator(pairPattern, tokens)
+        if (isBlockedType(keyGenerator.name.replace("generate", '')))
+            continue
+
+        key = keyGenerator(["PairPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (key.type != "MismatchToken") {
@@ -87,7 +90,10 @@ export function generatePairPattern(context: Node, tokens: TokenStream): PairPat
         | MismatchToken = null!
 
     for (let valueGenerator of valueGenerators) {
-        value = valueGenerator(pairPattern, tokens)
+        if (isBlockedType(valueGenerator.name.replace("generate", '')))
+            continue
+        
+        value = valueGenerator(["PairPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (value.type != "MismatchToken")

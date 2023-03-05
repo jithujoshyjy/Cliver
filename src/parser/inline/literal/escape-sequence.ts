@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isPunctuator, type Node } from "../../utility.js"
 
-export function generateEscapeSequence(context: Node, tokens: TokenStream): EscapeSequence | MismatchToken {
+export function generateEscapeSequence(context: string[], tokens: TokenStream): EscapeSequence | MismatchToken {
     let escapeSequence: EscapeSequence = {
         type: "EscapeSequence",
         value: null!,

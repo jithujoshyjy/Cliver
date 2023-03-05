@@ -1,15 +1,15 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skipables, type Node, skip } from "../../../utility.js"
+import { createMismatchToken, isPunctuator, skipables, type Node, skip, isBlockedType } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
 import { generatePairPattern } from "./pair-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
-export function generateBracePattern(context: Node, tokens: TokenStream): BracePattern | MismatchToken {
+export function generateBracePattern(context: string[], tokens: TokenStream): BracePattern | MismatchToken {
     const bracePattern: BracePattern = {
         type: "BracePattern",
-        values: null!,
+        values: [],
         line: 0,
         column: 0,
         start: 0,
@@ -62,7 +62,10 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
             : tokens.currentToken
 
         for (let nodeGenerator of nodeGenerators) {
-            patternNode = nodeGenerator(bracePattern, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+            
+            patternNode = nodeGenerator(["BracePattern", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (patternNode.type != "MismatchToken")
@@ -76,7 +79,7 @@ export function generateBracePattern(context: Node, tokens: TokenStream): BraceP
 
         lastDelim = null
         currentToken = tokens.currentToken
-        
+
         return patternNode
     }
 

@@ -1,5 +1,5 @@
 import { TokenStream } from "../../lexer/token.js"
-import { skip, skipables, _skipables, type Node, NodePrinter, pickPrinter } from "../utility.js"
+import { skip, skipables, _skipables, type Node, NodePrinter, pickPrinter, isBlockedType } from "../utility.js"
 import { generateBlockMacroApplication, printBlockMacroApplication } from "./block-macro-application.js"
 import { generateDoCatchBlock, printDoCatchBlock } from "./do-catch-block.js"
 import { generateForBlock, printForBlock } from "./for-block.js"
@@ -10,7 +10,7 @@ import { generateNamedFunction, printNamedFunction } from "./named-function.js"
 import { generateUseDeclaration, printUseDeclaration } from "./use-declaration.js"
 import { generateVariableDeclaration, printVariableDeclaration } from "./variable-declaration/variable-declaration.js"
 
-export function generateBlock(context: Node, tokens: TokenStream): Block | MismatchToken {
+export function generateBlock(context: string[], tokens: TokenStream): Block | MismatchToken {
     const block: Block = {
         type: "Block",
         value: null!,
@@ -34,8 +34,10 @@ export function generateBlock(context: Node, tokens: TokenStream): Block | Misma
 
     let node: typeof block.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
         
-        node = nodeGenerator(block, tokens)
+        node = nodeGenerator(["Block", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (node.type != "MismatchToken")

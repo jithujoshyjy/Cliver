@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator, PartialParse, lookAheadForFunctionCall, lookAheadForStringLiteral, lookAheadForSymbolLiteral } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator, PartialParse, lookAheadForFunctionCall, lookAheadForStringLiteral, lookAheadForSymbolLiteral, isBlockedType } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateKeyword } from "../keyword.js"
 import { generateArrayLiteral } from "../literal/array-literal.js"
@@ -12,7 +12,7 @@ import { generateTaggedNumber } from "./tagged-number.js"
 import { generateTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol } from "./tagged-symbol.js"
 
-export function generatePropertyAccess(context: Node, tokens: TokenStream): PropertyAccess | MismatchToken {
+export function generatePropertyAccess(context: string[], tokens: TokenStream): PropertyAccess | MismatchToken {
     let propertyAccess: PropertyAccess = {
         type: "PropertyAccess",
         accessor: null!,
@@ -30,7 +30,7 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
 
     const accessorGenerators = [
         generateImplicitMultiplication, generateTaggedNumber, generateLiteral, generateGroupExpression
-    ] as Array<(context: Node, tokens: TokenStream) => typeof propertyAccess.accessor | MismatchToken>
+    ] as Array<(context: string[], tokens: TokenStream) => typeof propertyAccess.accessor | MismatchToken>
 
     if (lookAheadForSymbolLiteral(tokens))
         accessorGenerators.unshift(generateTaggedSymbol)
@@ -51,43 +51,44 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         | GroupExpression
         | MismatchToken = null!
 
-    if (!context.meta?.resumeFrom) {
-        for (let accessorGenerator of accessorGenerators) {
+    for (let accessorGenerator of accessorGenerators) {
 
-            if (accessorGenerator.name.endsWith(context.type))
-                continue
+        if (isBlockedType(accessorGenerator.name.replace("generate", '')))
+            continue
 
-            accessor = accessorGenerator(propertyAccess, tokens)
-            currentToken = tokens.currentToken
+        if (accessorGenerator.name.endsWith("PropertyAccess"))
+            continue
 
-            if (accessor.type != "MismatchToken")
-                break
+        accessor = accessorGenerator(["PropertyAccess", ...context], tokens)
+        currentToken = tokens.currentToken
 
-            if (accessor.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return accessor
-            }
-        }
+        if (accessor.type != "MismatchToken")
+            break
 
-        if (accessor.type == "MismatchToken") {
+        if (accessor.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
             return accessor
         }
-
-        propertyAccess.start = accessor.start
-        propertyAccess.line = accessor.line
-        propertyAccess.column = accessor.column
-        propertyAccess.accessor = accessor
     }
+
+    if (accessor.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return accessor
+    }
+
+    propertyAccess.start = accessor.start
+    propertyAccess.line = accessor.line
+    propertyAccess.column = accessor.column
+    propertyAccess.accessor = accessor
+
 
     if (currentToken.type == "EOF") {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    tokens.cursor = context.meta?.resumeFrom ?? tokens.cursor
     let isInitial = true
-    
+
     while (!tokens.isFinished) {
         currentToken = _skipables.includes(tokens.currentToken)
             ? skip(tokens, _skipables)
@@ -101,7 +102,7 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
         if (isPunctuator(currentToken, '[')) {
             propertyAccess.computed = true
 
-            const field = generateArrayLiteral(propertyAccess, tokens)
+            const field = generateArrayLiteral(["PropertyAccess", ...context], tokens)
             if (field.type == "MismatchToken") {
                 tokens.cursor = initialCursor
                 return field
@@ -148,7 +149,11 @@ export function generatePropertyAccess(context: Node, tokens: TokenStream): Prop
             | MismatchToken = null!
 
         for (let fieldGenerator of fieldGenerators) {
-            field = fieldGenerator(propertyAccess, tokens)
+
+            if (isBlockedType(fieldGenerator.name.replace("generate", '')))
+                continue
+
+            field = fieldGenerator(["PropertyAccess", ...context], tokens)
             currentToken = tokens.currentToken
 
             if (field.type != "MismatchToken")

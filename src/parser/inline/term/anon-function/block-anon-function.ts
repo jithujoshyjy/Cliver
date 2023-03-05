@@ -6,7 +6,7 @@ import { generatePattern } from "../../expression/pattern/pattern.js"
 import { generateTypeExpression } from "../../type/type-expression.js"
 import { generateIdentifier } from "../../literal/identifier.js"
 
-export function generateBlockAnonFunction(context: Node, tokens: TokenStream): BlockAnonFunction | MismatchToken {
+export function generateBlockAnonFunction(context: string[], tokens: TokenStream): BlockAnonFunction | MismatchToken {
     const blockAnonFunction: BlockAnonFunction = {
         type: "BlockAnonFunction",
         body: [],

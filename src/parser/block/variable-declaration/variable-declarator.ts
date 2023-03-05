@@ -2,9 +2,9 @@ import { TokenStream } from "../../../lexer/token.js"
 import { generateExpression } from "../../inline/expression/expression.js"
 import { generatePattern } from "../../inline/expression/pattern/pattern.js"
 import { generateTypeExpression } from "../../inline/type/type-expression.js"
-import { isOperator, skip, skipables, type Node } from "../../utility.js"
+import { isOperator, skip, skipables, withBlocked, type Node } from "../../utility.js"
 
-export function generateVariableDeclarator(context: Node, tokens: TokenStream): VariableDeclarator | MismatchToken {
+export function generateVariableDeclarator(context: string[], tokens: TokenStream): VariableDeclarator | MismatchToken {
     const variableDeclarator: VariableDeclarator = {
         type: "VariableDeclarator",
         left: null!,
@@ -19,46 +19,56 @@ export function generateVariableDeclarator(context: Node, tokens: TokenStream): 
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const pattern = generatePattern(variableDeclarator, tokens)
+    const blockedTypes = [
+        "AsExpression", "InfixPattern", "PrefixPattern",
+        "PostfixPattern", "TypeAssertion", "InterpPattern"
+    ]
+
+    const pattern: Pattern | MismatchToken
+        = withBlocked(blockedTypes, () => generatePattern(["VariableDeclarator", ...context], tokens))
+    
     if (pattern.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return pattern
     }
 
+    variableDeclarator.start = pattern.start
+    variableDeclarator.line = pattern.line
+    variableDeclarator.column = pattern.column
     variableDeclarator.left = pattern
-    
-    let prevCursor = tokens.cursor
-    currentToken = skip(tokens, skipables) // :: | =
 
-    if(isOperator(currentToken, "::")) {
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    if (isOperator(currentToken, "::")) {
         currentToken = skip(tokens, skipables) // skip ::
-        const typeExpr = generateTypeExpression(variableDeclarator, tokens)
+        const typeExpr = generateTypeExpression(["VariableDeclarator", ...context], tokens)
 
         if (typeExpr.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return typeExpr
         }
 
+        variableDeclarator.end = typeExpr.end
         variableDeclarator.signature = typeExpr
-
-        prevCursor = tokens.cursor
         currentToken = skip(tokens, skipables) // =
     }
-    
-    if(isOperator(currentToken, "=")) {
+
+    if (isOperator(currentToken, "=")) {
 
         currentToken = skip(tokens, skipables) // skip =
-        const expression = generateExpression(variableDeclarator, tokens)
+        const expression: Expression | MismatchToken
+            = withBlocked(["AssignExpr"], () => generateExpression(["VariableDeclarator", ...context], tokens))
 
         if (expression.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return expression
         }
 
+        variableDeclarator.end = expression.end
         variableDeclarator.right = expression
     }
-    else
-        tokens.cursor = prevCursor
 
     return variableDeclarator
 }

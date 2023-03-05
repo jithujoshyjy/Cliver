@@ -7,7 +7,7 @@ import { printInfixOperation } from "./operation.ts/infix-operation.js"
 import { printPostfixOperation } from "./operation.ts/postfix-operation.js"
 import { printPrefixOperation } from "./operation.ts/prefix-operation.js"
 
-export function generateGroupExpression(context: Node, tokens: TokenStream): GroupExpression | MismatchToken {
+export function generateGroupExpression(context: string[], tokens: TokenStream): GroupExpression | MismatchToken {
     const groupExpression: GroupExpression = {
         type: "GroupExpression",
         value: null!,
@@ -31,7 +31,7 @@ export function generateGroupExpression(context: Node, tokens: TokenStream): Gro
 
     currentToken = skip(tokens, skipables) // skip (
 
-    let expression: Expression | MismatchToken = generateExpression(groupExpression, tokens)
+    let expression: Expression | MismatchToken = generateExpression(["GroupExpression", ...context], tokens)
     currentToken = tokens.currentToken
 
     if (expression.type == "MismatchToken") {

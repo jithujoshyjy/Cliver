@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, skipables, type Node } from "../../../utility.js"
+import { createMismatchToken, isBlockedType, isPunctuator, skip, skipables, type Node } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
@@ -10,7 +10,7 @@ import { generateParenPattern } from "./paren-pattern.js"
 import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
-export function generateBracketPattern(context: Node, tokens: TokenStream): BracketPattern | MismatchToken {
+export function generateBracketPattern(context: string[], tokens: TokenStream): BracketPattern | MismatchToken {
     const bracketPattern: BracketPattern = {
         type: "BracketPattern",
         values: [[]],
@@ -77,9 +77,12 @@ export function generateBracketPattern(context: Node, tokens: TokenStream): Brac
             | InterpPattern
             | Literal
             | MismatchToken = null!
-        
+
         for (let valueGenerator of valueGenerators) {
-            value = valueGenerator(bracketPattern, tokens)
+            if (isBlockedType(valueGenerator.name.replace("generate", '')))
+                continue
+            
+            value = valueGenerator(["BracketPattern", ...context], tokens)
             currentToken = tokens.currentToken
             if (value.type != "MismatchToken")
                 break

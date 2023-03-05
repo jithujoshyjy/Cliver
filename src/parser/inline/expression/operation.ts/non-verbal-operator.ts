@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isOperator, isRightAssociative, type Node } from "../../../utility.js"
 
-export function generateNonVerbalOperator(context: Node, tokens: TokenStream): NonVerbalOperator | MismatchToken {
+export function generateNonVerbalOperator(context: string[], tokens: TokenStream): NonVerbalOperator | MismatchToken {
     const nonVerbalOperator: NonVerbalOperator = {
         type: "NonVerbalOperator",
         precedence: 10,

@@ -2,7 +2,7 @@ import { type TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isOperator, type Node } from "../../../utility.js"
 import { generateIntegerLiteral } from "./integer-literal.js"
 
-export function generateFloatLiteral(context: Node, tokens: TokenStream): FloatLiteral | MismatchToken {
+export function generateFloatLiteral(context: string[], tokens: TokenStream): FloatLiteral | MismatchToken {
     const floatLiteral: FloatLiteral = {
         type: "FloatLiteral",
         value: "0",
@@ -15,7 +15,7 @@ export function generateFloatLiteral(context: Node, tokens: TokenStream): FloatL
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    const integerPart = generateIntegerLiteral(floatLiteral, tokens)
+    const integerPart = generateIntegerLiteral(["FloatLiteral", ...context], tokens)
     currentToken = tokens.currentToken
 
     if (integerPart.type == "IntegerLiteral")
@@ -45,7 +45,7 @@ export function generateFloatLiteral(context: Node, tokens: TokenStream): FloatL
     floatLiteral.value += "."
     tokens.advance()
 
-    const floatPart = generateIntegerLiteral(floatLiteral, tokens)
+    const floatPart = generateIntegerLiteral(["FloatLiteral", ...context], tokens)
     if (floatPart.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return floatPart

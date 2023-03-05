@@ -1,7 +1,8 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, operatorPrecedence, skip, skipables, type Node, pickPrinter, NodePrinter } from "../../utility.js"
+import { createMismatchToken, isOperator, operatorPrecedence, skip, skipables, type Node, pickPrinter, NodePrinter, isBlockedType, blockedTypes } from "../../utility.js"
 import { generateLiteral, printLiteral } from "../literal/literal.js"
 import { generateTerm, printTerm } from "../term/term.js"
+import { generateAssignExpr, printAssignExpr } from "./assign-expression.js"
 import { generateGroupExpression, printGroupExpression } from "./group-expression.js"
 import { generateInfixOperation, printInfixOperation } from "./operation.ts/infix-operation.js"
 import { generateNonVerbalOperator } from "./operation.ts/non-verbal-operator.js"
@@ -10,7 +11,7 @@ import { generatePostfixOperation, printPostfixOperation } from "./operation.ts/
 import { generatePrefixOperation, printPrefixOperation } from "./operation.ts/prefix-operation.js"
 import { generateVerbalOperator } from "./operation.ts/verbal-operator.js"
 
-export function generateExpression(context: Node, tokens: TokenStream): Expression | MismatchToken {
+export function generateExpression(context: string[], tokens: TokenStream): Expression | MismatchToken {
     const expression: Expression = {
         type: "Expression",
         value: null!,
@@ -24,16 +25,18 @@ export function generateExpression(context: Node, tokens: TokenStream): Expressi
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        generateInfixOperation, generatePrefixOperation, generatePostfixOperation,
+        generateAssignExpr, generateInfixOperation, generatePrefixOperation, generatePostfixOperation,
         generateTerm, generateLiteral
     ]
 
     let node: typeof expression.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
-        node = nodeGenerator(expression, tokens)
-        if (node.type != "MismatchToken") {
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        
+        node = nodeGenerator(["Expression", ...context], tokens)
+        if (node.type != "MismatchToken")
             break
-        }
 
         if (node.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
@@ -64,11 +67,11 @@ export function printExpression(token: Expression, indent = 0) {
     const trailJoiner = "│\t"
 
     const printers = [
-        printInfixOperation, printPrefixOperation, printPostfixOperation,
+        printAssignExpr, printInfixOperation, printPrefixOperation, printPostfixOperation,
         printTerm, printLiteral, printGroupExpression
     ] as NodePrinter[]
 
     const printer = pickPrinter(printers, token.value)!
     const space = ' '.repeat(4)
-    return "Expression\n" + space.repeat(indent) + endJoiner + printer(token.value, indent+1)
+    return "Expression\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { type Node } from "../../utility.js"
 
-export function generateObjectCascadeNotation(context: Node, tokens: TokenStream): ObjectCascadeNotation | MismatchToken {
+export function generateObjectCascadeNotation(context: string[], tokens: TokenStream): ObjectCascadeNotation | MismatchToken {
     const objectCascadeNotation: ObjectCascadeNotation = {
         type: "ObjectCascadeNotation",
         body: [],
@@ -12,6 +12,7 @@ export function generateObjectCascadeNotation(context: Node, tokens: TokenStream
     }
 
     const initialCursor = tokens.cursor
+    let currentToken = tokens.currentToken
 
     return objectCascadeNotation
 }

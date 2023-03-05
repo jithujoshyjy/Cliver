@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, NodePrinter, pickPrinter } from "../../../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables, _skipables, type Node, DiagnosticMessage, NodePrinter, pickPrinter, isBlockedType } from "../../../utility.js"
 import { generateExpression, printExpression } from "../../expression/expression.js"
 import { generateEscapeSequence } from "../../literal/escape-sequence.js"
 import { generateIdentifier, printIdentifier } from "../../literal/identifier.js"
@@ -7,7 +7,7 @@ import { printStringLiteral } from "../../literal/string-literal.js"
 import { generatePair, printPair } from "../pair.js"
 import { printInStringExpr, printInStringId } from "./tagged-string.js"
 
-export function generateMultilineFString(context: Node, tokens: TokenStream): MultilineFString | MismatchToken {
+export function generateMultilineFString(context: string[], tokens: TokenStream): MultilineFString | MismatchToken {
 
     const multilineFString: MultilineFString = {
         type: "MultilineFString",
@@ -74,6 +74,8 @@ export function generateMultilineFString(context: Node, tokens: TokenStream): Mu
         currentToken = tokens.currentToken
 
         for (let fragmentGenerator of fragmentGenerators) {
+            if (isBlockedType(fragmentGenerator.name.replace("generate", '')))
+                continue
             fragment = fragmentGenerator()
             currentToken = tokens.currentToken
 
@@ -145,7 +147,7 @@ export function generateMultilineFString(context: Node, tokens: TokenStream): Mu
             return createMismatchToken(currentToken)
         }
 
-        const escapeSequence = generateEscapeSequence(multilineFString, tokens)
+        const escapeSequence = generateEscapeSequence(["MultilineFString", ...context], tokens)
 
         if (escapeSequence.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -197,7 +199,7 @@ export function generateMultilineFString(context: Node, tokens: TokenStream): Mu
         instringId.column = currentToken.column
 
         tokens.advance()
-        const identifier = generateIdentifier(instringId, tokens)
+        const identifier = generateIdentifier(["InStringId", ...context], tokens)
 
         if (identifier.type == "MismatchToken") {
             tokens.cursor = initialCursor
@@ -265,7 +267,7 @@ export function generateMultilineFString(context: Node, tokens: TokenStream): Mu
             let value: Pair | Expression | MismatchToken = null!
             for (const nodeGenerator of nodeGenerators) {
 
-                value = nodeGenerator(instringExpr, tokens)
+                value = nodeGenerator(["InStringExpr", ...context], tokens)
                 currentToken = tokens.currentToken
 
                 if (value.type != "MismatchToken")

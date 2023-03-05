@@ -4,10 +4,10 @@ import { generateInline } from "../inline/inline.js"
 import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
-import { createMismatchToken, isKeyword, skip, skipables, type Node, DiagnosticMessage, _skipables, isPunctuator, isOperator, PartialParse } from "../utility.js"
+import { createMismatchToken, isKeyword, skip, skipables, type Node, DiagnosticMessage, _skipables, isPunctuator, isOperator, PartialParse, isBlockedType } from "../utility.js"
 import { generateBlock } from "./block.js"
 
-export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoCatchBlock | MismatchToken {
+export function generateDoCatchBlock(context: string[], tokens: TokenStream): DoCatchBlock | MismatchToken {
     const doCatchBlock: DoCatchBlock = {
         type: "DoCatchBlock",
         body: [],
@@ -22,7 +22,7 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoCatc
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const doKeyword = generateKeyword(doCatchBlock, tokens)
+    const doKeyword = generateKeyword(["DoCatchBlock", ...context], tokens)
 
     if (doKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -45,7 +45,7 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoCatc
                 ? skip(tokens, skipables)
                 : tokens.currentToken
 
-            const pattern = generatePattern(catchBlock, tokens)
+            const pattern = generatePattern(["CatchBlock", ...context], tokens)
             return pattern
         }
 
@@ -88,10 +88,10 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoCatc
 
         let status: Identifier
             | StringLiteral
-            | MismatchToken = generateIdentifier(doneBlock, tokens)
+            | MismatchToken = generateIdentifier(["DoneBlock", ...context], tokens)
 
         if (status.type == "MismatchToken")
-            status = generateStringLiteral(doneBlock, tokens)
+            status = generateStringLiteral(["DoneBlock", ...context], tokens)
 
         return status
     }
@@ -113,7 +113,7 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoCatc
             ? skip(tokens, skipables)
             : tokens.currentToken
 
-        const maybeKeyword = generateKeyword(doCatchBlock, tokens)
+        const maybeKeyword = generateKeyword(["DoCatchBlock", ...context], tokens)
         if (isKeyword(maybeKeyword, "catch")) {
 
             if (doCatchBlock.done !== null) {
@@ -204,7 +204,11 @@ export function generateDoCatchBlock(context: Node, tokens: TokenStream): DoCatc
             | MismatchToken = null!
 
         for (const nodeGenerator of nodeGenerators) {
-            node = nodeGenerator(doCatchBlock, tokens)
+
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+
+            node = nodeGenerator(["DoCatchBlock", ...context], tokens)
             currentToken = tokens.currentToken
             if (node.type != "MismatchToken")
                 break

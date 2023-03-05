@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, pickPrinter, NodePrinter } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, pickPrinter, NodePrinter, isBlockedType } from "../../utility.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { printPostfixOperation } from "../expression/operation.ts/postfix-operation.js"
@@ -7,7 +7,7 @@ import { generatePrefixOperation, printPrefixOperation } from "../expression/ope
 import { generateLiteral, printLiteral } from "../literal/literal.js"
 import { generateTerm, printTerm } from "./term.js"
 
-export function generatePair(context: Node, tokens: TokenStream): Pair | MismatchToken {
+export function generatePair(context: string[], tokens: TokenStream): Pair | MismatchToken {
     const pair: Pair = {
         type: "Pair",
         key: null!,
@@ -34,7 +34,10 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
         | MismatchToken = null!
 
     for (let nodeGenerator of nodeGenerators) {
-        key = nodeGenerator(pair, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        
+        key = nodeGenerator(["Pair", ...context], tokens)
         currentToken = tokens.currentToken
         if (key.type != "MismatchToken")
             break
@@ -58,7 +61,7 @@ export function generatePair(context: Node, tokens: TokenStream): Pair | Mismatc
     }
 
     currentToken = skip(tokens, skipables) // skip :
-    const value = generateExpression(pair, tokens)
+    const value = generateExpression(["Pair", ...context], tokens)
 
     if (value.type == "MismatchToken") {
         tokens.cursor = initialCursor

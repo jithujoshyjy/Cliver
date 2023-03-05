@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isOperator, isPunctuator, keywords, PartialParse, type Node } from "../../utility.js"
 
-export function generateIdentifier(context: Node, tokens: TokenStream): Identifier | MismatchToken {
+export function generateIdentifier(context: string[], tokens: TokenStream): Identifier | MismatchToken {
     const identifier: Identifier = {
         type: "Identifier",
         name: "",

@@ -6,7 +6,7 @@ import { generateTypeExpression } from "../inline/type/type-expression.js"
 import { generateProgram } from "../program.js"
 import { createMismatchToken, isKeyword, isOperator, isPunctuator, skip, skipables, type Node } from "../utility.js"
 
-export function generateNamedFunction(context: Node, tokens: TokenStream): NamedFunction | MismatchToken {
+export function generateNamedFunction(context: string[], tokens: TokenStream): NamedFunction | MismatchToken {
     const namedFunction: NamedFunction = {
         type: "NamedFunction",
         body: [],

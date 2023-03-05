@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { NodePrinter, pickPrinter, type Node, createMismatchToken, PartialParse } from "../../utility.js"
+import { NodePrinter, pickPrinter, type Node, isBlockedType } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateArrayLiteral, printArrayLiteral } from "./array-literal.js"
 import { generateDoExpr, printDoExpr } from "./do-expr.js"
@@ -12,7 +12,7 @@ import { generateCharLiteral, printCharLiteral } from "./char-literal.js"
 import { generateSymbolLiteral, printSymbolLiteral } from "./symbol-literal.js"
 import { generateOperatorRef, printOperatorRef } from "./operator-ref.js"
 
-export function generateLiteral(context: Node, tokens: TokenStream): Literal | MismatchToken {
+export function generateLiteral(context: string[], tokens: TokenStream): Literal | MismatchToken {
     const literal: Literal = {
         type: "Literal",
         value: null!,
@@ -33,7 +33,10 @@ export function generateLiteral(context: Node, tokens: TokenStream): Literal | M
 
     let node: typeof literal.value | MismatchToken = null!
     for (let nodeGenerator of nodeGenerators) {
-        node = nodeGenerator(literal, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        
+        node = nodeGenerator(["Literal", ...context], tokens)
         currentToken = tokens.currentToken
         if (node.type != "MismatchToken") {
             break
@@ -75,5 +78,5 @@ export function printLiteral(token: Literal, indent = 0) {
     const printer = pickPrinter(printers, token.value)!
     const space = ' '.repeat(4)
     return "Literal" +
-        '\n' + space.repeat(indent) + endJoiner + printer(token.value, indent+1)
+        '\n' + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

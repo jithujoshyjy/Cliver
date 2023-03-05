@@ -2,7 +2,7 @@ import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, operatorPrecedence, type Node } from "../../../utility.js"
 import { generateKeyword } from "../../keyword.js"
 
-export function generateVerbalOperator(context: Node, tokens: TokenStream): VerbalOperator | MismatchToken {
+export function generateVerbalOperator(context: string[], tokens: TokenStream): VerbalOperator | MismatchToken {
     const verbalOperator: VerbalOperator = {
         type: "VerbalOperator",
         kind: "infix",
@@ -26,7 +26,7 @@ export function generateVerbalOperator(context: Node, tokens: TokenStream): Verb
         || op.name in operatorPrecedence.infix.right
         || op.name in operatorPrecedence.prefix
 
-    const keyword: Keyword | MismatchToken = generateKeyword(verbalOperator, tokens)
+    const keyword: Keyword | MismatchToken = generateKeyword(["VerbalOperator", ...context], tokens)
     currentToken = tokens.currentToken
     
     if (keyword.type == "MismatchToken") {

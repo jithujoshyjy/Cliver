@@ -4,7 +4,7 @@ import chalk from "chalk";
 
 export function generateAST(tokens: TokenStream): Program | void {
 
-    const program = generateProgram(null, tokens)
+    const program = generateProgram([], tokens)
     
     if (program.type != "MismatchToken")
         return program

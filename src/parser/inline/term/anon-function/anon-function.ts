@@ -4,7 +4,7 @@ import { generateBlockAnonFunction } from "./block-anon-function.js"
 import { generateInlineAnonFunction } from "./inline-anon-function.js"
 
 
-export function generateAnonFunction(context: Node, tokens: TokenStream): AnonFunction | MismatchToken {
+export function generateAnonFunction(context: string[], tokens: TokenStream): AnonFunction | MismatchToken {
     const anonFunction: AnonFunction = {
         type: "AnonFunction",
         value: null!,
@@ -17,9 +17,9 @@ export function generateAnonFunction(context: Node, tokens: TokenStream): AnonFu
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    let value: typeof anonFunction.value | MismatchToken = generateInlineAnonFunction(anonFunction, tokens)
+    let value: typeof anonFunction.value | MismatchToken = generateInlineAnonFunction(["AnonFunction", ...context], tokens)
     if(value.type == "MismatchToken") {
-        value = generateBlockAnonFunction(anonFunction, tokens)
+        value = generateBlockAnonFunction(["AnonFunction", ...context], tokens)
     }
 
     if(value.type == "MismatchToken") {

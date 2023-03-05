@@ -1,10 +1,10 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateBlock, printBlock } from "../../block/block.js"
-import { createMismatchToken, isKeyword, skip, skipables, type Node, keywords, DiagnosticMessage } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, skipables, type Node, keywords, DiagnosticMessage, isBlockedType } from "../../utility.js"
 import { generateInline, printInline } from "../inline.js"
 import { generateKeyword } from "../keyword.js"
 
-export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | MismatchToken {
+export function generateDoExpr(context: string[], tokens: TokenStream): DoExpr | MismatchToken {
     const doExpr: DoExpr = {
         type: "DoExpr",
         body: [],
@@ -17,7 +17,7 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const doKeyword = generateKeyword(doExpr, tokens)
+    const doKeyword = generateKeyword(["DoExpr", ...context], tokens)
 
     if (doKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -43,13 +43,13 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
             ? skip(tokens, skipables)
             : tokens.currentToken
 
-        const endKeyword = generateKeyword(doExpr, tokens)
+        const endKeyword = generateKeyword(["DoExpr", ...context], tokens)
 
-        if(isKeyword(endKeyword, "end")) {
+        if (isKeyword(endKeyword, "end")) {
             doExpr.end = endKeyword.end
             break
         }
-        else if(endKeyword.type != "MismatchToken") {
+        else if (endKeyword.type != "MismatchToken") {
             const error = "Unexpected Keyword '{0}' on {1}:{2}"
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken, [error, endKeyword.name, endKeyword.line, endKeyword.column])
@@ -60,11 +60,15 @@ export function generateDoExpr(context: Node, tokens: TokenStream): DoExpr | Mis
             | MismatchToken = null!
 
         for (const nodeGenerator of nodeGenerators) {
-            node = nodeGenerator(doExpr, tokens)
+
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+
+            node = nodeGenerator(["DoExpr", ...context], tokens)
             currentToken = tokens.currentToken
-            if (node.type != "MismatchToken") {
+
+            if (node.type != "MismatchToken")
                 break
-            }
 
             if (node.errorDescription.severity <= 3) {
                 tokens.cursor = initialCursor

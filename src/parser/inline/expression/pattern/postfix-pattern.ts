@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, skip, type Node, _skipables, operatorPrecedence } from "../../../utility.js"
+import { createMismatchToken, skip, type Node, _skipables, operatorPrecedence, isBlockedType } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateNonVerbalOperator } from "../operation.ts/non-verbal-operator.js"
 import { generateBracePattern } from "./brace-pattern.js"
@@ -7,7 +7,7 @@ import { generateBracketPattern } from "./bracket-pattern.js"
 import { generateInterpPattern } from "./interp-pattern.js"
 import { generateParenPattern } from "./paren-pattern.js"
 
-export function generatePostfixPattern(context: Node, tokens: TokenStream): PostfixPattern | MismatchToken {
+export function generatePostfixPattern(context: string[], tokens: TokenStream): PostfixPattern | MismatchToken {
     const postfixPattern: PostfixPattern = {
         type: "PostfixPattern",
         operand: null!,
@@ -34,7 +34,10 @@ export function generatePostfixPattern(context: Node, tokens: TokenStream): Post
         | MismatchToken = null!
 
     for (let operandGenerator of operandGenerators) {
-        operand = operandGenerator(postfixPattern, tokens)
+        if (isBlockedType(operandGenerator.name.replace("generate", '')))
+            continue
+        
+        operand = operandGenerator(["PostfixPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (operand.type != "MismatchToken") {
@@ -61,7 +64,7 @@ export function generatePostfixPattern(context: Node, tokens: TokenStream): Post
         ? skip(tokens, _skipables)
         : tokens.currentToken
     
-    let _operator = generateNonVerbalOperator(postfixPattern, tokens)
+    let _operator = generateNonVerbalOperator(["PostfixPattern", ...context], tokens)
 
     if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor

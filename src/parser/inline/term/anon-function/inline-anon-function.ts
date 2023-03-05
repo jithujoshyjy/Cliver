@@ -5,7 +5,7 @@ import { generateExpression } from "../../expression/expression.js"
 import { generatePattern } from "../../expression/pattern/pattern.js"
 import { generateTypeExpression } from "../../type/type-expression.js"
 
-export function generateInlineAnonFunction(context: Node, tokens: TokenStream): InlineAnonFunction | MismatchToken {
+export function generateInlineAnonFunction(context: string[], tokens: TokenStream): InlineAnonFunction | MismatchToken {
     const inlineAnonFunction: InlineAnonFunction = {
         type: "InlineAnonFunction",
         body: null!,

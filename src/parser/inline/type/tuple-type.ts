@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateTypeExpression } from "./type-expression.js"
 
-export function generateTupleType(context: Node, tokens: TokenStream): TupleType | GroupTypeExpression | MismatchToken {
+export function generateTupleType(context: string[], tokens: TokenStream): TupleType | GroupTypeExpression | MismatchToken {
 
     const tupleType: TupleType = {
         type: "TupleType",

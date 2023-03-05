@@ -5,11 +5,10 @@ import { generatePrefixOperation } from "../inline/expression/operation.ts/prefi
 import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
-import { generateObjectExtendNotation } from "../inline/term/object-extend-notation.js"
 import { generateTaggedSymbol } from "../inline/term/tagged-symbol.js"
-import { createMismatchToken, isKeyword, isOperator, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
+import { createMismatchToken, isBlockedType, isKeyword, isOperator, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
 
-export function generateImportDeclaration(context: Node, tokens: TokenStream): ImportDeclaration | MismatchToken {
+export function generateImportDeclaration(context: string[], tokens: TokenStream): ImportDeclaration | MismatchToken {
     const importDeclr: ImportDeclaration = {
         type: "ImportDeclaration",
         specifiers: [],
@@ -23,7 +22,7 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    const importKeyword = generateKeyword(importDeclr, tokens)
+    const importKeyword = generateKeyword(["ImportDeclaration", ...context], tokens)
     if (importKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return importKeyword
@@ -55,21 +54,23 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
         currentToken = skipables.includes(tokens.currentToken)
             ? skip(tokens, skipables)
             : tokens.currentToken
-        
+
         let specifierGenerators = [
-            generateObjectExtendNotation, generateAsExpression,
+            generateAsExpression,
             generateIdentifier, generatePrefixOperation, generateNonVerbalOperator
         ]
 
         let specifier: AsExpression
             | Identifier
-            | ObjectExtendNotation
             | PrefixOperation
             | NonVerbalOperator
             | MismatchToken = null!
 
         for (let specifierGenerator of specifierGenerators) {
-            specifier = specifierGenerator(importDeclr, tokens)
+            if (isBlockedType(specifierGenerator.name.replace("generate", '')))
+                continue
+            
+            specifier = specifierGenerator(["ImportDeclaration", ...context], tokens)
             if (specifier.type != "MismatchToken")
                 break
         }
@@ -97,10 +98,10 @@ export function generateImportDeclaration(context: Node, tokens: TokenStream): I
     const parseSource = () => {
         let source: MismatchToken
             | TaggedSymbol
-            | StringLiteral = generateTaggedSymbol(importDeclr, tokens)
+            | StringLiteral = generateTaggedSymbol(["ImportDeclaration", ...context], tokens)
 
         if (source.type == "MismatchToken") {
-            source = generateStringLiteral(importDeclr, tokens)
+            source = generateStringLiteral(["ImportDeclaration", ...context], tokens)
         }
 
         if (source.type == "StringLiteral" && source.kind != "inline") {

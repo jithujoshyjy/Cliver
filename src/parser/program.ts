@@ -3,7 +3,7 @@ import { generateBlock, printBlock } from "./block/block.js"
 import { generateInline, printInline } from "./inline/inline.js"
 import { skip, skipables, type Node } from "./utility.js"
 
-export function generateProgram(context: Node | null, tokens: TokenStream): Program | MismatchToken {
+export function generateProgram(context: string[], tokens: TokenStream): Program | MismatchToken {
     const program: Program = {
         type: "Program",
         body: [],
@@ -34,7 +34,7 @@ export function generateProgram(context: Node | null, tokens: TokenStream): Prog
             | MismatchToken = null!
 
         for (const nodeGenerator of nodeGenerators) {
-            node = nodeGenerator(program, tokens)
+            node = nodeGenerator(["Program", ...context], tokens)
             currentToken = tokens.currentToken
             if (node.type != "MismatchToken")
                 break

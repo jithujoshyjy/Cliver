@@ -3,7 +3,7 @@ import { createMismatchToken, skip, skipables, type Node, isPunctuator } from ".
 import { generateNonVerbalOperator } from "../expression/operation.ts/non-verbal-operator.js"
 import { generateVerbalOperator } from "../expression/operation.ts/verbal-operator.js"
 
-export function generateOperatorRef(context: Node, tokens: TokenStream): OperatorRef | MismatchToken {
+export function generateOperatorRef(context: string[], tokens: TokenStream): OperatorRef | MismatchToken {
     const operatorRef: OperatorRef = {
         type: "OperatorRef",
         operator: null!,
@@ -29,10 +29,10 @@ export function generateOperatorRef(context: Node, tokens: TokenStream): Operato
 
     let _operator: NonVerbalOperator
         | VerbalOperator
-        | MismatchToken = generateNonVerbalOperator(operatorRef, tokens)
+        | MismatchToken = generateNonVerbalOperator(["OperatorRef", ...context], tokens)
 
     if (_operator.type == "MismatchToken")
-        _operator = generateVerbalOperator(operatorRef, tokens)
+        _operator = generateVerbalOperator(["OperatorRef", ...context], tokens)
 
     if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor

@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, type Node } from "../../../utility.js"
 
-export function generateIntegerLiteral(context: Node, tokens: TokenStream): IntegerLiteral | MismatchToken {
+export function generateIntegerLiteral(context: string[], tokens: TokenStream): IntegerLiteral | MismatchToken {
     const integerLiteral: IntegerLiteral = {
         type: "IntegerLiteral",
         value: null!,

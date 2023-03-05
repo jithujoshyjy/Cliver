@@ -4,10 +4,10 @@ import { generateInline } from "../inline/inline.js"
 import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
-import { isKeyword, skip, skipables, type Node, createMismatchToken, DiagnosticMessage, PartialParse, isOperator } from "../utility.js"
+import { isKeyword, skip, skipables, type Node, createMismatchToken, DiagnosticMessage, PartialParse, isOperator, isBlockedType } from "../utility.js"
 import { generateBlock } from "./block.js"
 
-export function generateForBlock(context: Node, tokens: TokenStream): ForBlock | MismatchToken {
+export function generateForBlock(context: string[], tokens: TokenStream): ForBlock | MismatchToken {
     const forBlock: ForBlock = {
         type: "ForBlock",
         body: [],
@@ -31,7 +31,7 @@ export function generateForBlock(context: Node, tokens: TokenStream): ForBlock |
         generateBlock, generateInline
     ]
 
-    const forKeyword = generateKeyword(forBlock, tokens)
+    const forKeyword = generateKeyword(["ForBlock", ...context], tokens)
     if (forKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return forKeyword
@@ -50,7 +50,7 @@ export function generateForBlock(context: Node, tokens: TokenStream): ForBlock |
         ? skip(tokens, skipables)
         : tokens.currentToken
 
-    const expression = generateExpression(forBlock, tokens)
+    const expression = generateExpression(["ForBlock", ...context], tokens)
     if (expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
@@ -72,10 +72,10 @@ export function generateForBlock(context: Node, tokens: TokenStream): ForBlock |
 
         let status: Identifier
             | StringLiteral
-            | MismatchToken = generateIdentifier(doneBlock, tokens)
+            | MismatchToken = generateIdentifier(["DoneBlock", ...context], tokens)
 
         if (status.type == "MismatchToken")
-            status = generateStringLiteral(doneBlock, tokens)
+            status = generateStringLiteral(["DoneBlock", ...context], tokens)
 
         return status
     }
@@ -86,7 +86,7 @@ export function generateForBlock(context: Node, tokens: TokenStream): ForBlock |
             ? skip(tokens, skipables)
             : tokens.currentToken
 
-        const maybeKeyword = generateKeyword(forBlock, tokens)
+        const maybeKeyword = generateKeyword(["ForBlock", ...context], tokens)
         if (isKeyword(maybeKeyword, "done")) {
 
             if (forBlock.done !== null) {
@@ -140,7 +140,9 @@ export function generateForBlock(context: Node, tokens: TokenStream): ForBlock |
             | MismatchToken = null!
 
         for (const nodeGenerator of nodeGenerators) {
-            node = nodeGenerator(forBlock, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+            node = nodeGenerator(["ForBlock", ...context], tokens)
             currentToken = tokens.currentToken
             if (node.type != "MismatchToken")
                 break

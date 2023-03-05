@@ -5,7 +5,7 @@ import { generateIdentifier } from "../literal/identifier.js"
 import { generateCaseExpr, printCaseExpr } from "./case-expression.js"
 import { generateExpression, printExpression } from "./expression.js"
 
-export function generateAsExpression(context: Node, tokens: TokenStream): AsExpression | MismatchToken {
+export function generateAsExpression(context: string[], tokens: TokenStream): AsExpression | MismatchToken {
     const asExpression: AsExpression = {
         type: "AsExpression",
         left: null!,
@@ -19,7 +19,7 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const left = generateExpression(asExpression, tokens)
+    const left = generateExpression(["AsExpression", ...context], tokens)
     if (left.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return left
@@ -30,7 +30,7 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
         ? skip(tokens, _skipables)
         : tokens.currentToken
 
-    const asKeyword = generateKeyword(asExpression, tokens)
+    const asKeyword = generateKeyword(["AsExpression", ...context], tokens)
     if (asKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return asKeyword
@@ -49,7 +49,7 @@ export function generateAsExpression(context: Node, tokens: TokenStream): AsExpr
         | CaseExpr
         | MismatchToken = null!
 
-    right = generateIdentifier(asExpression, tokens)
+    right = generateIdentifier(["AsExpression", ...context], tokens)
 
     if (right.type == "MismatchToken") {
         tokens.cursor = initialCursor

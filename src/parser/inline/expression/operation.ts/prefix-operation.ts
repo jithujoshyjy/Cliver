@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { operatorPrecedence, skip, skipables, type Node, NodePrinter, pickPrinter } from "../../../utility.js"
+import { operatorPrecedence, skip, skipables, type Node, NodePrinter, pickPrinter, isBlockedType } from "../../../utility.js"
 import { generateLiteral, printLiteral } from "../../literal/literal.js"
 import { generateTerm, printTerm } from "../../term/term.js"
 import { printInfixOperation } from "./infix-operation.js"
@@ -7,7 +7,7 @@ import { generateNonVerbalOperator, printNonVerbalOperator } from "./non-verbal-
 import { generatePostfixOperation, printPostfixOperation } from "./postfix-operation.js"
 import { generateVerbalOperator, printVerbalOperator } from "./verbal-operator.js"
 
-export function generatePrefixOperation(context: Node, tokens: TokenStream): PrefixOperation | MismatchToken {
+export function generatePrefixOperation(context: string[], tokens: TokenStream): PrefixOperation | MismatchToken {
     const prefixOperation: PrefixOperation = {
         type: "PrefixOperation",
         operand: null!,
@@ -23,10 +23,10 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
 
     let _operator: NonVerbalOperator
         | VerbalOperator
-        | MismatchToken = generateNonVerbalOperator(prefixOperation, tokens)
+        | MismatchToken = generateNonVerbalOperator(["PrefixOperation", ...context], tokens)
 
     if (_operator.type == "MismatchToken")
-        _operator = generateVerbalOperator(prefixOperation, tokens)
+        _operator = generateVerbalOperator(["PrefixOperation", ...context], tokens)
 
     if (_operator.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -67,7 +67,10 @@ export function generatePrefixOperation(context: Node, tokens: TokenStream): Pre
         | MismatchToken = null!
 
     for (let operandGenerator of operandGenerators) {
-        operand = operandGenerator(prefixOperation, tokens)
+        if (isBlockedType(operandGenerator.name.replace("generate", '')))
+            continue
+
+        operand = operandGenerator(["PrefixOperation", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (operand.type != "MismatchToken")

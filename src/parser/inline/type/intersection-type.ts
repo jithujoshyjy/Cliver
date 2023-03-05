@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, skip, skipables, type Node } from "../../utility.js"
 import { generateDifferenceType } from "./difference-type.js"
 
 import { generateFunctionCallType } from "./function-call-type.js"
@@ -10,7 +10,7 @@ import { generateTypeExpression } from "./type-expression.js"
 import { generateTypeName } from "./type-name.js"
 import { generateUnionType } from "./union-type.js"
 
-export function generateIntersectionType(context: Node, tokens: TokenStream): IntersectionType | MismatchToken {
+export function generateIntersectionType(context: string[], tokens: TokenStream): IntersectionType | MismatchToken {
     const intersectionType: IntersectionType = {
         type: "IntersectionType",
         left: null!,
@@ -31,7 +31,10 @@ export function generateIntersectionType(context: Node, tokens: TokenStream): In
     let typeMember: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
 
     for (let typeGenerator of typeGenerators) {
-        typeMember = typeGenerator(intersectionType, tokens)
+        if (isBlockedType(typeGenerator.name.replace("generate", '')))
+            continue
+
+        typeMember = typeGenerator(["IntersectionType", ...context], tokens)
         currentToken = tokens.currentToken
         if (typeMember.type != "MismatchToken")
             break
@@ -45,18 +48,18 @@ export function generateIntersectionType(context: Node, tokens: TokenStream): In
     intersectionType.left = typeMember
     currentToken = skip(tokens, skipables)
 
-    if(!isOperator(currentToken, "&")) {
+    if (!isOperator(currentToken, "&")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
     currentToken = skip(tokens, skipables) // skip &
 
-    const right = generateTypeExpression(intersectionType, tokens) // buggy :(
+    const right = generateTypeExpression(["IntersectionType", ...context], tokens) // buggy :(
 
-    if(right.type == "MismatchToken")
+    if (right.type == "MismatchToken")
         return right
-    
+
     intersectionType.right = right
 
     return intersectionType

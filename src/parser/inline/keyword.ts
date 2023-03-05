@@ -2,7 +2,7 @@ import { TokenStream } from "../../lexer/token.js"
 import { createMismatchToken, type Node } from "../utility.js"
 import { generateIdentifier } from "./literal/identifier.js"
 
-export function generateKeyword(context: Node, tokens: TokenStream): Keyword | MismatchToken {
+export function generateKeyword(context: string[], tokens: TokenStream): Keyword | MismatchToken {
     const keyword: Keyword = {
         type: "Keyword",
         name: "",
@@ -15,7 +15,7 @@ export function generateKeyword(context: Node, tokens: TokenStream): Keyword | M
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const maybeKeyword = generateIdentifier(keyword, tokens)
+    const maybeKeyword = generateIdentifier(["Keyword", ...context], tokens)
     if(maybeKeyword.type != "MismatchToken" || !maybeKeyword.partialParse) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)

@@ -338,16 +338,6 @@ type BlockMacroApplication = {
     end: number
 }
 
-type ObjectExtendNotation = {
-    type: "ObjectExtendNotation",
-    head: Expression,
-    body: Array<Inline | Block>,
-    line: number,
-    column: number,
-    start: number,
-    end: number
-}
-
 type ObjectCascadeNotation = {
     type: "ObjectCascadeNotation",
     body: Array<ObjectOptionalCascade | ObjectRegularCascade>,
@@ -662,7 +652,7 @@ type Term = {
 
 type Expression = {
     type: "Expression",
-    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: AssignExpr | InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     line: number,
     column: number,
     start: number,
@@ -671,7 +661,7 @@ type Expression = {
 
 type GroupExpression = {
     type: "GroupExpression",
-    value: InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: AssignExpr | InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     line: number,
     column: number,
     start: number,

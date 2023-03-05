@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../../utility.js"
 
-export function generateErrorPipeline(context: Node, tokens: TokenStream): ErrorPipeline | MismatchToken {
+export function generateErrorPipeline(context: string[], tokens: TokenStream): ErrorPipeline | MismatchToken {
     const errorPipeline: ErrorPipeline = {
         type: "ErrorPipeline",
         expression: null!,

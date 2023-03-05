@@ -3,7 +3,7 @@ import { type Node } from "../../../utility.js"
 import { generateMetaDataInterpolation } from "../../term/meta-data-interpolation.js"
 import { generateTaggedString } from "../../term/tagged-string/tagged-string.js"
 
-export function generateInterpPattern(context: Node, tokens: TokenStream): InterpPattern | MismatchToken {
+export function generateInterpPattern(context: string[], tokens: TokenStream): InterpPattern | MismatchToken {
     const interpPattern: InterpPattern = {
         type: "InterpPattern",
         body: null!,
@@ -18,10 +18,10 @@ export function generateInterpPattern(context: Node, tokens: TokenStream): Inter
 
     let body: TaggedString
         | MetaDataInterpolation
-        | MismatchToken = generateTaggedString(interpPattern, tokens)
+        | MismatchToken = generateTaggedString(["InterpPattern", ...context], tokens)
 
     if(body.type == "MismatchToken") {
-        body = generateMetaDataInterpolation(interpPattern, tokens)
+        body = generateMetaDataInterpolation(["InterpPattern", ...context], tokens)
     }
 
     if(body.type == "MismatchToken") {

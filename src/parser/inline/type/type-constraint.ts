@@ -4,7 +4,7 @@ import { generateTupleLiteral } from "../literal/tuple-literal.js"
 import { generateFunctionType } from "./function-type.js"
 import { generateStructureType } from "./structure-type.js"
 
-export function generateTypeConstraint(context: Node, tokens: TokenStream): TypeConstraint | MismatchToken {
+export function generateTypeConstraint(context: string[], tokens: TokenStream): TypeConstraint | MismatchToken {
     const typeConstraint: TypeConstraint = {
         type: "TypeConstraint",
         assert: null,

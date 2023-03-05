@@ -3,10 +3,10 @@ import { generateAsExpression } from "../inline/expression/as-expression.js"
 import { generateExpression } from "../inline/expression/expression.js"
 import { generateInline } from "../inline/inline.js"
 import { generateKeyword } from "../inline/keyword.js"
-import { createMismatchToken, isKeyword, skip, skipables, _skipables, type Node, DiagnosticMessage, isOperator } from "../utility.js"
+import { createMismatchToken, isKeyword, skip, skipables, _skipables, type Node, DiagnosticMessage, isOperator, isBlockedType } from "../utility.js"
 import { generateBlock } from "./block.js"
 
-export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | MismatchToken {
+export function generateIfBlock(context: string[], tokens: TokenStream): IfBlock | MismatchToken {
     const ifBlock: IfBlock = {
         type: "IfBlock",
         alternatives: [],
@@ -33,7 +33,7 @@ export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | M
     let blockHolderBody = ifBlock.body
     let isSingleItemBlock = false
 
-    const ifKeyword = generateKeyword(ifBlock, tokens)
+    const ifKeyword = generateKeyword(["IfBlock", ...context], tokens)
     if (ifKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return ifKeyword
@@ -60,7 +60,10 @@ export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | M
             | MismatchToken = null!
 
         for (const conditionGenerator of conditionGenerators) {
-            condition = conditionGenerator(conditional, tokens)
+            if (isBlockedType(conditionGenerator.name.replace("generate", '')))
+                continue
+
+            condition = conditionGenerator([conditional.type, ...context], tokens)
             currentToken = tokens.currentToken
 
             if (condition.type != "MismatchToken")
@@ -98,7 +101,7 @@ export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | M
             ? skip(tokens, skipables)
             : tokens.currentToken
 
-        const maybeKeyword = generateKeyword(ifBlock, tokens)
+        const maybeKeyword = generateKeyword(["IfBlock", ...context], tokens)
         if (isKeyword(maybeKeyword, "elseif")) {
 
             if (ifBlock.fallback !== null) {
@@ -183,7 +186,10 @@ export function generateIfBlock(context: Node, tokens: TokenStream): IfBlock | M
             | MismatchToken = null!
 
         for (const nodeGenerator of nodeGenerators) {
-            node = nodeGenerator(ifBlock, tokens)
+            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+                continue
+            
+            node = nodeGenerator(["IfBlock", ...context], tokens)
             currentToken = tokens.currentToken
             if (node.type != "MismatchToken")
                 break

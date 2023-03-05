@@ -2,9 +2,9 @@ import { TokenStream } from "../../lexer/token.js"
 import { generateNonVerbalOperator } from "../inline/expression/operation.ts/non-verbal-operator.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generatePropertyAccess } from "../inline/term/property-access.js"
-import { createMismatchToken, isOperator, skip, type Node, _skipables } from "../utility.js"
+import { createMismatchToken, isOperator, skip, type Node, _skipables, isBlockedType } from "../utility.js"
 
-export function generateBlockMacroApplication(context: Node, tokens: TokenStream): BlockMacroApplication | MismatchToken {
+export function generateBlockMacroApplication(context: string[], tokens: TokenStream): BlockMacroApplication | MismatchToken {
     const blockMacroApplication: BlockMacroApplication = {
         type: "BlockMacroApplication",
         caller: null!,
@@ -19,8 +19,8 @@ export function generateBlockMacroApplication(context: Node, tokens: TokenStream
     const initialCursor = tokens.cursor
     let currentToken = tokens.currentToken
 
-    const maybeOperator = generateNonVerbalOperator(blockMacroApplication, tokens)
-    if(maybeOperator.type == "MismatchToken") {
+    const maybeOperator = generateNonVerbalOperator(["BlockMacroApplication", ...context], tokens)
+    if (maybeOperator.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return maybeOperator
     }
@@ -47,7 +47,10 @@ export function generateBlockMacroApplication(context: Node, tokens: TokenStream
         | MismatchToken = null!
 
     for (const nodeGenerator of nodeGenerators) {
-        caller = nodeGenerator(blockMacroApplication, tokens)
+        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
+            continue
+        
+        caller = nodeGenerator(["BlockMacroApplication", ...context], tokens)
         currentToken = tokens.currentToken
 
         if (caller.type != "MismatchToken")
