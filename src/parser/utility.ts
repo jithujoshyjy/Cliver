@@ -265,10 +265,10 @@ export const withBlocked = <T>(blocked: string[], callback: Function): T => {
     blocked.forEach(() => blockedTypes.shift())
     return res
 }
-export const withUnblocked = <T>(blocked: string[], callback: Function): T => {
-    blocked.forEach(x =>
+export const withUnblocked = <T>(unblocked: string[], callback: Function): T => {
+    unblocked.forEach(x =>
         blockedTypes.splice(((y = blockedTypes.indexOf(x)) => y == -1 ? Infinity : y)(), 1))
     const res: T = callback()
-    blocked.forEach(x => blockedTypes.unshift(x))
+    unblocked.forEach(x => blockedTypes.unshift(x))
     return res
 }

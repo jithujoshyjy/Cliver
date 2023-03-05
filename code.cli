@@ -1,1 +1,2 @@
-{abc} = 123
+var abc = 123
+val bcd = 456

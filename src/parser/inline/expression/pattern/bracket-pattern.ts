@@ -14,6 +14,7 @@ export function generateBracketPattern(context: string[], tokens: TokenStream): 
     const bracketPattern: BracketPattern = {
         type: "BracketPattern",
         values: [[]],
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -32,14 +33,11 @@ export function generateBracketPattern(context: string[], tokens: TokenStream): 
     bracketPattern.line = currentToken.line
     bracketPattern.column = currentToken.column
 
+    currentToken = skip(tokens, skipables)
     const valueGenerators = [
         generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
         generateInterpPattern, generateLiteral
     ]
-
-    currentToken = skipables.includes(tokens.currentToken)
-        ? skip(tokens, skipables)
-        : tokens.currentToken
 
     const captureComma = () => {
         const initialToken = tokens.currentToken
@@ -81,7 +79,7 @@ export function generateBracketPattern(context: string[], tokens: TokenStream): 
         for (let valueGenerator of valueGenerators) {
             if (isBlockedType(valueGenerator.name.replace("generate", '')))
                 continue
-            
+
             value = valueGenerator(["BracketPattern", ...context], tokens)
             currentToken = tokens.currentToken
             if (value.type != "MismatchToken")
@@ -124,6 +122,11 @@ export function generateBracketPattern(context: string[], tokens: TokenStream): 
                 return value
             }
 
+            bracketPattern.includesNamed ||=
+                value.type == "AsExpression" ||
+                value.type == "Literal" && value.value.type == "Identifier" ||
+                value.type != "Literal" && value.type != "TypeAssertion" && value.includesNamed
+            
             bracketPattern.values.at(-1)?.push(value)
         }
 

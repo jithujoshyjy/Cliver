@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { NodePrinter, pickPrinter, type Node, isBlockedType } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateArrayLiteral, printArrayLiteral } from "./array-literal.js"
-import { generateDoExpr, printDoExpr } from "./do-expr.js"
+import { generateDoExpr, printDoExpr } from "../term/do-expr.js"
 import { generateIdentifier, printIdentifier } from "./identifier.js"
 import { generateMapLiteral, printMapLiteral } from "./map-literal.js"
 import { generateNumericLiteral, printNumericLiteral } from "./numeric-literal/numericLiteral.js"
@@ -27,8 +27,8 @@ export function generateLiteral(context: string[], tokens: TokenStream): Literal
 
     const nodeGenerators = [
         generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
-        generateCharLiteral, generateSymbolLiteral, generateNumericLiteral, generateDoExpr,
-        generateIdentifier, generateGroupExpression, generateOperatorRef,
+        generateCharLiteral, generateSymbolLiteral, generateNumericLiteral,
+        generateIdentifier, generateOperatorRef,
     ]
 
     let node: typeof literal.value | MismatchToken = null!
@@ -71,8 +71,7 @@ export function printLiteral(token: Literal, indent = 0) {
     const printers = [
         printMapLiteral, printTupleLiteral, printArrayLiteral,
         printStringLiteral, printCharLiteral, printSymbolLiteral,
-        printNumericLiteral, printDoExpr, printIdentifier,
-        printGroupExpression, printOperatorRef
+        printNumericLiteral, printIdentifier, printOperatorRef
     ] as NodePrinter[]
 
     const printer = pickPrinter(printers, token.value)!

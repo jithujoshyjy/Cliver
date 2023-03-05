@@ -21,6 +21,7 @@ import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateSymbolFragment, printSymbolFragment } from "./symbol-fragment.js"
 import { generateMatchInline, printMatchInline } from "./match-inline.js"
+import { generateDoExpr, printDoExpr } from "./do-expr.js"
 
 export function generateTerm(context: string[], tokens: TokenStream): Term | MismatchToken {
     const term: Term = {
@@ -30,7 +31,6 @@ export function generateTerm(context: string[], tokens: TokenStream): Term | Mis
         column: 0,
         start: 0,
         end: 0,
-        meta: {}
     }
 
     let currentToken = tokens.currentToken
@@ -46,7 +46,7 @@ export function generateTerm(context: string[], tokens: TokenStream): Term | Mis
         /* generateExternalCallbackNotation, generateAnonFunction, */ generateUnitFunction,
         /* generateAssignExpr, */ generateMetaDataInterpolation, /* generateTaggedSymbol, */
         generateSymbolFragment, /* generateTaggedString, */ generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
-        generateMatchInline, generateIfInline, generateGroupExpression, generateInlineMacroApplication,
+        generateMatchInline, generateIfInline, generateDoExpr, generateGroupExpression, generateInlineMacroApplication,
         /* generateFunctionCall, generatePropertyAccess */
     ]
 
@@ -89,7 +89,7 @@ export function printTerm(token: Term, indent = 0) {
     const trailJoiner = "│\t"
 
     const printers = [
-        printMetaDataInterpolation, printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, printMatchInline, printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printPropertyAccess, /* printTypeAssertion, printAssignExpr, */ printGroupExpression
+        printMetaDataInterpolation, printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, printMatchInline, printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printDoExpr, printPropertyAccess, /* printTypeAssertion, printAssignExpr, */ printGroupExpression
     ] as NodePrinter[]
 
     const printer = pickPrinter(printers, token.value)!

@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isKeyword, skip, _skipables, type Node, PartialParse, pickPrinter, NodePrinter } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, _skipables, type Node, PartialParse, pickPrinter, NodePrinter, withBlocked } from "../../utility.js"
 import { generateKeyword } from "../keyword.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateCaseExpr, printCaseExpr } from "./case-expression.js"
@@ -19,13 +19,19 @@ export function generateAsExpression(context: string[], tokens: TokenStream): As
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const left = generateExpression(["AsExpression", ...context], tokens)
+    const left: Expression | MismatchToken
+        = withBlocked(["AssignExpr"], () => generateExpression(["AsExpression", ...context], tokens))
+    
     if (left.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return left
     }
 
     asExpression.left = left
+    asExpression.start = left.start
+    asExpression.line = left.line
+    asExpression.column = left.column
+
     currentToken = _skipables.includes(tokens.currentToken)
         ? skip(tokens, _skipables)
         : tokens.currentToken
@@ -57,6 +63,8 @@ export function generateAsExpression(context: string[], tokens: TokenStream): As
     }
 
     asExpression.right = right
+    asExpression.end = right.end
+    
     return asExpression
 }
 

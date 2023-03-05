@@ -3,7 +3,7 @@ import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type No
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generatePair, printPair } from "../term/pair.js"
 
-export function generateTupleLiteral(context: string[], tokens: TokenStream): TupleLiteral | GroupExpression | MismatchToken {
+export function generateTupleLiteral(context: string[], tokens: TokenStream): TupleLiteral | MismatchToken {
     const tupleLiteral: TupleLiteral = {
         type: "TupleLiteral",
         positional: [],

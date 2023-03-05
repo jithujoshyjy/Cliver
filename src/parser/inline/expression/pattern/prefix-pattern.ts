@@ -14,6 +14,7 @@ export function generatePrefixPattern(context: string[], tokens: TokenStream): P
         type: "PrefixPattern",
         operand: null!,
         operator: null!,
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -80,7 +81,7 @@ export function generatePrefixPattern(context: string[], tokens: TokenStream): P
     for (let operandGenerator of operandGenerators) {
         if (isBlockedType(operandGenerator.name.replace("generate", '')))
             continue
-        
+
         operand = operandGenerator(["PrefixPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
@@ -98,6 +99,10 @@ export function generatePrefixPattern(context: string[], tokens: TokenStream): P
         tokens.cursor = initialCursor
         return operand
     }
+
+    prefixPattern.includesNamed =
+        operand.type == "Literal" && operand.value.type == "Identifier" ||
+        operand.type != "Literal" && operand.includesNamed
 
     prefixPattern.operand = operand
     prefixPattern.end = operand.end

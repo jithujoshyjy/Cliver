@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, skip, skipables, type Node, isOperator } from "../../utility.js"
+import { createMismatchToken, skip, skipables, type Node, isOperator, withBlocked } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
 import { generateNonVerbalOperator } from "../expression/operation.ts/non-verbal-operator.js"
 import { generateTypeExpression } from "./type-expression.js"
@@ -18,12 +18,17 @@ export function generateTypeAssertion(context: string[], tokens: TokenStream): T
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const expression = generateExpression(["TypeAssertion", ...context], tokens)
+    const expression: Expression | MismatchToken
+        = withBlocked(["AssignExpr"], () => generateExpression(["TypeAssertion", ...context], tokens))
+    
     if (expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
     }
 
+    typeAssertion.start = expression.start
+    typeAssertion.line = expression.line
+    typeAssertion.column = expression.column
     typeAssertion.left = expression
 
     currentToken = skipables.includes(tokens.currentToken)
@@ -53,6 +58,7 @@ export function generateTypeAssertion(context: string[], tokens: TokenStream): T
         return typeExpr
     }
 
+    typeAssertion.end = typeExpr.end
     typeAssertion.right = typeExpr
 
     return typeAssertion

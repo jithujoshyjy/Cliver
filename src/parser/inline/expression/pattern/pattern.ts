@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { isBlockedType, type Node } from "../../../utility.js"
+import { isBlockedType, withUnblocked, type Node } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTypeAssertion } from "../../type/type-assertion.js"
 import { generateAsExpression } from "../as-expression.js"
@@ -15,6 +15,7 @@ export function generatePattern(context: string[], tokens: TokenStream): Pattern
     const pattern: Pattern = {
         type: "Pattern",
         body: null!,
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -25,7 +26,7 @@ export function generatePattern(context: string[], tokens: TokenStream): Pattern
     const initialCursor = tokens.cursor
 
     const nodeGenerators = [
-        generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern,  generateParenPattern, generateBracketPattern,
+        generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
         generateInterpPattern, generateLiteral
     ]
 
@@ -41,15 +42,21 @@ export function generatePattern(context: string[], tokens: TokenStream): Pattern
         | Literal
         | MismatchToken = null!
 
+    const unblockedTypes = [
+        "AsExpression", "InfixPattern", "PrefixPattern",
+        "PostfixPattern", "TypeAssertion", "InterpPattern"
+    ]
+
     for (let nodeGenerator of nodeGenerators) {
         if (isBlockedType(nodeGenerator.name.replace("generate", '')))
             continue
-        
-        patternNode = nodeGenerator(["Pattern", ...context], tokens)
+
+        patternNode = withUnblocked(unblockedTypes, () =>
+            nodeGenerator(["Pattern", ...context], tokens))
+
         currentToken = tokens.currentToken
-        if (patternNode.type != "MismatchToken") {
+        if (patternNode.type != "MismatchToken")
             break
-        }
 
         if (patternNode.errorDescription.severity <= 3) {
             tokens.cursor = initialCursor
@@ -62,8 +69,17 @@ export function generatePattern(context: string[], tokens: TokenStream): Pattern
         return patternNode
     }
 
-    pattern.body = patternNode
+    pattern.line = patternNode.line
+    pattern.column = patternNode.column
+    pattern.start = patternNode.start
+    pattern.end = patternNode.end
 
+    pattern.includesNamed =
+        patternNode.type == "AsExpression" ||
+        patternNode.type == "Literal" && patternNode.value.type == "Identifier" ||
+        patternNode.type != "Literal" && patternNode.type != "TypeAssertion" && patternNode.includesNamed
+
+    pattern.body = patternNode
     return pattern
 }
 

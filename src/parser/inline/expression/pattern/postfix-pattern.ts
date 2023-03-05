@@ -12,6 +12,7 @@ export function generatePostfixPattern(context: string[], tokens: TokenStream): 
         type: "PostfixPattern",
         operand: null!,
         operator: null!,
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -36,7 +37,7 @@ export function generatePostfixPattern(context: string[], tokens: TokenStream): 
     for (let operandGenerator of operandGenerators) {
         if (isBlockedType(operandGenerator.name.replace("generate", '')))
             continue
-        
+
         operand = operandGenerator(["PostfixPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
@@ -60,10 +61,14 @@ export function generatePostfixPattern(context: string[], tokens: TokenStream): 
     postfixPattern.line = operand.line
     postfixPattern.column = operand.column
 
+    postfixPattern.includesNamed =
+        operand.type == "Literal" && operand.value.type == "Identifier" ||
+        operand.type != "Literal" && operand.includesNamed
+
     currentToken = _skipables.includes(tokens.currentToken)
         ? skip(tokens, _skipables)
         : tokens.currentToken
-    
+
     let _operator = generateNonVerbalOperator(["PostfixPattern", ...context], tokens)
 
     if (_operator.type == "MismatchToken") {

@@ -440,7 +440,7 @@ type ElseInline = {
 type MatchInline = {
     type: "MatchInline",
     matcher: Expression,
-    cases: Array<(CaseExpr & {body: Expression | Block})>,
+    cases: Array<(CaseExpr & { body: Expression | Block })>,
     line: number,
     column: number,
     start: number,
@@ -521,6 +521,7 @@ type Pattern = {
     | PostfixPattern
     | InterpPattern
     | Literal,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -529,8 +530,18 @@ type Pattern = {
 
 type PairPattern = {
     type: "PairPattern",
-    key: any,
-    value: any,
+    key: PrefixPattern | PostfixPattern | Literal,
+    value: AsExpression
+    | TypeAssertion
+    | BracePattern
+    | BracketPattern
+    | ParenPattern
+    | PrefixPattern
+    | InfixPattern
+    | PostfixPattern
+    | InterpPattern
+    | Literal,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -540,6 +551,7 @@ type PairPattern = {
 type InterpPattern = {
     type: "InterpPattern",
     body: TaggedString | MetaDataInterpolation,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -550,6 +562,7 @@ type PrefixPattern = {
     type: "PrefixPattern",
     operator: NonVerbalOperator,
     operand: Literal | BracePattern | BracketPattern | ParenPattern | InterpPattern | PrefixPattern | InfixPattern | PostfixPattern,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -560,6 +573,7 @@ type PostfixPattern = {
     type: "PostfixPattern",
     operator: NonVerbalOperator,
     operand: Literal | BracePattern | BracketPattern | ParenPattern | InterpPattern,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -585,6 +599,7 @@ type InfixPattern = {
     | PrefixPattern
     | PostfixPattern
     | Literal,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -593,7 +608,12 @@ type InfixPattern = {
 
 type BracePattern = {
     type: "BracePattern",
-    values: any[],
+    values: Array<TypeAssertion
+        | AsExpression
+        | PairPattern
+        | PrefixPattern
+        | Literal>,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -602,7 +622,18 @@ type BracePattern = {
 
 type BracketPattern = {
     type: "BracketPattern",
-    values: any[][],
+    values: Array<AsExpression
+        | InfixPattern
+        | PrefixPattern
+        | PostfixPattern
+        | TypeAssertion
+        | BracePattern
+        | ParenPattern
+        | BracketPattern
+        | InterpPattern
+        | Literal
+        | MismatchToken>[],
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -611,8 +642,31 @@ type BracketPattern = {
 
 type ParenPattern = {
     type: "ParenPattern",
-    positional: Array<any>,
-    keyword: Array<any>,
+    positional: Array<PairPattern
+        | AsExpression
+        | TypeAssertion
+        | BracePattern
+        | BracketPattern
+        | ParenPattern
+        | PrefixPattern
+        | InfixPattern
+        | PostfixPattern
+        | InterpPattern
+        | Literal
+        | MismatchToken>,
+    keyword: Array<PairPattern
+        | AsExpression
+        | TypeAssertion
+        | BracePattern
+        | BracketPattern
+        | ParenPattern
+        | PrefixPattern
+        | InfixPattern
+        | PostfixPattern
+        | InterpPattern
+        | Literal
+        | MismatchToken>,
+    includesNamed: boolean,
     line: number,
     column: number,
     start: number,
@@ -631,7 +685,7 @@ type CommentLiteral = {
 
 type Literal = {
     type: "Literal",
-    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | CharLiteral | SymbolLiteral | NumericLiteral | DoExpr | Identifier | GroupExpression | OperatorRef,
+    value: MapLiteral | TupleLiteral | ArrayLiteral | StringLiteral | CharLiteral | SymbolLiteral | NumericLiteral | Identifier | OperatorRef,
     line: number,
     column: number,
     start: number,
@@ -640,14 +694,11 @@ type Literal = {
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | SymbolFragment | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | AssignExpr | GroupExpression,
+    value: MetaDataInterpolation | TaggedSymbol | SymbolFragment | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | AssignExpr | DoExpr | GroupExpression,
     line: number,
     column: number,
     start: number,
-    end: number,
-    meta: {
-        resumeFrom?: number
-    }
+    end: number
 }
 
 type Expression = {
@@ -841,7 +892,7 @@ type TaggedString = {
     start: number,
     end: number,
     meta: {
-        resumeFrom?: number 
+        resumeFrom?: number
     }
 }
 

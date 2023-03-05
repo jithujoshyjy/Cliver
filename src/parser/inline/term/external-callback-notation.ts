@@ -1,6 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { skip, skipables, type Node, PartialParse, createMismatchToken } from "../../utility.js"
-import { generateDoExpr } from "../literal/do-expr.js"
+import { generateDoExpr } from "./do-expr.js"
 import { generateFunctionCall } from "./function-call.js"
 
 export function generateExternalCallbackNotation(context: string[], tokens: TokenStream): ExternalCallbackNotation | MismatchToken {

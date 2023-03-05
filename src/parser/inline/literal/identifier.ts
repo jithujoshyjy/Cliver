@@ -14,7 +14,7 @@ export function generateIdentifier(context: string[], tokens: TokenStream): Iden
     let currentToken = tokens.currentToken
     let wordCount = 0
     const initialCursor = tokens.cursor
-
+    
     if (isPunctuator(currentToken, "$")) {
         identifier.name += "$"
         identifier.start = currentToken.start

@@ -10,6 +10,7 @@ export function generateBracePattern(context: string[], tokens: TokenStream): Br
     const bracePattern: BracePattern = {
         type: "BracePattern",
         values: [],
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -26,8 +27,6 @@ export function generateBracePattern(context: string[], tokens: TokenStream): Br
 
     currentToken = skip(tokens, skipables)
     bracePattern.start = currentToken.start
-    bracePattern.end = currentToken.end
-
     bracePattern.line = currentToken.line
     bracePattern.column = currentToken.column
 
@@ -62,9 +61,10 @@ export function generateBracePattern(context: string[], tokens: TokenStream): Br
             : tokens.currentToken
 
         for (let nodeGenerator of nodeGenerators) {
+
             if (isBlockedType(nodeGenerator.name.replace("generate", '')))
                 continue
-            
+
             patternNode = nodeGenerator(["BracePattern", ...context], tokens)
             currentToken = tokens.currentToken
 
@@ -108,13 +108,12 @@ export function generateBracePattern(context: string[], tokens: TokenStream): Br
             return patternNode
         }
 
-        bracePattern.values.push(patternNode)
-        const comma = captureComma()
+        bracePattern.includesNamed ||=
+            patternNode.type == "AsExpression" ||
+            patternNode.type == "Literal" && patternNode.value.type == "Identifier" ||
+            patternNode.type != "Literal" && patternNode.type != "TypeAssertion" && patternNode.includesNamed
 
-        if (comma.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return comma
-        }
+        bracePattern.values.push(patternNode)
 
         lastDelim = captureComma()
         isInitial = false

@@ -164,6 +164,7 @@ export function generateUnitFunction(context: string[], tokens: TokenStream): Un
             type: "Pattern",
             body: literal,
             line: literal.line,
+            includesNamed: false,
             column: literal.column,
             start: literal.start,
             end: literal.end

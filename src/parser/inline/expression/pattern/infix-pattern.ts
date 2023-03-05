@@ -16,6 +16,7 @@ export function generateInfixPattern(context: string[], tokens: TokenStream): In
         operator: null!,
         left: null!,
         right: null!,
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -71,6 +72,10 @@ export function generateInfixPattern(context: string[], tokens: TokenStream): In
     infixPattern.start = operand.start
     infixPattern.line = operand.line
     infixPattern.column = operand.column
+
+    infixPattern.includesNamed =
+        operand.type == "Literal" && operand.value.type == "Identifier" ||
+        operand.type != "Literal" && operand.includesNamed
 
     const getPrecidence = (op: NonVerbalOperator | VerbalOperator) => {
         return operatorPrecedence.infix.left[op.name]
@@ -177,6 +182,10 @@ export function generateInfixPattern(context: string[], tokens: TokenStream): In
         infixPattern.right = operand
         infixPattern.end = operand.end
     }
+
+    infixPattern.includesNamed ||=
+        operand.type == "Literal" && operand.value.type == "Identifier" ||
+        operand.type != "Literal" && operand.includesNamed
 
     return infixPattern
 }

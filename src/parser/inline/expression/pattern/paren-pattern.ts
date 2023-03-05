@@ -16,6 +16,7 @@ export function generateParenPattern(context: string[], tokens: TokenStream): Pa
         type: "ParenPattern",
         positional: [],
         keyword: [],
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -166,11 +167,17 @@ export function generateParenPattern(context: string[], tokens: TokenStream): Pa
                 return createMismatchToken(currentToken, [error, maybeIdentifier.type, line, column])
             }
 
+            parenPattern.includesNamed ||=
+                value.type == "AsExpression" ||
+                value.type == "Literal" && value.value.type == "Identifier" ||
+                value.type != "Literal" && value.type != "TypeAssertion" && value.includesNamed
+
             parenPattern[argType].push(value as any)
         }
-
-        if (skipables.includes(currentToken))
-            currentToken = skip(tokens, skipables)
+        
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
 
         lastDelim = captureComma()
 

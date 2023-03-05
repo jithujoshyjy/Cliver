@@ -16,6 +16,7 @@ export function generatePairPattern(context: string[], tokens: TokenStream): Pai
         type: "PairPattern",
         key: null!,
         value: null!,
+        includesNamed: false,
         line: 0,
         column: 0,
         start: 0,
@@ -65,7 +66,11 @@ export function generatePairPattern(context: string[], tokens: TokenStream): Pai
     pairPattern.start = key.start
     pairPattern.line = key.line
     pairPattern.column = key.column
-    
+
+    pairPattern.includesNamed =
+        key.type == "Literal" && key.value.type == "Identifier" ||
+        key.type != "Literal" && key.includesNamed
+
     currentToken = skipables.includes(tokens.currentToken)
         ? skip(tokens, skipables)
         : tokens.currentToken
@@ -92,7 +97,7 @@ export function generatePairPattern(context: string[], tokens: TokenStream): Pai
     for (let valueGenerator of valueGenerators) {
         if (isBlockedType(valueGenerator.name.replace("generate", '')))
             continue
-        
+
         value = valueGenerator(["PairPattern", ...context], tokens)
         currentToken = tokens.currentToken
 
@@ -111,6 +116,11 @@ export function generatePairPattern(context: string[], tokens: TokenStream): Pai
 
     pairPattern.value = value
     pairPattern.end = value.end
+
+    pairPattern.includesNamed =
+        value.type == "AsExpression" ||
+        value.type == "Literal" && value.value.type == "Identifier" ||
+        value.type != "Literal" && value.type != "TypeAssertion" && value.includesNamed
 
     return pairPattern
 }

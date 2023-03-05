@@ -20,7 +20,7 @@ export function generateNamedFunction(context: string[], tokens: TokenStream): N
         end: 0
     }
 
-    let currentToken = skip(tokens, skipables) // skip fun
+    let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
     /* const captureSignature = () => {

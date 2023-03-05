@@ -52,4 +52,10 @@ export default {
         "severity": 2,
         "catagory": "error"
     },
+
+    "Invalid left hand side of assignment on {0}:{1}": {
+        "code": "CLE0010",
+        "severity": 2,
+        "catagory": "error"
+    },
 }

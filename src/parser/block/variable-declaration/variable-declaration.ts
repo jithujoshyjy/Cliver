@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { generateIdentifier } from "../../inline/literal/identifier.js"
+import { generateKeyword } from "../../inline/keyword.js"
 import { generateTypeExpression } from "../../inline/type/type-expression.js"
 import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, isKeyword } from "../../utility.js"
 import { generateVariableDeclarator } from "./variable-declarator.js"
@@ -19,7 +19,7 @@ export function generateVariableDeclaration(context: string[], tokens: TokenStre
     let currentToken = tokens.currentToken
     const initialCursor = tokens.cursor
 
-    const varOrValKeyword = generateIdentifier(["VariableDeclaration", ...context], tokens)
+    const varOrValKeyword = generateKeyword(["VariableDeclaration", ...context], tokens)
     if (varOrValKeyword.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return varOrValKeyword
@@ -29,6 +29,10 @@ export function generateVariableDeclaration(context: string[], tokens: TokenStre
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
     variableDeclaration.start = varOrValKeyword.start
     variableDeclaration.line = varOrValKeyword.line
@@ -47,6 +51,7 @@ export function generateVariableDeclaration(context: string[], tokens: TokenStre
             tokens.cursor = initialCursor
             return signature
         }
+
         variableDeclaration.signature = signature
         currentToken = skipables.includes(tokens.currentToken)
             ? skip(tokens, skipables)
@@ -57,9 +62,9 @@ export function generateVariableDeclaration(context: string[], tokens: TokenStre
         currentToken = skipables.includes(tokens.currentToken)
             ? skip(tokens, skipables)
             : tokens.currentToken
-        
+
         const declarator = generateVariableDeclarator(["VariableDeclaration", ...context], tokens)
-    
+
         currentToken = tokens.currentToken
         return declarator
     }
@@ -69,44 +74,28 @@ export function generateVariableDeclaration(context: string[], tokens: TokenStre
             ? skip(tokens, skipables)
             : tokens.currentToken
 
-        if (!isPunctuator(currentToken, ",")) {
-            tokens.cursor = initialCursor
+        if (!isPunctuator(currentToken, ","))
             return createMismatchToken(currentToken)
-        }
 
         currentToken = skip(tokens, skipables)
         return currentToken
     }
 
-    const captureDeclarators = () => {
-        const declarators: VariableDeclarator[] = []
-        while (!tokens.isFinished) {
-            const declarator = captureDeclarator()
+    while (!tokens.isFinished) {
+        const declarator = captureDeclarator()
 
-            if (declarator.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return declarator
-            }
-
-            declarators.push(declarator)
-            const comma = captureComma()
-
-            if (comma.type == "MismatchToken")
-                break
-
-            currentToken = skip(tokens, skipables)
+        if (declarator.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return declarator
         }
 
-        return declarators
-    }
+        variableDeclaration.declarations.push(declarator)
+        const comma = captureComma()
 
-    const declarators = captureDeclarators()
-    if (!Array.isArray(declarators)) {
-        tokens.cursor = initialCursor
-        return declarators
+        currentToken = tokens.currentToken
+        if (comma.type == "MismatchToken" || currentToken.type == "EOF")
+            break
     }
-
-    variableDeclaration.declarations = declarators
 
     return variableDeclaration
 }

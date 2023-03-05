@@ -16,11 +16,12 @@ export function generateKeyword(context: string[], tokens: TokenStream): Keyword
     const initialCursor = tokens.cursor
 
     const maybeKeyword = generateIdentifier(["Keyword", ...context], tokens)
+    
     if(maybeKeyword.type != "MismatchToken" || !maybeKeyword.partialParse) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
-
+    
     tokens.cursor = maybeKeyword.partialParse.cursor
     const identifier = maybeKeyword.partialParse.result as Identifier
     

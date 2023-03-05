@@ -2,7 +2,7 @@ import { TokenStream } from "../../../lexer/token.js"
 import { generateExpression } from "../../inline/expression/expression.js"
 import { generatePattern } from "../../inline/expression/pattern/pattern.js"
 import { generateTypeExpression } from "../../inline/type/type-expression.js"
-import { isOperator, skip, skipables, withBlocked, type Node } from "../../utility.js"
+import { isOperator, skip, skipables, withBlocked, type Node, createMismatchToken, DiagnosticMessage } from "../../utility.js"
 
 export function generateVariableDeclarator(context: string[], tokens: TokenStream): VariableDeclarator | MismatchToken {
     const variableDeclarator: VariableDeclarator = {
@@ -30,6 +30,12 @@ export function generateVariableDeclarator(context: string[], tokens: TokenStrea
     if (pattern.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return pattern
+    }
+
+    if(!pattern.includesNamed) {
+        const error: DiagnosticMessage = "Invalid left hand side of assignment on {0}:{1}"
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken, [error, pattern.line, pattern.column])
     }
 
     variableDeclarator.start = pattern.start
