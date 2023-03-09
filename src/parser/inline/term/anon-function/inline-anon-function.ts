@@ -6,21 +6,21 @@ import { generatePattern } from "../../expression/pattern/pattern.js"
 import { generateTypeExpression } from "../../type/type-expression.js"
 
 export function generateInlineAnonFunction(context: string[], tokens: TokenStream): InlineAnonFunction | MismatchToken {
-    const inlineAnonFunction: InlineAnonFunction = {
-        type: "InlineAnonFunction",
-        body: null!,
-        params: [],
-        signature: null,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const inlineAnonFunction: InlineAnonFunction = {
+		type: "InlineAnonFunction",
+		body: null!,
+		params: [],
+		signature: null,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = skip(tokens, skipables) // skip fun
-    const initialCursor = tokens.cursor
+	const currentToken = skip(tokens, skipables) // skip fun
+	const initialCursor = tokens.cursor
 
-    /* const captureSignature = () => {
+	/* const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
         const signature = generateTypeExpression(inlineAnonFunction, tokens)
         return signature
@@ -101,5 +101,5 @@ export function generateInlineAnonFunction(context: string[], tokens: TokenStrea
 
     inlineAnonFunction.body = expression */
 
-    return inlineAnonFunction
+	return inlineAnonFunction
 }

@@ -2,80 +2,80 @@ import { TokenStream } from "../../lexer/token.js"
 import { generateNonVerbalOperator } from "../inline/expression/operation.ts/non-verbal-operator.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generatePropertyAccess } from "../inline/term/property-access.js"
-import { createMismatchToken, isOperator, skip, type Node, _skipables, isBlockedType } from "../utility.js"
+import { createMismatchToken, skip, _skipables, isBlockedType } from "../utility.js"
 
 export function generateBlockMacroApplication(context: string[], tokens: TokenStream): BlockMacroApplication | MismatchToken {
-    const blockMacroApplication: BlockMacroApplication = {
-        type: "BlockMacroApplication",
-        caller: null!,
-        left: [],
-        right: [],
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const blockMacroApplication: BlockMacroApplication = {
+		type: "BlockMacroApplication",
+		caller: null!,
+		left: [],
+		right: [],
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    const initialCursor = tokens.cursor
-    let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
 
-    const maybeOperator = generateNonVerbalOperator(["BlockMacroApplication", ...context], tokens)
-    if (maybeOperator.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return maybeOperator
-    }
+	const maybeOperator = generateNonVerbalOperator(["BlockMacroApplication", ...context], tokens)
+	if (maybeOperator.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return maybeOperator
+	}
 
-    if (maybeOperator.name != "@@") {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (maybeOperator.name != "@@") {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    blockMacroApplication.start = currentToken.start
-    blockMacroApplication.line = currentToken.line
-    blockMacroApplication.column = currentToken.column
+	blockMacroApplication.start = currentToken.start
+	blockMacroApplication.line = currentToken.line
+	blockMacroApplication.column = currentToken.column
 
-    currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
+	currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables)
+		: tokens.currentToken
 
-    const nodeGenerators = [
-        generatePropertyAccess, generateIdentifier
-    ]
+	const nodeGenerators = [
+		generatePropertyAccess, generateIdentifier
+	]
 
-    let caller: Identifier
+	let caller: Identifier
         | PropertyAccess
         | MismatchToken = null!
 
-    for (const nodeGenerator of nodeGenerators) {
-        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-            continue
+	for (const nodeGenerator of nodeGenerators) {
+		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+			continue
         
-        caller = nodeGenerator(["BlockMacroApplication", ...context], tokens)
-        currentToken = tokens.currentToken
+		caller = nodeGenerator(["BlockMacroApplication", ...context], tokens)
+		currentToken = tokens.currentToken
 
-        if (caller.type != "MismatchToken")
-            break
+		if (caller.type != "MismatchToken")
+			break
 
-        if (caller.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return caller
-        }
-    }
+		if (caller.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return caller
+		}
+	}
 
-    if (caller.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return caller
-    }
+	if (caller.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return caller
+	}
 
-    blockMacroApplication.caller = caller
-    return blockMacroApplication
+	blockMacroApplication.caller = caller
+	return blockMacroApplication
 }
 
 export function printBlockMacroApplication(token: BlockMacroApplication, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const space = ' '.repeat(4)
-    return "BlockMacroApplication\n"
+	const space = " ".repeat(4)
+	return "BlockMacroApplication\n"
 }

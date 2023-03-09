@@ -3,56 +3,56 @@ import { createMismatchToken, isOperator, type Node } from "../../../utility.js"
 import { generateIntegerLiteral } from "./integer-literal.js"
 
 export function generateFloatLiteral(context: string[], tokens: TokenStream): FloatLiteral | MismatchToken {
-    const floatLiteral: FloatLiteral = {
-        type: "FloatLiteral",
-        value: "0",
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const floatLiteral: FloatLiteral = {
+		type: "FloatLiteral",
+		value: "0",
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    const initialCursor = tokens.cursor
-    let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
 
-    const integerPart = generateIntegerLiteral(["FloatLiteral", ...context], tokens)
-    currentToken = tokens.currentToken
+	const integerPart = generateIntegerLiteral(["FloatLiteral", ...context], tokens)
+	currentToken = tokens.currentToken
 
-    if (integerPart.type == "IntegerLiteral")
-        floatLiteral.value = integerPart.value
+	if (integerPart.type == "IntegerLiteral")
+		floatLiteral.value = integerPart.value
 
-    if (!isOperator(currentToken, ".")) {
+	if (!isOperator(currentToken, ".")) {
 
-        const cursor = tokens.cursor
-        if (integerPart.type == "IntegerLiteral")
-            return createMismatchToken(currentToken, { cursor, result: integerPart })
+		const cursor = tokens.cursor
+		if (integerPart.type == "IntegerLiteral")
+			return createMismatchToken(currentToken, { cursor, result: integerPart })
 
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    if (integerPart.type == "IntegerLiteral") {
-        floatLiteral.start = integerPart.start
-        floatLiteral.line = integerPart.line
-        floatLiteral.column = integerPart.column
-    }
-    else {
-        floatLiteral.start = currentToken.start
-        floatLiteral.line = currentToken.line
-        floatLiteral.column = currentToken.column
-    }
+	if (integerPart.type == "IntegerLiteral") {
+		floatLiteral.start = integerPart.start
+		floatLiteral.line = integerPart.line
+		floatLiteral.column = integerPart.column
+	}
+	else {
+		floatLiteral.start = currentToken.start
+		floatLiteral.line = currentToken.line
+		floatLiteral.column = currentToken.column
+	}
 
-    floatLiteral.value += "."
-    tokens.advance()
+	floatLiteral.value += "."
+	tokens.advance()
 
-    const floatPart = generateIntegerLiteral(["FloatLiteral", ...context], tokens)
-    if (floatPart.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return floatPart
-    }
+	const floatPart = generateIntegerLiteral(["FloatLiteral", ...context], tokens)
+	if (floatPart.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return floatPart
+	}
 
-    floatLiteral.value += floatPart.value
-    floatLiteral.end = floatPart.end
+	floatLiteral.value += floatPart.value
+	floatLiteral.end = floatPart.end
 
-    return floatLiteral
+	return floatLiteral
 }

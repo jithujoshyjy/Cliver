@@ -3,19 +3,19 @@ import { createMismatchToken, isOperator, skip, skipables, type Node } from "../
 import { generateTypeAssertion } from "./type-assertion.js"
 
 export function generateStructureType(context: string[], tokens: TokenStream): StructureType | MismatchToken {
-    const structureType: StructureType = {
-        type: "StructureType",
-        fields: [],
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const structureType: StructureType = {
+		type: "StructureType",
+		fields: [],
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    const initialCursor = tokens.cursor
-    let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
+	const currentToken = tokens.currentToken
 
-    /* if(currentToken.type != TokenType.BraceEnclosed) {
+	/* if(currentToken.type != TokenType.BraceEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -58,5 +58,5 @@ export function generateStructureType(context: string[], tokens: TokenStream): S
         }
     } */
 
-    return structureType
+	return structureType
 }

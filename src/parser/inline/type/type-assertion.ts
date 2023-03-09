@@ -5,62 +5,62 @@ import { generateNonVerbalOperator } from "../expression/operation.ts/non-verbal
 import { generateTypeExpression } from "./type-expression.js"
 
 export function generateTypeAssertion(context: string[], tokens: TokenStream): TypeAssertion | MismatchToken {
-    const typeAssertion: TypeAssertion = {
-        type: "TypeAssertion",
-        left: null!,
-        right: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const typeAssertion: TypeAssertion = {
+		type: "TypeAssertion",
+		left: null!,
+		right: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const expression: Expression | MismatchToken
+	const expression: Expression | MismatchToken
         = withBlocked(["AssignExpr"], () => generateExpression(["TypeAssertion", ...context], tokens))
     
-    if (expression.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return expression
-    }
+	if (expression.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return expression
+	}
 
-    typeAssertion.start = expression.start
-    typeAssertion.line = expression.line
-    typeAssertion.column = expression.column
-    typeAssertion.left = expression
+	typeAssertion.start = expression.start
+	typeAssertion.line = expression.line
+	typeAssertion.column = expression.column
+	typeAssertion.left = expression
 
-    currentToken = skipables.includes(tokens.currentToken)
-        ? skip(tokens, skipables)
-        : tokens.currentToken
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
-    const doubleColon = generateNonVerbalOperator(["TypeAssertion", ...context], tokens)
+	const doubleColon = generateNonVerbalOperator(["TypeAssertion", ...context], tokens)
 
-    if (doubleColon.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return doubleColon
-    }
+	if (doubleColon.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return doubleColon
+	}
 
-    if(doubleColon.name != "::") {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if(doubleColon.name != "::") {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    currentToken = skipables.includes(tokens.currentToken)
-        ? skip(tokens, skipables)
-        : tokens.currentToken
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
     
-    const typeExpr = generateTypeExpression(["TypeAssertion", ...context], tokens)
+	const typeExpr = generateTypeExpression(["TypeAssertion", ...context], tokens)
 
-    if (typeExpr.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return typeExpr
-    }
+	if (typeExpr.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return typeExpr
+	}
 
-    typeAssertion.end = typeExpr.end
-    typeAssertion.right = typeExpr
+	typeAssertion.end = typeExpr.end
+	typeAssertion.right = typeExpr
 
-    return typeAssertion
+	return typeAssertion
 }
 

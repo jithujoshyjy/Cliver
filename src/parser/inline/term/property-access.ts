@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator, PartialParse, lookAheadForFunctionCall, lookAheadForStringLiteral, lookAheadForSymbolLiteral, isBlockedType } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, isPunctuator, isBlockedType, withBlocked, withUnblocked, PartialParse } from "../../utility.js"
 import { generateGroupExpression } from "../expression/group-expression.js"
 import { generateKeyword } from "../keyword.js"
 import { generateArrayLiteral } from "../literal/array-literal.js"
@@ -13,36 +13,33 @@ import { generateTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol } from "./tagged-symbol.js"
 
 export function generatePropertyAccess(context: string[], tokens: TokenStream): PropertyAccess | MismatchToken {
-    let propertyAccess: PropertyAccess = {
-        type: "PropertyAccess",
-        accessor: null!,
-        field: null!,
-        optional: false,
-        computed: false,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	let propertyAccess: PropertyAccess = {
+		type: "PropertyAccess",
+		accessor: null!,
+		field: null!,
+		optional: false,
+		computed: false,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const accessorGenerators = [
-        generateImplicitMultiplication, generateTaggedNumber, generateLiteral, generateGroupExpression
-    ] as Array<(context: string[], tokens: TokenStream) => typeof propertyAccess.accessor | MismatchToken>
+	const accessorGenerators = [
+		generateFunctionCall, generateTaggedSymbol, generateTaggedString, generateImplicitMultiplication,
+		generateTaggedNumber, generateLiteral, generateGroupExpression, generateKeyword
+	]
 
-    if (lookAheadForSymbolLiteral(tokens))
-        accessorGenerators.unshift(generateTaggedSymbol)
-    else if (lookAheadForStringLiteral(tokens))
-        accessorGenerators.unshift(generateTaggedString)
+	const fieldGenerators = [
+		generateFunctionCall, generateIntegerLiteral, generateKeyword, generateIdentifier
+	]
 
-    const fieldGenerators = [
-        generateIntegerLiteral, generateKeyword, generateIdentifier
-    ]
-
-    let accessor: PropertyAccess
+	let accessor: PropertyAccess
         | Literal
+        | Keyword
         | TaggedSymbol
         | TaggedString
         | ImplicitMultiplication
@@ -51,169 +48,160 @@ export function generatePropertyAccess(context: string[], tokens: TokenStream): 
         | GroupExpression
         | MismatchToken = null!
 
-    for (let accessorGenerator of accessorGenerators) {
+	for (const accessorGenerator of accessorGenerators) {
 
-        if (isBlockedType(accessorGenerator.name.replace("generate", '')))
-            continue
+		if (isBlockedType(accessorGenerator.name.replace("generate", "")))
+			continue
 
-        if (accessorGenerator.name.endsWith("PropertyAccess"))
-            continue
+		accessor = withBlocked(["PropertyAccess"], () => accessorGenerator(["PropertyAccess", ...context], tokens))
+		currentToken = tokens.currentToken
 
-        accessor = accessorGenerator(["PropertyAccess", ...context], tokens)
-        currentToken = tokens.currentToken
+		if (accessor.type != "MismatchToken")
+			break
 
-        if (accessor.type != "MismatchToken")
-            break
+		if (accessor.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return accessor
+		}
+	}
 
-        if (accessor.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return accessor
-        }
-    }
+	if (accessor.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return accessor
+	}
 
-    if (accessor.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return accessor
-    }
+	propertyAccess.start = accessor.start
+	propertyAccess.line = accessor.line
+	propertyAccess.column = accessor.column
+	propertyAccess.accessor = accessor
 
-    propertyAccess.start = accessor.start
-    propertyAccess.line = accessor.line
-    propertyAccess.column = accessor.column
-    propertyAccess.accessor = accessor
+	if (currentToken.type == "EOF") {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
+	let isInitial = true
+	while (!tokens.isFinished) {
 
-    if (currentToken.type == "EOF") {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+		currentToken = _skipables.includes(tokens.currentToken)
+			? skip(tokens, _skipables)
+			: tokens.currentToken
 
-    let isInitial = true
+		if (isOperator(currentToken, "?")) {
+			propertyAccess.optional = true
+			currentToken = skip(tokens, _skipables)
+		}
 
-    while (!tokens.isFinished) {
-        currentToken = _skipables.includes(tokens.currentToken)
-            ? skip(tokens, _skipables)
-            : tokens.currentToken
+		if (isPunctuator(currentToken, "[")) {
+			propertyAccess.computed = true
 
-        if (isOperator(currentToken, '?')) {
-            propertyAccess.optional = true
-            currentToken = skip(tokens, _skipables)
-        }
+			const field = generateArrayLiteral(["PropertyAccess", ...context], tokens)
+			if (field.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return field
+			}
 
-        if (isPunctuator(currentToken, '[')) {
-            propertyAccess.computed = true
+			propertyAccess.end = field.end
+			isInitial = false
 
-            const field = generateArrayLiteral(["PropertyAccess", ...context], tokens)
-            if (field.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return field
-            }
+			if (propertyAccess.field) {
+				const parentPropertyAccess = Object.assign({}, propertyAccess)
+				parentPropertyAccess.accessor = propertyAccess
 
-            propertyAccess.end = field.end
-            isInitial = false
+				parentPropertyAccess.field = field
+				propertyAccess = parentPropertyAccess
+				continue
+			}
 
-            if (propertyAccess.field) {
-                const parentPropertyAccess = Object.assign({}, propertyAccess)
-                parentPropertyAccess.accessor = propertyAccess
+			propertyAccess.field = field
+			continue
+		}
 
-                parentPropertyAccess.field = field
-                propertyAccess = parentPropertyAccess
-                continue
-            }
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-            propertyAccess.field = field
-            continue
-        }
+		const isDotOperator = isOperator(currentToken, ".") || isOperator(currentToken, "?.")
 
-        currentToken = skipables.includes(tokens.currentToken)
-            ? skip(tokens, skipables)
-            : tokens.currentToken
+		if (!isDotOperator && !isInitial)
+			break
 
-        const isDotOperator = isOperator(currentToken, '.') || isOperator(currentToken, '?.')
+		if (!isDotOperator) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
-        if (!isDotOperator && !isInitial)
-            break
+		if (isOperator(currentToken, "?."))
+			propertyAccess.optional = true
 
-        if (!isDotOperator) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+		currentToken = skip(tokens, skipables)
 
-        if (isOperator(currentToken, '?.'))
-            propertyAccess.optional = true
-
-        currentToken = skip(tokens, skipables)
-
-        let field: IntegerLiteral
+		let field: FunctionCall
+            | IntegerLiteral
             | Identifier
             | Keyword
             | MismatchToken = null!
 
-        for (let fieldGenerator of fieldGenerators) {
+		for (const fieldGenerator of fieldGenerators) {
 
-            if (isBlockedType(fieldGenerator.name.replace("generate", '')))
-                continue
+			if (isBlockedType(fieldGenerator.name.replace("generate", ""), ["FunctionCall"]))
+				continue
 
-            field = fieldGenerator(["PropertyAccess", ...context], tokens)
-            currentToken = tokens.currentToken
+			field = withBlocked(["PropertyAccess"],
+				() => fieldGenerator(["PropertyAccess", ...context], tokens))
 
-            if (field.type != "MismatchToken")
-                break
+			currentToken = tokens.currentToken
 
-            if (field.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return field
-            }
-        }
+			if (field.type != "MismatchToken")
+				break
 
-        if (field.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return field
-        }
+			if (field.errorDescription.severity <= 3) {
+				tokens.cursor = initialCursor
+				return field
+			}
+		}
 
-        propertyAccess.end = field.end
-        isInitial = false
+		if (field.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return field
+		}
 
-        if (propertyAccess.field) {
-            const parentPropertyAccess = Object.assign({}, propertyAccess)
-            parentPropertyAccess.accessor = propertyAccess
+		propertyAccess.end = field.end
+		isInitial = false
 
-            parentPropertyAccess.field = field
-            propertyAccess = parentPropertyAccess
-            continue
-        }
+		if (propertyAccess.field) {
+			const parentPropertyAccess = Object.assign({}, propertyAccess)
+			parentPropertyAccess.accessor = propertyAccess
 
-        propertyAccess.field = field
-    }
+			parentPropertyAccess.field = field
+			propertyAccess = parentPropertyAccess
+			continue
+		}
 
-    const isFunctionCallAhead = lookAheadForFunctionCall(tokens)
-    const isStringLiteralAhead = lookAheadForStringLiteral(tokens)
-    const isSymbolLiteralAhead = lookAheadForSymbolLiteral(tokens)
+		propertyAccess.field = field
+	}
 
-    if ([isFunctionCallAhead, isStringLiteralAhead, isSymbolLiteralAhead].some(x => x)) {
-        const partialParse: PartialParse = {
-            result: propertyAccess,
-            cursor: tokens.cursor,
-            meta: {
-                parentType: isFunctionCallAhead
-                    ? "FunctionCall"
-                    : isStringLiteralAhead
-                        ? "TaggedString"
-                        : "TaggedSymbol"
-            }
-        }
+	if (propertyAccess.field.type == "FunctionCall" && context[0] != "FunctionCall") {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-        // tokens.cursor = initialCursor
-        return createMismatchToken(currentToken, partialParse)
-    }
+	if (propertyAccess.field.type == "FunctionCall" && context[0] == "FunctionCall") {
+		const { field: functionCall } = propertyAccess
+		const { caller: field } = functionCall
+		propertyAccess.field = field as Identifier | Keyword | ArrayLiteral
+		tokens.cursor = (propertyAccess.end = field.end) + 1
+		console.log(context[0], propertyAccess)
+	}
 
-    return propertyAccess
+	return propertyAccess
 }
 
 export function printPropertyAccess(token: PropertyAccess, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const space = ' '.repeat(4)
-    return "PropertyAccess\n"
+	const space = " ".repeat(4)
+	return "PropertyAccess\n"
 }

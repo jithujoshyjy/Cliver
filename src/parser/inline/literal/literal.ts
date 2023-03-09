@@ -13,69 +13,69 @@ import { generateSymbolLiteral, printSymbolLiteral } from "./symbol-literal.js"
 import { generateOperatorRef, printOperatorRef } from "./operator-ref.js"
 
 export function generateLiteral(context: string[], tokens: TokenStream): Literal | MismatchToken {
-    const literal: Literal = {
-        type: "Literal",
-        value: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const literal: Literal = {
+		type: "Literal",
+		value: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const nodeGenerators = [
-        generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
-        generateCharLiteral, generateSymbolLiteral, generateNumericLiteral,
-        generateIdentifier, generateOperatorRef,
-    ]
+	const nodeGenerators = [
+		generateMapLiteral, generateTupleLiteral, generateArrayLiteral, generateStringLiteral,
+		generateCharLiteral, generateSymbolLiteral, generateNumericLiteral,
+		generateIdentifier, generateOperatorRef,
+	]
 
-    let node: typeof literal.value | MismatchToken = null!
-    for (let nodeGenerator of nodeGenerators) {
-        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-            continue
+	let node: typeof literal.value | MismatchToken = null!
+	for (const nodeGenerator of nodeGenerators) {
+		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+			continue
         
-        node = nodeGenerator(["Literal", ...context], tokens)
-        currentToken = tokens.currentToken
-        if (node.type != "MismatchToken") {
-            break
-        }
+		node = nodeGenerator(["Literal", ...context], tokens)
+		currentToken = tokens.currentToken
+		if (node.type != "MismatchToken") {
+			break
+		}
 
-        if (node.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return node
-        }
-    }
+		if (node.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return node
+		}
+	}
 
-    if (node.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return node
-    }
+	if (node.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return node
+	}
 
-    literal.start = node.start
-    literal.end = node.end
-    literal.value = node
+	literal.start = node.start
+	literal.end = node.end
+	literal.value = node
 
-    literal.line = node.line
-    literal.column = node.column
+	literal.line = node.line
+	literal.column = node.column
 
-    return literal
+	return literal
 }
 
 export function printLiteral(token: Literal, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const printers = [
-        printMapLiteral, printTupleLiteral, printArrayLiteral,
-        printStringLiteral, printCharLiteral, printSymbolLiteral,
-        printNumericLiteral, printIdentifier, printOperatorRef
-    ] as NodePrinter[]
+	const printers = [
+		printMapLiteral, printTupleLiteral, printArrayLiteral,
+		printStringLiteral, printCharLiteral, printSymbolLiteral,
+		printNumericLiteral, printIdentifier, printOperatorRef
+	] as NodePrinter[]
 
-    const printer = pickPrinter(printers, token.value)!
-    const space = ' '.repeat(4)
-    return "Literal" +
-        '\n' + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
+	const printer = pickPrinter(printers, token.value)!
+	const space = " ".repeat(4)
+	return "Literal" +
+        "\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

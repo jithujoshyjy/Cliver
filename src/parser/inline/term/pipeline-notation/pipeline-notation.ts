@@ -6,61 +6,61 @@ import { generateErrorPipeline } from "./error-pipeline.js"
 import { generateTransformPipeline } from "./transform-pipeline.js"
 
 export function generatePipelineNotation(context: string[], tokens: TokenStream): PipelineNotation | MismatchToken {
-    const pipelineNotation: PipelineNotation = {
-        type: "PipelineNotation",
-        expression: null!,
-        pipes: [],
-        kind: "pointfree",
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const pipelineNotation: PipelineNotation = {
+		type: "PipelineNotation",
+		expression: null!,
+		pipes: [],
+		kind: "pointfree",
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    let expression: AsExpression | Expression | MismatchToken = generateAsExpression(["PipelineNotation", ...context], tokens)
-    if (expression.type == "MismatchToken") {
-        expression = generateExpression(["PipelineNotation", ...context], tokens)
-    }
+	let expression: AsExpression | Expression | MismatchToken = generateAsExpression(["PipelineNotation", ...context], tokens)
+	if (expression.type == "MismatchToken") {
+		expression = generateExpression(["PipelineNotation", ...context], tokens)
+	}
 
-    if (expression.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return expression
-    }
+	if (expression.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return expression
+	}
 
-    pipelineNotation.expression = expression
-    pipelineNotation.kind = expression.type == "AsExpression" ? "pointed" : "pointfree"
+	pipelineNotation.expression = expression
+	pipelineNotation.kind = expression.type == "AsExpression" ? "pointed" : "pointfree"
 
-    while(!tokens.isFinished) {
-        const pipe = parsePipe()
-        currentToken = tokens.currentToken
+	while(!tokens.isFinished) {
+		const pipe = parsePipe()
+		currentToken = tokens.currentToken
 
-        if(pipe.type == "MismatchToken" && pipelineNotation.pipes.length == 0) {
-            tokens.cursor = initialCursor
-            return pipe
-        }
+		if(pipe.type == "MismatchToken" && pipelineNotation.pipes.length == 0) {
+			tokens.cursor = initialCursor
+			return pipe
+		}
 
-        if(pipe.type == "MismatchToken") {
-            break
-        }
+		if(pipe.type == "MismatchToken") {
+			break
+		}
 
-        pipelineNotation.pipes.push(pipe)
-    }
+		pipelineNotation.pipes.push(pipe)
+	}
 
-    return pipelineNotation
+	return pipelineNotation
 
-    function parsePipe() {
-        currentToken = skip(tokens, skipables) // `` | .`` | ??
-        let pipe: TransformPipeline
+	function parsePipe() {
+		currentToken = skip(tokens, skipables) // `` | .`` | ??
+		let pipe: TransformPipeline
             | ErrorPipeline
             | MismatchToken = generateTransformPipeline(["PipelineNotation", ...context], tokens)
 
-        if(pipe.type == "MismatchToken") {
-            pipe = generateErrorPipeline(["PipelineNotation", ...context], tokens)
-        }
+		if(pipe.type == "MismatchToken") {
+			pipe = generateErrorPipeline(["PipelineNotation", ...context], tokens)
+		}
 
-        return pipe
-    }
+		return pipe
+	}
 }

@@ -6,82 +6,82 @@ import { generateCaseExpr, printCaseExpr } from "./case-expression.js"
 import { generateExpression, printExpression } from "./expression.js"
 
 export function generateAsExpression(context: string[], tokens: TokenStream): AsExpression | MismatchToken {
-    const asExpression: AsExpression = {
-        type: "AsExpression",
-        left: null!,
-        right: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const asExpression: AsExpression = {
+		type: "AsExpression",
+		left: null!,
+		right: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const left: Expression | MismatchToken
+	const left: Expression | MismatchToken
         = withBlocked(["AssignExpr"], () => generateExpression(["AsExpression", ...context], tokens))
     
-    if (left.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return left
-    }
+	if (left.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return left
+	}
 
-    asExpression.left = left
-    asExpression.start = left.start
-    asExpression.line = left.line
-    asExpression.column = left.column
+	asExpression.left = left
+	asExpression.start = left.start
+	asExpression.line = left.line
+	asExpression.column = left.column
 
-    currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
+	currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables)
+		: tokens.currentToken
 
-    const asKeyword = generateKeyword(["AsExpression", ...context], tokens)
-    if (asKeyword.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return asKeyword
-    }
+	const asKeyword = generateKeyword(["AsExpression", ...context], tokens)
+	if (asKeyword.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return asKeyword
+	}
 
-    if (!isKeyword(asKeyword, "as")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isKeyword(asKeyword, "as")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
+	currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables)
+		: tokens.currentToken
 
-    let right: Identifier
+	let right: Identifier
         | CaseExpr
         | MismatchToken = null!
 
-    right = generateIdentifier(["AsExpression", ...context], tokens)
+	right = generateIdentifier(["AsExpression", ...context], tokens)
 
-    if (right.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return right
-    }
+	if (right.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return right
+	}
 
-    asExpression.right = right
-    asExpression.end = right.end
+	asExpression.right = right
+	asExpression.end = right.end
     
-    return asExpression
+	return asExpression
 }
 
 export function printAsExpression(token: AsExpression, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const printers = [printCaseExpr, printExpression] as NodePrinter[]
-    const printer = pickPrinter(printers, token.right)!
+	const printers = [printCaseExpr, printExpression] as NodePrinter[]
+	const printer = pickPrinter(printers, token.right)!
 
-    const space = ' '.repeat(4)
-    return "AsExpression" +
-        '\n' + space.repeat(indent) + middleJoiner + "left" +
-        '\n' + space.repeat(indent + 1) + endJoiner +
+	const space = " ".repeat(4)
+	return "AsExpression" +
+        "\n" + space.repeat(indent) + middleJoiner + "left" +
+        "\n" + space.repeat(indent + 1) + endJoiner +
         printExpression(token.left, indent + 2) +
-        '\n' + space.repeat(indent) + endJoiner + "body" +
-        '\n' + space.repeat(indent + 1) + endJoiner +
+        "\n" + space.repeat(indent) + endJoiner + "body" +
+        "\n" + space.repeat(indent + 1) + endJoiner +
         printer(token.right, indent + 1)
 }

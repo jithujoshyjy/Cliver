@@ -11,60 +11,60 @@ import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
 export function generateBracketPattern(context: string[], tokens: TokenStream): BracketPattern | MismatchToken {
-    const bracketPattern: BracketPattern = {
-        type: "BracketPattern",
-        values: [[]],
-        includesNamed: false,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const bracketPattern: BracketPattern = {
+		type: "BracketPattern",
+		values: [[]],
+		includesNamed: false,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    if (!isPunctuator(currentToken, "[")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isPunctuator(currentToken, "[")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    bracketPattern.start = currentToken.start
-    bracketPattern.line = currentToken.line
-    bracketPattern.column = currentToken.column
+	bracketPattern.start = currentToken.start
+	bracketPattern.line = currentToken.line
+	bracketPattern.column = currentToken.column
 
-    currentToken = skip(tokens, skipables)
-    const valueGenerators = [
-        generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
-        generateInterpPattern, generateLiteral
-    ]
+	currentToken = skip(tokens, skipables)
+	const valueGenerators = [
+		generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
+		generateInterpPattern, generateLiteral
+	]
 
-    const captureComma = () => {
-        const initialToken = tokens.currentToken
+	const captureComma = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ",")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(initialToken, ",")) {
+			return createMismatchToken(initialToken)
+		}
 
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    const captureSemicolon = () => {
-        const initialToken = tokens.currentToken
+	const captureSemicolon = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ";")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(initialToken, ";")) {
+			return createMismatchToken(initialToken)
+		}
 
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    let lastDelim: LexicalToken | MismatchToken | null = null
-    const parseValue = () => {
+	let lastDelim: LexicalToken | MismatchToken | null = null
+	const parseValue = () => {
 
-        let value: AsExpression
+		let value: AsExpression
             | InfixPattern
             | PrefixPattern
             | PostfixPattern
@@ -76,73 +76,73 @@ export function generateBracketPattern(context: string[], tokens: TokenStream): 
             | Literal
             | MismatchToken = null!
 
-        for (let valueGenerator of valueGenerators) {
-            if (isBlockedType(valueGenerator.name.replace("generate", '')))
-                continue
+		for (const valueGenerator of valueGenerators) {
+			if (isBlockedType(valueGenerator.name.replace("generate", "")))
+				continue
 
-            value = valueGenerator(["BracketPattern", ...context], tokens)
-            currentToken = tokens.currentToken
-            if (value.type != "MismatchToken")
-                break
+			value = valueGenerator(["BracketPattern", ...context], tokens)
+			currentToken = tokens.currentToken
+			if (value.type != "MismatchToken")
+				break
 
-            if (value.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return value
-            }
-        }
+			if (value.errorDescription.severity <= 3) {
+				tokens.cursor = initialCursor
+				return value
+			}
+		}
 
-        lastDelim = null
-        return value
-    }
+		lastDelim = null
+		return value
+	}
 
-    let isInitial = true
-    while (!tokens.isFinished) {
+	let isInitial = true
+	while (!tokens.isFinished) {
 
-        if (isPunctuator(currentToken, "]")) {
-            bracketPattern.end = currentToken.end
-            tokens.advance()
-            break
-        }
+		if (isPunctuator(currentToken, "]")) {
+			bracketPattern.end = currentToken.end
+			tokens.advance()
+			break
+		}
 
-        if (!isInitial && lastDelim == null) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+		if (!isInitial && lastDelim == null) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
-        if (lastDelim?.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return lastDelim
-        }
+		if (lastDelim?.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return lastDelim
+		}
 
-        if (!isPunctuator(currentToken, ";")) {
-            const value = parseValue()
+		if (!isPunctuator(currentToken, ";")) {
+			const value = parseValue()
 
-            if (value.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return value
-            }
+			if (value.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return value
+			}
 
-            bracketPattern.includesNamed ||=
+			bracketPattern.includesNamed ||=
                 value.type == "AsExpression" ||
                 value.type == "Literal" && value.value.type == "Identifier" ||
                 value.type != "Literal" && value.type != "TypeAssertion" && value.includesNamed
             
-            bracketPattern.values.at(-1)?.push(value)
-        }
+			bracketPattern.values.at(-1)?.push(value)
+		}
 
-        if (skipables.includes(currentToken))
-            currentToken = skip(tokens, skipables)
+		if (skipables.includes(currentToken))
+			currentToken = skip(tokens, skipables)
 
-        lastDelim = captureComma()
+		lastDelim = captureComma()
 
-        if (lastDelim.type == "MismatchToken")
-            lastDelim = captureSemicolon()
+		if (lastDelim.type == "MismatchToken")
+			lastDelim = captureSemicolon()
 
-        if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";"))
-            bracketPattern.values.push([])
+		if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";"))
+			bracketPattern.values.push([])
 
-        isInitial = false
-    }
+		isInitial = false
+	}
 
-    return bracketPattern
+	return bracketPattern
 }

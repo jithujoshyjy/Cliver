@@ -10,56 +10,56 @@ import { generateTypeExpression } from "./type-expression.js"
 import { generateTypeName } from "./type-name.js"
 
 export function generateUnionType(context: string[], tokens: TokenStream): UnionType | MismatchToken {
-    const unionType: UnionType = {
-        type: "UnionType",
-        left: null!,
-        right: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const unionType: UnionType = {
+		type: "UnionType",
+		left: null!,
+		right: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    let initialCursor = tokens.cursor
-    const typeGenerators = [
-        generateIntersectionType, generateDifferenceType, generateNegateType,
-        generateFunctionType, generateFunctionCallType, generateStructureType, generateTypeName
-    ]
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
+	const typeGenerators = [
+		generateIntersectionType, generateDifferenceType, generateNegateType,
+		generateFunctionType, generateFunctionCallType, generateStructureType, generateTypeName
+	]
 
-    let typeMember: TypeName | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
+	let typeMember: TypeName | IntersectionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
 
-    for (let typeGenerator of typeGenerators) {
-        if (isBlockedType(typeGenerator.name.replace("generate", '')))
-            continue
+	for (const typeGenerator of typeGenerators) {
+		if (isBlockedType(typeGenerator.name.replace("generate", "")))
+			continue
         
-        typeMember = typeGenerator(["UnionType", ...context], tokens)
-        currentToken = tokens.currentToken
-        if (typeMember.type != "MismatchToken")
-            break
-    }
+		typeMember = typeGenerator(["UnionType", ...context], tokens)
+		currentToken = tokens.currentToken
+		if (typeMember.type != "MismatchToken")
+			break
+	}
 
-    if (typeMember.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return typeMember
-    }
+	if (typeMember.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return typeMember
+	}
 
-    unionType.left = typeMember
-    currentToken = skip(tokens, skipables)
+	unionType.left = typeMember
+	currentToken = skip(tokens, skipables)
 
-    if (!isOperator(currentToken, "|")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isOperator(currentToken, "|")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    currentToken = skip(tokens, skipables) // skip |
+	currentToken = skip(tokens, skipables) // skip |
 
-    const right = generateTypeExpression(["UnionType", ...context], tokens) // buggy :(
+	const right = generateTypeExpression(["UnionType", ...context], tokens) // buggy :(
 
-    if (right.type == "MismatchToken")
-        return right
+	if (right.type == "MismatchToken")
+		return right
 
-    unionType.right = right
+	unionType.right = right
 
-    return unionType
+	return unionType
 }

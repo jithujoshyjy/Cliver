@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { operatorPrecedence, skip, skipables, type Node, NodePrinter, pickPrinter, isBlockedType } from "../../../utility.js"
+import { operatorPrecedence, skip, skipables, NodePrinter, pickPrinter, isBlockedType } from "../../../utility.js"
 import { generateLiteral, printLiteral } from "../../literal/literal.js"
 import { generateTerm, printTerm } from "../../term/term.js"
 import { printInfixOperation } from "./infix-operation.js"
@@ -85,8 +85,8 @@ export function generatePrefixOperation(context: string[], tokens: TokenStream):
     if (operand.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return operand
-
     }
+
     prefixOperation.operand = operand
     prefixOperation.end = operand.end
 

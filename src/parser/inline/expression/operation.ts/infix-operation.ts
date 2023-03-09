@@ -108,7 +108,7 @@ export function generateInfixOperation(context: string[], tokens: TokenStream): 
         tokens.cursor = initialCursor
         return _operator
     }
-
+    
     _operator.precedence = getPrecidence(_operator)
     infixOperation.operator = _operator
 

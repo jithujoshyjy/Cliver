@@ -4,29 +4,29 @@ import { generateTypeExpression } from "./type-expression.js"
 
 export function generateTupleType(context: string[], tokens: TokenStream): TupleType | GroupTypeExpression | MismatchToken {
 
-    const tupleType: TupleType = {
-        type: "TupleType",
-        values: [],
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const tupleType: TupleType = {
+		type: "TupleType",
+		values: [],
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    const groupTypeExpr: GroupTypeExpression = {
-        type: "GroupTypeExpression",
-        body: null!,
-        constraint: null,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const groupTypeExpr: GroupTypeExpression = {
+		type: "GroupTypeExpression",
+		body: null!,
+		constraint: null,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    const initialCursor = tokens.cursor
-    let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
+	const currentToken = tokens.currentToken
 
-    /* if (currentToken.type != TokenType.ParenEnclosed) {
+	/* if (currentToken.type != TokenType.ParenEnclosed) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
@@ -86,5 +86,5 @@ export function generateTupleType(context: string[], tokens: TokenStream): Tuple
             return groupTypeExpr
         } */
 
-    return tupleType
+	return tupleType
 }

@@ -11,159 +11,160 @@ import { generatePropertyAccess, printPropertyAccess } from "./property-access.j
 import { generateTerm, printTerm } from "./term.js"
 
 export function generateInlineMacroApplication(context: string[], tokens: TokenStream): InlineMacroApplication | MismatchToken {
-    const inlineMacroApplication: InlineMacroApplication = {
-        type: "InlineMacroApplication",
-        arguments: null,
-        body: null!,
-        caller: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const inlineMacroApplication: InlineMacroApplication = {
+		type: "InlineMacroApplication",
+		arguments: null,
+		body: null!,
+		caller: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    if (isOperator(currentToken, "@")) {
+	if (isOperator(currentToken, "@")) {
 
-        inlineMacroApplication.start = currentToken.start
-        inlineMacroApplication.line = currentToken.line
-        inlineMacroApplication.column = currentToken.column
+		inlineMacroApplication.start = currentToken.start
+		inlineMacroApplication.line = currentToken.line
+		inlineMacroApplication.column = currentToken.column
 
-        currentToken = skip(tokens, _skipables) // skip @
-        const identifier = generateIdentifier(["InlineMacroApplication", ...context], tokens)
+		currentToken = skip(tokens, _skipables) // skip @
+		const identifier = generateIdentifier(["InlineMacroApplication", ...context], tokens)
 
-        if (identifier.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return identifier
-        }
+		if (identifier.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return identifier
+		}
 
-        inlineMacroApplication.caller = identifier
-    }
-    else {
+		inlineMacroApplication.caller = identifier
+	}
+	else {
 
-        let caller: Identifier
+		let caller: Identifier
             | PropertyAccess
             | MismatchToken = null!
 
-        const nodeGenerators = [
-            generatePropertyAccess, generateIdentifier
-        ]
+		const nodeGenerators = [
+			generatePropertyAccess, generateIdentifier
+		]
 
-        for (let nodeGenerator of nodeGenerators) {
-            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-                continue
-            caller = nodeGenerator(["InlineMacroApplication", ...context], tokens)
-            currentToken = tokens.currentToken
-            if (caller.type != "MismatchToken") {
-                break
-            }
+		for (const nodeGenerator of nodeGenerators) {
+			if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+				continue
+            
+			caller = nodeGenerator(["InlineMacroApplication", ...context], tokens)
+			currentToken = tokens.currentToken
 
-            if (caller.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return caller
-            }
-        }
+			if (caller.type != "MismatchToken")
+				break
 
-        if (caller.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return caller
-        }
+			if (caller.errorDescription.severity <= 3) {
+				tokens.cursor = initialCursor
+				return caller
+			}
+		}
 
-        inlineMacroApplication.start = caller.start
-        inlineMacroApplication.line = caller.line
-        inlineMacroApplication.column = caller.column
-        inlineMacroApplication.caller = caller
+		if (caller.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return caller
+		}
 
-        currentToken = _skipables.includes(tokens.currentToken)
-            ? skip(tokens, _skipables)
-            : tokens.currentToken
+		inlineMacroApplication.start = caller.start
+		inlineMacroApplication.line = caller.line
+		inlineMacroApplication.column = caller.column
+		inlineMacroApplication.caller = caller
 
-        if (!isOperator(currentToken, "@")) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
-        currentToken = skip(tokens, _skipables) // skip @
+		currentToken = _skipables.includes(tokens.currentToken)
+			? skip(tokens, _skipables)
+			: tokens.currentToken
 
-        const args = generateCallSiteArgsList(["InlineMacroApplication", ...context], tokens)
+		if (!isOperator(currentToken, "@")) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
+		currentToken = skip(tokens, _skipables) // skip @
 
-        if (args.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return args
-        }
+		const args = generateCallSiteArgsList(["InlineMacroApplication", ...context], tokens)
 
-        inlineMacroApplication.arguments = args
-    }
+		if (args.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return args
+		}
 
-    currentToken = skipables.includes(tokens.currentToken)
-        ? skip(tokens, skipables)
-        : tokens.currentToken
+		inlineMacroApplication.arguments = args
+	}
 
-    const nodeGenerators = [
-        generatePrefixOperation, generatePostfixOperation, generateTerm,
-        generateLiteral, generateGroupExpression
-    ]
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
-    let body: PrefixOperation
+	const nodeGenerators = [
+		generatePrefixOperation, generatePostfixOperation, generateTerm,
+		generateLiteral, generateGroupExpression
+	]
+
+	let body: PrefixOperation
         | PostfixOperation
         | GroupExpression
         | Term
         | Literal
         | MismatchToken = null!
 
-    for (let nodeGenerator of nodeGenerators) {
-        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-            continue
-        body = nodeGenerator(["InlineMacroApplication", ...context], tokens)
-        currentToken = tokens.currentToken
+	for (const nodeGenerator of nodeGenerators) {
+		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+			continue
+		body = nodeGenerator(["InlineMacroApplication", ...context], tokens)
+		currentToken = tokens.currentToken
 
-        if (body.type != "MismatchToken")
-            break
+		if (body.type != "MismatchToken")
+			break
 
-        if (body.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return body
-        }
-    }
+		if (body.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return body
+		}
+	}
 
-    if (body.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return body
-    }
+	if (body.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return body
+	}
 
-    inlineMacroApplication.body = body
-    inlineMacroApplication.end = body.end
+	inlineMacroApplication.body = body
+	inlineMacroApplication.end = body.end
 
-    return inlineMacroApplication
+	return inlineMacroApplication
 }
 
 export function printInlineMacroApplication(token: InlineMacroApplication, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const callerPrinters = [printPropertyAccess, printIdentifier] as NodePrinter[]
-    const callerPrinter = pickPrinter(callerPrinters, token.caller)!
+	const callerPrinters = [printPropertyAccess, printIdentifier] as NodePrinter[]
+	const callerPrinter = pickPrinter(callerPrinters, token.caller)!
 
-    const bodyPrinters = [
-        printInfixOperation, printPrefixOperation, printPostfixOperation,
-        printTerm, printLiteral, printGroupExpression
-    ] as NodePrinter[]
+	const bodyPrinters = [
+		printInfixOperation, printPrefixOperation, printPostfixOperation,
+		printTerm, printLiteral, printGroupExpression
+	] as NodePrinter[]
 
-    const bodyPrinter = pickPrinter(bodyPrinters, token.body)!
+	const bodyPrinter = pickPrinter(bodyPrinters, token.body)!
 
-    const space = ' '.repeat(4)
-    return "InlineMacroApplication" +
-        '\n' + space.repeat(indent) + middleJoiner + "caller" +
-        '\n' + space.repeat(indent + 1) + endJoiner +
+	const space = " ".repeat(4)
+	return "InlineMacroApplication" +
+        "\n" + space.repeat(indent) + middleJoiner + "caller" +
+        "\n" + space.repeat(indent + 1) + endJoiner +
         callerPrinter(token.caller, indent + 2) +
         (token.arguments
-            ? '\n' + space.repeat(indent) + middleJoiner + "arguments" +
-            '\n' + space.repeat(indent + 1) + endJoiner +
+        	? "\n" + space.repeat(indent) + middleJoiner + "arguments" +
+            "\n" + space.repeat(indent + 1) + endJoiner +
             printCallSiteArgsList(token.arguments, indent + 2)
-            : "") +
-        '\n' + space.repeat(indent) + endJoiner + "body" +
-        '\n' + space.repeat(indent + 1) + endJoiner +
+        	: "") +
+        "\n" + space.repeat(indent) + endJoiner + "body" +
+        "\n" + space.repeat(indent + 1) + endJoiner +
         bodyPrinter(token.body, indent + 2)
 }

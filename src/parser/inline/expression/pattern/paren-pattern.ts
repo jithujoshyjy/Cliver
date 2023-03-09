@@ -12,64 +12,64 @@ import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
 export function generateParenPattern(context: string[], tokens: TokenStream): ParenPattern | MismatchToken {
-    const parenPattern: ParenPattern = {
-        type: "ParenPattern",
-        positional: [],
-        keyword: [],
-        includesNamed: false,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const parenPattern: ParenPattern = {
+		type: "ParenPattern",
+		positional: [],
+		keyword: [],
+		includesNamed: false,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    if (!isPunctuator(currentToken, "(")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isPunctuator(currentToken, "(")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    parenPattern.line = currentToken.line
-    parenPattern.column = currentToken.column
-    parenPattern.start = currentToken.start
+	parenPattern.line = currentToken.line
+	parenPattern.column = currentToken.column
+	parenPattern.start = currentToken.start
 
-    currentToken = skip(tokens, skipables)
-    const nodeGenerators = [
-        generatePairPattern, generateAsExpression, generateInfixPattern, generatePrefixPattern,
-        generatePostfixPattern, generateTypeAssertion, generateBracePattern,
-        generateParenPattern, generateBracketPattern, generateInterpPattern, generateLiteral
-    ]
+	currentToken = skip(tokens, skipables)
+	const nodeGenerators = [
+		generatePairPattern, generateAsExpression, generateInfixPattern, generatePrefixPattern,
+		generatePostfixPattern, generateTypeAssertion, generateBracePattern,
+		generateParenPattern, generateBracketPattern, generateInterpPattern, generateLiteral
+	]
 
-    const captureComma = () => {
-        const initialToken = tokens.currentToken
+	const captureComma = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ",")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(initialToken, ",")) {
+			return createMismatchToken(initialToken)
+		}
 
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    let semicolonCount = 0
-    const captureSemicolon = () => {
-        const initialToken = tokens.currentToken
+	let semicolonCount = 0
+	const captureSemicolon = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ";")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(initialToken, ";")) {
+			return createMismatchToken(initialToken)
+		}
 
-        semicolonCount++
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		semicolonCount++
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    let lastDelim: LexicalToken | MismatchToken | null = null
-    const parseValue = () => {
+	let lastDelim: LexicalToken | MismatchToken | null = null
+	const parseValue = () => {
 
-        let value: PairPattern
+		let value: PairPattern
             | AsExpression
             | TypeAssertion
             | BracePattern
@@ -82,142 +82,142 @@ export function generateParenPattern(context: string[], tokens: TokenStream): Pa
             | Literal
             | MismatchToken = null!
 
-        for (const nodeGenerator of nodeGenerators) {
+		for (const nodeGenerator of nodeGenerators) {
 
-            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-                continue
+			if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+				continue
 
-            value = nodeGenerator(["ParenPattern", ...context], tokens)
-            currentToken = tokens.currentToken
+			value = nodeGenerator(["ParenPattern", ...context], tokens)
+			currentToken = tokens.currentToken
 
-            if (value.type != "MismatchToken")
-                break
+			if (value.type != "MismatchToken")
+				break
 
-            if (value.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return value
-            }
-        }
+			if (value.errorDescription.severity <= 3) {
+				tokens.cursor = initialCursor
+				return value
+			}
+		}
 
-        lastDelim = null
-        return value
-    }
+		lastDelim = null
+		return value
+	}
 
-    let isInitial = true, argType: "positional" | "keyword" = "positional"
-    while (!tokens.isFinished) {
+	let isInitial = true, argType: "positional" | "keyword" = "positional"
+	while (!tokens.isFinished) {
 
-        if (isPunctuator(currentToken, ")")) {
-            parenPattern.end = currentToken.end
-            tokens.advance()
-            break
-        }
+		if (isPunctuator(currentToken, ")")) {
+			parenPattern.end = currentToken.end
+			tokens.advance()
+			break
+		}
 
-        if (!isInitial && lastDelim == null) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+		if (!isInitial && lastDelim == null) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
-        if (lastDelim?.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return lastDelim
-        }
+		if (lastDelim?.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return lastDelim
+		}
 
-        if (!isPunctuator(currentToken, ";")) {
-            const value = parseValue()
+		if (!isPunctuator(currentToken, ";")) {
+			const value = parseValue()
 
-            if (value.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return value
-            }
+			if (value.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return value
+			}
 
-            if (isInitial && value.type == "PairPattern")
-                argType = "keyword"
+			if (isInitial && value.type == "PairPattern")
+				argType = "keyword"
 
-            while (value.type == "PairPattern") {
+			while (value.type == "PairPattern") {
 
-                const maybeLiteral = value.key
-                let type: string = maybeLiteral.type
+				const maybeLiteral = value.key
+				let type: string = maybeLiteral.type
 
-                if (maybeLiteral.type == "Literal") {
+				if (maybeLiteral.type == "Literal") {
 
-                    const maybeIdentifier = maybeLiteral.value
-                    if (maybeIdentifier.type == "Identifier")
-                        break
+					const maybeIdentifier = maybeLiteral.value
+					if (maybeIdentifier.type == "Identifier")
+						break
 
-                    type = maybeIdentifier.type
-                }
+					type = maybeIdentifier.type
+				}
 
-                const { line, column } = currentToken
-                const error: DiagnosticMessage = "Unexpected token '{0}' on {1}:{2}"
+				const { line, column } = currentToken
+				const error: DiagnosticMessage = "Unexpected token '{0}' on {1}:{2}"
 
-                tokens.cursor = initialCursor
-                return createMismatchToken(currentToken, [error, type, line, column])
-            }
+				tokens.cursor = initialCursor
+				return createMismatchToken(currentToken, [error, type, line, column])
+			}
 
-            while (argType == "keyword" && value.type == "Literal") {
-                const maybeIdentifier = value.value
+			while (argType == "keyword" && value.type == "Literal") {
+				const maybeIdentifier = value.value
 
-                if (maybeIdentifier.type == "Identifier")
-                    break
+				if (maybeIdentifier.type == "Identifier")
+					break
 
-                const { line, column } = currentToken
-                const error: DiagnosticMessage = "Unexpected token '{0}' on {1}:{2}"
+				const { line, column } = currentToken
+				const error: DiagnosticMessage = "Unexpected token '{0}' on {1}:{2}"
 
-                tokens.cursor = initialCursor
-                return createMismatchToken(currentToken, [error, maybeIdentifier.type, line, column])
-            }
+				tokens.cursor = initialCursor
+				return createMismatchToken(currentToken, [error, maybeIdentifier.type, line, column])
+			}
 
-            parenPattern.includesNamed ||=
+			parenPattern.includesNamed ||=
                 value.type == "AsExpression" ||
                 value.type == "Literal" && value.value.type == "Identifier" ||
                 value.type != "Literal" && value.type != "TypeAssertion" && value.includesNamed
 
-            parenPattern[argType].push(value as any)
-        }
+			parenPattern[argType].push(value as any)
+		}
         
-        currentToken = skipables.includes(tokens.currentToken)
-            ? skip(tokens, skipables)
-            : tokens.currentToken
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-        lastDelim = captureComma()
+		lastDelim = captureComma()
 
-        if (lastDelim.type == "MismatchToken")
-            lastDelim = captureSemicolon()
+		if (lastDelim.type == "MismatchToken")
+			lastDelim = captureSemicolon()
 
-        if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";")) {
-            argType = "keyword"
-            if (semicolonCount > 1) {
-                tokens.cursor = initialCursor
-                return createMismatchToken(currentToken)
-            }
-        }
+		if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";")) {
+			argType = "keyword"
+			if (semicolonCount > 1) {
+				tokens.cursor = initialCursor
+				return createMismatchToken(currentToken)
+			}
+		}
 
-        isInitial = false
-    }
+		isInitial = false
+	}
 
-    const hasValidArgs = parenPattern.keyword.length >= 1 ||
+	const hasValidArgs = parenPattern.keyword.length >= 1 ||
         parenPattern.positional.length > 1 ||
         parenPattern.positional.length == 1 &&
         lastDelim?.type != "MismatchToken"
 
-    if (!hasValidArgs) {
-        tokens.cursor = initialCursor
-        let partialParse: PartialParse | undefined
+	if (!hasValidArgs) {
+		tokens.cursor = initialCursor
+		let partialParse: PartialParse | undefined
 
-        if (parenPattern.positional.length == 1 && lastDelim?.type != "MismatchToken")
-            partialParse = {
-                cursor: tokens.cursor,
-                result: parenPattern.positional.pop()!
-            }
+		if (parenPattern.positional.length == 1 && lastDelim?.type != "MismatchToken")
+			partialParse = {
+				cursor: tokens.cursor,
+				result: parenPattern.positional.pop()!
+			}
 
-        const diagnostics: DiagnosticDescriptionObj = {
-            message: "Unexpected token '{0}' on {1}:{2}",
-            args: [currentToken.type, currentToken.line, currentToken.column],
-            severity: 3,
-        }
+		const diagnostics: DiagnosticDescriptionObj = {
+			message: "Unexpected token '{0}' on {1}:{2}",
+			args: [currentToken.type, currentToken.line, currentToken.column],
+			severity: 3,
+		}
 
-        return createMismatchToken(currentToken, { partialParse, diagnostics })
-    }
+		return createMismatchToken(currentToken, { partialParse, diagnostics })
+	}
 
-    return parenPattern
+	return parenPattern
 }

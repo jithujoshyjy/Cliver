@@ -12,25 +12,25 @@ import { generatePostfixPattern } from "./postfix-pattern.js"
 import { generatePrefixPattern } from "./prefix-pattern.js"
 
 export function generatePattern(context: string[], tokens: TokenStream): Pattern | MismatchToken {
-    const pattern: Pattern = {
-        type: "Pattern",
-        body: null!,
-        includesNamed: false,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const pattern: Pattern = {
+		type: "Pattern",
+		body: null!,
+		includesNamed: false,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const nodeGenerators = [
-        generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
-        generateInterpPattern, generateLiteral
-    ]
+	const nodeGenerators = [
+		generateAsExpression, generateInfixPattern, generatePrefixPattern, generatePostfixPattern, generateTypeAssertion, generateBracePattern, generateParenPattern, generateBracketPattern,
+		generateInterpPattern, generateLiteral
+	]
 
-    let patternNode: AsExpression
+	let patternNode: AsExpression
         | TypeAssertion
         | BracePattern
         | BracketPattern
@@ -42,54 +42,54 @@ export function generatePattern(context: string[], tokens: TokenStream): Pattern
         | Literal
         | MismatchToken = null!
 
-    const unblockedTypes = [
-        "AsExpression", "InfixPattern", "PrefixPattern",
-        "PostfixPattern", "TypeAssertion", "InterpPattern"
-    ]
+	const unblockedTypes = [
+		"AsExpression", "InfixPattern", "PrefixPattern",
+		"PostfixPattern", "TypeAssertion", "InterpPattern"
+	]
 
-    for (let nodeGenerator of nodeGenerators) {
-        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-            continue
+	for (const nodeGenerator of nodeGenerators) {
+		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+			continue
 
-        patternNode = withUnblocked(unblockedTypes, () =>
-            nodeGenerator(["Pattern", ...context], tokens))
+		patternNode = withUnblocked(unblockedTypes, () =>
+			nodeGenerator(["Pattern", ...context], tokens))
 
-        currentToken = tokens.currentToken
-        if (patternNode.type != "MismatchToken")
-            break
+		currentToken = tokens.currentToken
+		if (patternNode.type != "MismatchToken")
+			break
 
-        if (patternNode.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return patternNode
-        }
-    }
+		if (patternNode.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return patternNode
+		}
+	}
 
-    if (patternNode.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return patternNode
-    }
+	if (patternNode.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return patternNode
+	}
 
-    pattern.line = patternNode.line
-    pattern.column = patternNode.column
-    pattern.start = patternNode.start
-    pattern.end = patternNode.end
+	pattern.line = patternNode.line
+	pattern.column = patternNode.column
+	pattern.start = patternNode.start
+	pattern.end = patternNode.end
 
-    pattern.includesNamed =
+	pattern.includesNamed =
         patternNode.type == "AsExpression" ||
         patternNode.type == "Literal" && patternNode.value.type == "Identifier" ||
         patternNode.type != "Literal" && patternNode.type != "TypeAssertion" && patternNode.includesNamed
 
-    pattern.body = patternNode
-    return pattern
+	pattern.body = patternNode
+	return pattern
 }
 
 export function printPattern(token: Pattern, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const space = ' '.repeat(4)
-    return "Pattern\n"
+	const space = " ".repeat(4)
+	return "Pattern\n"
 }
 
 /*

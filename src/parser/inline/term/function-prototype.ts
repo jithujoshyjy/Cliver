@@ -7,270 +7,270 @@ import { generateIdentifier } from "../literal/identifier.js"
 import { generateTypeExpression } from "../type/type-expression.js"
 
 export function generateFunctionPrototype(context: string[], tokens: TokenStream): FunctionPrototype | MismatchToken {
-    const functionPrototype: FunctionPrototype = {
-        type: "FunctionPrototype",
-        kind: ["return"],
-        positional: [],
-        keyword: [],
-        captured: [],
-        signature: null,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const functionPrototype: FunctionPrototype = {
+		type: "FunctionPrototype",
+		kind: ["return"],
+		positional: [],
+		keyword: [],
+		captured: [],
+		signature: null,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const funKeyword = generateKeyword(["FunctionPrototype", ...context], tokens)
+	const funKeyword = generateKeyword(["FunctionPrototype", ...context], tokens)
 
-    if (funKeyword.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return funKeyword
-    }
+	if (funKeyword.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return funKeyword
+	}
 
-    if (!isKeyword(funKeyword, "fun")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isKeyword(funKeyword, "fun")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    functionPrototype.start = funKeyword.start
-    functionPrototype.line = funKeyword.line
-    functionPrototype.column = funKeyword.column
+	functionPrototype.start = funKeyword.start
+	functionPrototype.line = funKeyword.line
+	functionPrototype.column = funKeyword.column
 
-    const captureSignature = () => {
-        currentToken = skip(tokens, skipables)
-        const signature = generateTypeExpression(["FunctionPrototype", ...context], tokens)
-        return signature
-    }
+	const captureSignature = () => {
+		currentToken = skip(tokens, skipables)
+		const signature = generateTypeExpression(["FunctionPrototype", ...context], tokens)
+		return signature
+	}
 
-    if (isOperator(currentToken, "::")) {
-        const signature = captureSignature()
-        if (signature.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return signature
-        }
+	if (isOperator(currentToken, "::")) {
+		const signature = captureSignature()
+		if (signature.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return signature
+		}
 
-        functionPrototype.signature = signature
-    }
+		functionPrototype.signature = signature
+	}
 
-    const captureComma = () => {
-        const initialToken = tokens.currentToken
+	const captureComma = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(currentToken, ",")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(currentToken, ",")) {
+			return createMismatchToken(initialToken)
+		}
 
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    let isInitial = true, lastDelim: LexicalToken | MismatchToken | null = null
-    const captureFunctionKind = () => {
-        currentToken = skipables.includes(tokens.currentToken)
-            ? skip(tokens, skipables)
-            : tokens.currentToken
+	let isInitial = true, lastDelim: LexicalToken | MismatchToken | null = null
+	const captureFunctionKind = () => {
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-        const nodeGenerators = [
-            generateIdentifier, generateKeyword
-        ]
+		const nodeGenerators = [
+			generateIdentifier, generateKeyword
+		]
 
-        let kind: Identifier
+		let kind: Identifier
             | Keyword
             | MismatchToken = null!
 
-        for (const nodeGenerator of nodeGenerators) {
-            if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-                continue
+		for (const nodeGenerator of nodeGenerators) {
+			if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+				continue
             
-            kind = nodeGenerator(["FunctionPrototype", ...context], tokens)
-            currentToken = tokens.currentToken
+			kind = nodeGenerator(["FunctionPrototype", ...context], tokens)
+			currentToken = tokens.currentToken
 
-            if (kind.type != "MismatchToken")
-                break
+			if (kind.type != "MismatchToken")
+				break
 
-            if (kind.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return kind
-            }
-        }
+			if (kind.errorDescription.severity <= 3) {
+				tokens.cursor = initialCursor
+				return kind
+			}
+		}
 
-        lastDelim = null
-        return kind
-    }
+		lastDelim = null
+		return kind
+	}
 
-    if (isOperator(currentToken, "<")) {
-        currentToken = skip(tokens, skipables)
+	if (isOperator(currentToken, "<")) {
+		currentToken = skip(tokens, skipables)
 
-        while (!tokens.isFinished) {
+		while (!tokens.isFinished) {
 
-            if (isPunctuator(currentToken, ">")) {
-                functionPrototype.end = currentToken.end
-                tokens.advance()
-                break
-            }
+			if (isPunctuator(currentToken, ">")) {
+				functionPrototype.end = currentToken.end
+				tokens.advance()
+				break
+			}
 
-            if (!isInitial && lastDelim == null) {
-                tokens.cursor = initialCursor
-                return createMismatchToken(currentToken)
-            }
+			if (!isInitial && lastDelim == null) {
+				tokens.cursor = initialCursor
+				return createMismatchToken(currentToken)
+			}
 
-            if (lastDelim?.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return lastDelim
-            }
+			if (lastDelim?.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return lastDelim
+			}
 
-            const kind = captureFunctionKind()
+			const kind = captureFunctionKind()
 
-            if (kind.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return kind
-            }
+			if (kind.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return kind
+			}
 
-            functionPrototype.kind.push(kind)
-            if (skipables.includes(currentToken))
-                currentToken = skip(tokens, skipables)
+			functionPrototype.kind.push(kind)
+			if (skipables.includes(currentToken))
+				currentToken = skip(tokens, skipables)
 
-            lastDelim = captureComma()
-            isInitial = false
-        }
-    }
+			lastDelim = captureComma()
+			isInitial = false
+		}
+	}
 
-    if (!isPunctuator(currentToken, '('))
-        return functionPrototype
+	if (!isPunctuator(currentToken, "("))
+		return functionPrototype
 
-    currentToken = skip(tokens, skipables)
+	currentToken = skip(tokens, skipables)
 
-    lastDelim = null, isInitial = true
-    let argType: "positional" | "keyword" | "captured" = "positional"
+	lastDelim = null, isInitial = true
+	let argType: "positional" | "keyword" | "captured" = "positional"
 
-    const parseParam = <T extends typeof argType>(argType: T) => {
-        currentToken = skipables.includes(tokens.currentToken)
-            ? skip(tokens, skipables)
-            : tokens.currentToken
+	const parseParam = <T extends typeof argType>(argType: T) => {
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-        let param: AssignExpr
+		let param: AssignExpr
             | Pattern
             | Identifier
             | MismatchToken = null!
 
-        const positionalParamGenerators = [generateAssignExpr, generatePattern]
-        const keywordParamGenerators = [generateAssignExpr]
-        const captureParamGenerators = [generateIdentifier]
+		const positionalParamGenerators = [generateAssignExpr, generatePattern]
+		const keywordParamGenerators = [generateAssignExpr]
+		const captureParamGenerators = [generateIdentifier]
 
-        const paramGenerators = argType == "positional"
-            ? positionalParamGenerators
-            : argType == "keyword"
-                ? keywordParamGenerators
-                : captureParamGenerators
+		const paramGenerators = argType == "positional"
+			? positionalParamGenerators
+			: argType == "keyword"
+				? keywordParamGenerators
+				: captureParamGenerators
 
-        for (const paramGenerator of paramGenerators) {
-            param = paramGenerator(["FunctionPrototype", ...context], tokens)
-            currentToken = tokens.currentToken
+		for (const paramGenerator of paramGenerators) {
+			param = paramGenerator(["FunctionPrototype", ...context], tokens)
+			currentToken = tokens.currentToken
 
-            if (param.type != "MismatchToken")
-                break
+			if (param.type != "MismatchToken")
+				break
 
-            if (param.errorDescription.severity <= 3) {
-                tokens.cursor = initialCursor
-                return param
-            }
-        }
+			if (param.errorDescription.severity <= 3) {
+				tokens.cursor = initialCursor
+				return param
+			}
+		}
 
-        lastDelim = null
-        return param
-    }
+		lastDelim = null
+		return param
+	}
 
-    let semicolonCount = 0
-    const captureSemicolon = () => {
-        const initialToken = tokens.currentToken
+	let semicolonCount = 0
+	const captureSemicolon = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ";")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(initialToken, ";")) {
+			return createMismatchToken(initialToken)
+		}
 
-        semicolonCount++
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		semicolonCount++
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    while (!tokens.isFinished) {
+	while (!tokens.isFinished) {
 
-        if (isPunctuator(currentToken, ")")) {
-            functionPrototype.end = currentToken.end
-            tokens.advance()
-            break
-        }
+		if (isPunctuator(currentToken, ")")) {
+			functionPrototype.end = currentToken.end
+			tokens.advance()
+			break
+		}
 
-        if (!isInitial && lastDelim == null) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+		if (!isInitial && lastDelim == null) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
-        if (lastDelim?.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return lastDelim
-        }
+		if (lastDelim?.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return lastDelim
+		}
 
-        const param = parseParam(argType)
+		const param = parseParam(argType)
 
-        if (param.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return param
-        }
+		if (param.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return param
+		}
 
-        functionPrototype[argType].push(param as any)
+		functionPrototype[argType].push(param as any)
 
-        currentToken = skipables.includes(currentToken)
-            ? skip(tokens, skipables)
-            : tokens.currentToken
+		currentToken = skipables.includes(currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-        lastDelim = captureComma()
+		lastDelim = captureComma()
 
-        if (lastDelim.type == "MismatchToken")
-            lastDelim = captureSemicolon()
+		if (lastDelim.type == "MismatchToken")
+			lastDelim = captureSemicolon()
 
-        if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";")) {
-            argType = "keyword"
-            if (semicolonCount == 2) {
-                argType = "captured"
-            }
-            else if (semicolonCount > 2) {
-                tokens.cursor = initialCursor
-                return createMismatchToken(currentToken)
-            }
-        }
+		if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";")) {
+			argType = "keyword"
+			if (semicolonCount == 2) {
+				argType = "captured"
+			}
+			else if (semicolonCount > 2) {
+				tokens.cursor = initialCursor
+				return createMismatchToken(currentToken)
+			}
+		}
 
-        isInitial = false
-    }
+		isInitial = false
+	}
 
-    currentToken = tokens.currentToken
-    if (isOperator(currentToken, "::")) {
-        currentToken = skip(tokens, skipables)
+	currentToken = tokens.currentToken
+	if (isOperator(currentToken, "::")) {
+		currentToken = skip(tokens, skipables)
 
-        const signature = captureSignature()
-        if (signature.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return signature
-        }
+		const signature = captureSignature()
+		if (signature.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return signature
+		}
 
-        if (functionPrototype.signature !== null) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+		if (functionPrototype.signature !== null) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
-        functionPrototype.signature = signature
-    }
+		functionPrototype.signature = signature
+	}
 
-    return functionPrototype
+	return functionPrototype
 }
 
 export function printFunctionPrototype(token: FunctionPrototype, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const space = ' '.repeat(4)
-    return "FunctionPrototype\n"
+	const space = " ".repeat(4)
+	return "FunctionPrototype\n"
 }

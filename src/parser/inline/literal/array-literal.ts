@@ -3,119 +3,119 @@ import { createMismatchToken, isPunctuator, skip, skipables, type Node } from ".
 import { generateExpression, printExpression } from "../expression/expression.js"
 
 export function generateArrayLiteral(context: string[], tokens: TokenStream): ArrayLiteral | MismatchToken {
-    const arrayLiteral: ArrayLiteral = {
-        type: "ArrayLiteral",
-        values: [[]],
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const arrayLiteral: ArrayLiteral = {
+		type: "ArrayLiteral",
+		values: [[]],
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    if (!isPunctuator(currentToken, "[")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isPunctuator(currentToken, "[")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    arrayLiteral.start = currentToken.start
-    arrayLiteral.line = currentToken.line
-    arrayLiteral.column = currentToken.column
+	arrayLiteral.start = currentToken.start
+	arrayLiteral.line = currentToken.line
+	arrayLiteral.column = currentToken.column
 
-    currentToken = skip(tokens, skipables)
+	currentToken = skip(tokens, skipables)
 
-    const captureComma = () => {
-        const initialToken = tokens.currentToken
+	const captureComma = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ",")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(initialToken, ",")) {
+			return createMismatchToken(initialToken)
+		}
 
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    const captureSemicolon = () => {
-        const initialToken = tokens.currentToken
+	const captureSemicolon = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ";")) {
-            return createMismatchToken(initialToken)
-        }
+		if (!isPunctuator(initialToken, ";")) {
+			return createMismatchToken(initialToken)
+		}
 
-        currentToken = skip(tokens, skipables)
-        return initialToken
-    }
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
 
-    let lastDelim: LexicalToken | MismatchToken | null = null
-    const parseValue = () => {
+	let lastDelim: LexicalToken | MismatchToken | null = null
+	const parseValue = () => {
 
-        let value: Expression | MismatchToken = generateExpression(["ArrayLiteral", ...context], tokens)
-        currentToken = tokens.currentToken
+		const value: Expression | MismatchToken = generateExpression(["ArrayLiteral", ...context], tokens)
+		currentToken = tokens.currentToken
 
-        lastDelim = null
-        return value
-    }
+		lastDelim = null
+		return value
+	}
 
-    let isInitial = true
-    while (!tokens.isFinished) {
+	let isInitial = true
+	while (!tokens.isFinished) {
 
-        if (isPunctuator(currentToken, "]")) {
-            tokens.advance()
-            break
-        }
+		if (isPunctuator(currentToken, "]")) {
+			tokens.advance()
+			break
+		}
 
-        if (!isInitial && lastDelim == null) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+		if (!isInitial && lastDelim == null) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
-        if (lastDelim?.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return lastDelim
-        }
+		if (lastDelim?.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return lastDelim
+		}
 
-        if (!isPunctuator(currentToken, ";")) {
-            const value = parseValue()
+		if (!isPunctuator(currentToken, ";")) {
+			const value = parseValue()
 
-            if (value.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return value
-            }
+			if (value.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return value
+			}
 
-            arrayLiteral.values.at(-1)?.push(value)
-        }
+			arrayLiteral.values.at(-1)?.push(value)
+		}
 
-        if (skipables.includes(currentToken))
-            currentToken = skip(tokens, skipables)
+		if (skipables.includes(currentToken))
+			currentToken = skip(tokens, skipables)
 
-        lastDelim = captureComma()
+		lastDelim = captureComma()
 
-        if (lastDelim.type == "MismatchToken")
-            lastDelim = captureSemicolon()
+		if (lastDelim.type == "MismatchToken")
+			lastDelim = captureSemicolon()
 
-        if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";"))
-            arrayLiteral.values.push([])
+		if (lastDelim.type != "MismatchToken" && isPunctuator(lastDelim, ";"))
+			arrayLiteral.values.push([])
 
-        isInitial = false
-    }
+		isInitial = false
+	}
 
-    return arrayLiteral
+	return arrayLiteral
 }
 
 export function printArrayLiteral(token: ArrayLiteral, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
-    const space = ' '.repeat(4)
-    return "ArrayLiteral" +
-        token.values.reduce((a, c, i, arr) => a + '\n' + space.repeat(indent) +
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
+	const space = " ".repeat(4)
+	return "ArrayLiteral" +
+        token.values.reduce((a, c, i, arr) => a + "\n" + space.repeat(indent) +
         (i == arr.length - 1 ? endJoiner : middleJoiner) + (i + 1) +
         c.reduce((a, c, i, arr) =>
-            a + '\n' + space.repeat(indent+1) +
+        	a + "\n" + space.repeat(indent+1) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) +
-            printExpression(c, indent + 2), '')
-        , '')
+            printExpression(c, indent + 2), "")
+        , "")
 
 }

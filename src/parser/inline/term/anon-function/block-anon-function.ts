@@ -7,22 +7,22 @@ import { generateTypeExpression } from "../../type/type-expression.js"
 import { generateIdentifier } from "../../literal/identifier.js"
 
 export function generateBlockAnonFunction(context: string[], tokens: TokenStream): BlockAnonFunction | MismatchToken {
-    const blockAnonFunction: BlockAnonFunction = {
-        type: "BlockAnonFunction",
-        body: [],
-        kind: ["return"],
-        params: [],
-        signature: null,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const blockAnonFunction: BlockAnonFunction = {
+		type: "BlockAnonFunction",
+		body: [],
+		kind: ["return"],
+		params: [],
+		signature: null,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = skip(tokens, skipables) // skip fun
-    const initialCursor = tokens.cursor
+	const currentToken = skip(tokens, skipables) // skip fun
+	const initialCursor = tokens.cursor
 
-    /* const captureSignature = () => {
+	/* const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
         const signature = generateTypeExpression(blockAnonFunction, tokens)
         return signature
@@ -144,5 +144,5 @@ export function generateBlockAnonFunction(context: string[], tokens: TokenStream
         blockAnonFunction.body.push(node)
     } */
 
-    return blockAnonFunction
+	return blockAnonFunction
 }

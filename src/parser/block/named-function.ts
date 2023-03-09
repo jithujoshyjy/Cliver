@@ -7,23 +7,23 @@ import { generateProgram } from "../program.js"
 import { createMismatchToken, isKeyword, isOperator, isPunctuator, skip, skipables, type Node } from "../utility.js"
 
 export function generateNamedFunction(context: string[], tokens: TokenStream): NamedFunction | MismatchToken {
-    const namedFunction: NamedFunction = {
-        type: "NamedFunction",
-        body: [],
-        kind: ["return"],
-        name: null!,
-        params: [],
-        signature: null,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const namedFunction: NamedFunction = {
+		type: "NamedFunction",
+		body: [],
+		kind: ["return"],
+		name: null!,
+		params: [],
+		signature: null,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	const currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    /* const captureSignature = () => {
+	/* const captureSignature = () => {
         currentToken = skip(tokens, skipables) // skip ::
         const signature = generateTypeExpression(namedFunction, tokens)
         return signature
@@ -158,14 +158,14 @@ export function generateNamedFunction(context: string[], tokens: TokenStream): N
         namedFunction.body.push(node)
     } */
 
-    return /* namedFunction */ createMismatchToken(currentToken)
+	return /* namedFunction */ createMismatchToken(currentToken)
 }
 
 export function printNamedFunction(token: NamedFunction, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const space = ' '.repeat(4)
-    return "NamedFunction\n"
+	const space = " ".repeat(4)
+	return "NamedFunction\n"
 }

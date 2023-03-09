@@ -3,34 +3,34 @@ import { createMismatchToken, type Node } from "../utility.js"
 import { generateIdentifier } from "./literal/identifier.js"
 
 export function generateKeyword(context: string[], tokens: TokenStream): Keyword | MismatchToken {
-    const keyword: Keyword = {
-        type: "Keyword",
-        name: "",
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const keyword: Keyword = {
+		type: "Keyword",
+		name: "",
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	const currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const maybeKeyword = generateIdentifier(["Keyword", ...context], tokens)
+	const maybeKeyword = generateIdentifier(["Keyword", ...context], tokens)
     
-    if(maybeKeyword.type != "MismatchToken" || !maybeKeyword.partialParse) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if(maybeKeyword.type != "MismatchToken" || !maybeKeyword.partialParse) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
     
-    tokens.cursor = maybeKeyword.partialParse.cursor
-    const identifier = maybeKeyword.partialParse.result as Identifier
+	tokens.cursor = maybeKeyword.partialParse.cursor
+	const identifier = maybeKeyword.partialParse.result as Identifier
     
-    keyword.name = identifier.name
-    keyword.start = identifier.start
-    keyword.end = identifier.end
+	keyword.name = identifier.name
+	keyword.start = identifier.start
+	keyword.end = identifier.end
 
-    keyword.line = identifier.line
-    keyword.column = identifier.column
+	keyword.line = identifier.line
+	keyword.column = identifier.column
 
-    return keyword
+	return keyword
 }

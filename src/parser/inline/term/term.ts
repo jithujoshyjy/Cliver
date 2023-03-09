@@ -24,77 +24,71 @@ import { generateMatchInline, printMatchInline } from "./match-inline.js"
 import { generateDoExpr, printDoExpr } from "./do-expr.js"
 
 export function generateTerm(context: string[], tokens: TokenStream): Term | MismatchToken {
-    const term: Term = {
-        type: "Term",
-        value: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0,
-    }
+	const term: Term = {
+		type: "Term",
+		value: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0,
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const partialParsables = [
-        "FunctionCall", "PropertyAccess",
-        "TaggedSymbol", "TaggedString"
-    ]
+	const nodeGenerators = [
+		// generateTypeAssertion, generatePipelineNotation, generateObjectCascadeNotation,
+		/* generateExternalCallbackNotation, generateAnonFunction, */ generateUnitFunction,
+		generateMetaDataInterpolation, generateTaggedSymbol,
+		generateSymbolFragment, generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
+		generateMatchInline, generateIfInline, generateDoExpr, generateGroupExpression, generateInlineMacroApplication, generatePropertyAccess, generateFunctionCall,
+	]
 
-    const nodeGenerators = [
-        // generateTypeAssertion, generatePipelineNotation, generateObjectCascadeNotation,
-        /* generateExternalCallbackNotation, generateAnonFunction, */ generateUnitFunction,
-        /* generateAssignExpr, */ generateMetaDataInterpolation, /* generateTaggedSymbol, */
-        generateSymbolFragment, /* generateTaggedString, */ generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
-        generateMatchInline, generateIfInline, generateDoExpr, generateGroupExpression, generateInlineMacroApplication,
-        /* generateFunctionCall, generatePropertyAccess */
-    ]
+	let node: typeof term.value | MismatchToken = null!
+	for (const nodeGenerator of nodeGenerators) {
 
-    let node: typeof term.value | MismatchToken = null!
-    for (let nodeGenerator of nodeGenerators) {
+		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+			continue
+        
+		node = nodeGenerator(["Term", ...context], tokens)
+		currentToken = tokens.currentToken
 
-        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-            continue
+		if (node.type != "MismatchToken")
+			break
 
-        node = nodeGenerator(["Term", ...context], tokens)
-        currentToken = tokens.currentToken
+		if (node.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return node
+		}
+	}
 
-        if (node.type != "MismatchToken")
-            break
+	if (node.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return node
+	}
+    
+	term.start = node.start
+	term.end = node.end
+	term.value = node
 
-        if (node.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return node
-        }
-    }
+	term.line = node.line
+	term.column = node.column
 
-    if (node.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return node
-    }
-
-    term.start = node.start
-    term.end = node.end
-    term.value = node
-
-    term.line = node.line
-    term.column = node.column
-
-    return term
+	return term
 }
 
 export function printTerm(token: Term, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
 
-    const printers = [
-        printMetaDataInterpolation, printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, printMatchInline, printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printDoExpr, printPropertyAccess, /* printTypeAssertion, printAssignExpr, */ printGroupExpression
-    ] as NodePrinter[]
+	const printers = [
+		printMetaDataInterpolation, printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, printMatchInline, printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printDoExpr, printPropertyAccess, /* printTypeAssertion, */ printGroupExpression
+	] as NodePrinter[]
 
-    const printer = pickPrinter(printers, token.value)!
+	const printer = pickPrinter(printers, token.value)!
 
-    const space = ' '.repeat(4)
-    return "Term" +
-        '\n' + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
+	const space = " ".repeat(4)
+	return "Term" +
+        "\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

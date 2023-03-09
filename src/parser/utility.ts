@@ -19,52 +19,52 @@ export type DiagnosticDescription = {
 
 export const createDiagnosticMessage = <T extends DiagnosticMessage>(message: T, ...args: unknown[]): T => {
 
-    for (const [i, arg] of args.entries())
-        message = message.replace("{" + i + "}", String(arg)) as T
+	for (const [i, arg] of args.entries())
+		message = message.replace("{" + i + "}", String(arg)) as T
 
-    return message
+	return message
 }
 
 export const skip = (tokens: TokenStream, skipable: Skipable) => {
-    let currentToken = tokens.currentToken
-    while (!tokens.isFinished) {
-        tokens.advance()
-        currentToken = tokens.currentToken
+	let currentToken = tokens.currentToken
+	while (!tokens.isFinished) {
+		tokens.advance()
+		currentToken = tokens.currentToken
 
-        if (!skipable.includes(currentToken))
-            break
+		if (!skipable.includes(currentToken))
+			break
 
-        if (currentToken.value == "#") {
-            const comment = generateComment(tokens)
-        }
-    }
-    return currentToken
+		if (currentToken.value == "#") {
+			const comment = generateComment(tokens)
+		}
+	}
+	return currentToken
 }
 
-export const punctuators = ['(', ')', '[', ']', '{', '}', ',', ';', '\'', '"', "\\", "$", "#"]
+export const punctuators = ["(", ")", "[", "]", "{", "}", ",", ";", "'", "\"", "\\", "$", "#"]
 export const operators = [
-    "=", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
-    "%", "<", ">", '`', ":",
+	"=", "@", "~", ".", "?", "|", "&", "~", "!", "+", "-", "*", "^", "/",
+	"%", "<", ">", "`", ":",
 ]
 export const keywords = [
-    "done", "do", "fun", "var", "val", "type",
-    "end", "ref", "match", "case", "if", "elseif", "else", "for", "catch",
-    "throw", "in!", "in", "of", "use", "import", "export", "from",
-    "to", "is!", "is", "as"
+	"done", "do", "fun", "var", "val", "type",
+	"end", "ref", "match", "case", "if", "elseif", "else", "for", "catch",
+	"throw", "in!", "in", "of", "use", "import", "export", "from",
+	"to", "is!", "is", "as"
 ]
 
 export const isKeyword = (token: Node, keyword: KeywordKind) =>
-    token.type == "Keyword" && token.name == keyword
+	token.type == "Keyword" && token.name == keyword
 
 export const isOperator = (token: LexicalToken, opr: string) =>
-    token.type == "Operator" && token.value == opr
+	token.type == "Operator" && token.value == opr
 
 export const isPunctuator = (token: LexicalToken, punctuator: string) =>
-    token.type == "Punctuator" && token.value == punctuator
+	token.type == "Punctuator" && token.value == punctuator
 
 export const isRightAssociative = (op: InfixCallOperator | NonVerbalOperator | VerbalOperator) => {
-    const value = op.type == "InfixCallOperator" ? "`" : op.name
-    return value in operatorPrecedence.infix.right
+	const value = op.type == "InfixCallOperator" ? "`" : op.name
+	return value in operatorPrecedence.infix.right
 }
 
 export type PartialParse = { result: Node, cursor: number, meta?: { [x: string]: any } }
@@ -77,57 +77,57 @@ type DiagnosticObj = {
 
 export const createMismatchToken = (token: LexicalToken, error?: [DiagnosticMessage, ...any] | PartialParse | DiagnosticObj): MismatchToken => {
 
-    if (Array.isArray(error)) {
-        let [message, ...args] = error
+	if (Array.isArray(error)) {
+		const [message, ...args] = error
 
-        return {
-            type: "MismatchToken",
-            error: createDiagnosticMessage(message, ...args),
-            errorDescription: diagnosticMessages[message],
-            value: token,
-            line: token.line,
-            column: token.column,
-            start: token.start,
-            end: token.end
-        }
-    }
+		return {
+			type: "MismatchToken",
+			error: createDiagnosticMessage(message, ...args),
+			errorDescription: diagnosticMessages[message],
+			value: token,
+			line: token.line,
+			column: token.column,
+			start: token.start,
+			end: token.end
+		}
+	}
 
-    if (error && "diagnostics" in error) {
+	if (error && "diagnostics" in error) {
 
-        const diagnosticDescription: Partial<DiagnosticDescription> = {
-            ...(error.diagnostics.catagory ? { catagory: error.diagnostics.catagory } : {}),
-            ...(error.diagnostics.code ? { code: error.diagnostics.code } : {}),
-            ...(error.diagnostics.severity ? { severity: error.diagnostics.severity } : {})
-        }
+		const diagnosticDescription: Partial<DiagnosticDescription> = {
+			...(error.diagnostics.catagory ? { catagory: error.diagnostics.catagory } : {}),
+			...(error.diagnostics.code ? { code: error.diagnostics.code } : {}),
+			...(error.diagnostics.severity ? { severity: error.diagnostics.severity } : {})
+		}
 
 
-        return {
-            type: "MismatchToken",
-            error: createDiagnosticMessage(error.diagnostics.message, ...error.diagnostics.args),
-            errorDescription: { ...diagnosticMessages[error.diagnostics.message], ...diagnosticDescription },
-            value: token,
-            ...(error.partialParse ? { partialParse: error.partialParse } : {}),
-            line: token.line,
-            column: token.column,
-            start: token.start,
-            end: token.end
-        }
-    }
+		return {
+			type: "MismatchToken",
+			error: createDiagnosticMessage(error.diagnostics.message, ...error.diagnostics.args),
+			errorDescription: { ...diagnosticMessages[error.diagnostics.message], ...diagnosticDescription },
+			value: token,
+			...(error.partialParse ? { partialParse: error.partialParse } : {}),
+			line: token.line,
+			column: token.column,
+			start: token.start,
+			end: token.end
+		}
+	}
 
-    const partialParse = error ? { partialParse: { ...error } } : {}
-    const defaultMessage: DiagnosticMessage = "Unexpected token '{0}' on {1}:{2}"
+	const partialParse = error ? { partialParse: { ...error } } : {}
+	const defaultMessage: DiagnosticMessage = "Unexpected token '{0}' on {1}:{2}"
 
-    return {
-        type: "MismatchToken",
-        error: createDiagnosticMessage(defaultMessage, token.type, token.line, token.column),
-        errorDescription: diagnosticMessages[defaultMessage],
-        value: token,
-        ...partialParse,
-        line: token.line,
-        column: token.column,
-        start: token.start,
-        end: token.end
-    }
+	return {
+		type: "MismatchToken",
+		error: createDiagnosticMessage(defaultMessage, token.type, token.line, token.column),
+		errorDescription: diagnosticMessages[defaultMessage],
+		value: token,
+		...partialParse,
+		line: token.line,
+		column: token.column,
+		start: token.start,
+		end: token.end
+	}
 }
 
 type Skipable = {
@@ -137,21 +137,21 @@ type Skipable = {
 export type NodePrinter = (token: Node, indent?: number) => string
 
 export const pickPrinter = (printers: Array<NodePrinter>, token: Node) =>
-    printers.find(x => x.name.replace(/^print/, "") == token.type)
+	printers.find(x => x.name.replace(/^print/, "") == token.type)
 
 export const skipables: Skipable = {
-    includes(token: LexicalToken) {
-        return token.type == "Punctuator" && token.value == "#" ||
+	includes(token: LexicalToken) {
+		return token.type == "Punctuator" && token.value == "#" ||
             token.type == "Whitespace" ||
             token.type == "Newline"
-    }
+	}
 }
 
 export const _skipables: Skipable = {
-    includes(token: LexicalToken) {
-        return token.type == "Punctuator" && token.value == "#" ||
+	includes(token: LexicalToken) {
+		return token.type == "Punctuator" && token.value == "#" ||
             token.type == "Whitespace"
-    }
+	}
 }
 
 type PrecidenceType = {
@@ -161,114 +161,117 @@ type PrecidenceType = {
 }
 
 export const operatorPrecedence: PrecidenceType = {
-    infix: {
-        left: {
-            "..": 1, "..?": 1,
-            ":": 2, "=": 2, ":=": 2, "::": 2,
-            "+=": 2, "-=": 2, "*=": 2, "/=": 2, "^=": 2, "%=": 2,
-            "&&=": 2, "||=": 2, ".&&=": 2, ".||=": 2,
-            ".+=": 2, ".-=": 2, ".*=": 2, "./=": 2, ".%=": 2, ".^=": 2,
-            "||": 3, "??": 3, ".||": 3,
-            "&&": 4, ".&&": 4,
-            "|": 5,
-            "&": 7,
-            "==": 8, "!=": 8,
-            "in": 9, "in!": 9, "of": 9, "to": 9, "is": 9, "is!": 9, "as": 9,
-            "<=": 9, ">=": 9, "<": 9, ">": 9,
-            "+": 11, "-": 11, ".+": 11, ".-": 11,
-            "*": 12, "/": 12, "%": 12, ".*": 12, "./": 12, ".%": 12,
-            "<~": 17, ".": 17, "?.": 17,
-        },
-        right: {
-            "`": 2,
-            "^": 13, ".^": 13,
-        }
-    },
-    prefix: {
-        "...": 2, "ref": 2, "throw": 2,
-        "~": 6,
-        "!": 14, "+": 14, "-": 14,
-    },
-    postfix: {
-        "?": 2,
-    }
+	infix: {
+		left: {
+			"..": 1, "..?": 1,
+			":": 2, "=": 2, ":=": 2, "::": 2,
+			"+=": 2, "-=": 2, "*=": 2, "/=": 2, "^=": 2, "%=": 2,
+			"&&=": 2, "||=": 2, ".&&=": 2, ".||=": 2,
+			".+=": 2, ".-=": 2, ".*=": 2, "./=": 2, ".%=": 2, ".^=": 2,
+			"||": 3, "??": 3, ".||": 3,
+			"&&": 4, ".&&": 4,
+			"|": 5,
+			"&": 7,
+			"==": 8, "!=": 8,
+			"in": 9, "in!": 9, "of": 9, "to": 9, "is": 9, "is!": 9, "as": 9,
+			"<=": 9, ">=": 9, "<": 9, ">": 9,
+			"+": 11, "-": 11, ".+": 11, ".-": 11,
+			"*": 12, "/": 12, "%": 12, ".*": 12, "./": 12, ".%": 12,
+			"<~": 17, ".": 17, "?.": 17,
+		},
+		right: {
+			"`": 2,
+			"^": 13, ".^": 13,
+		}
+	},
+	prefix: {
+		"...": 2, "ref": 2, "throw": 2,
+		"~": 6,
+		"!": 14, "+": 14, "-": 14,
+	},
+	postfix: {
+		"?": 2,
+	}
 }
 
 export const lookAheadForStringLiteral = (tokens: TokenStream) => {
-    const initialCursor = tokens.cursor
-    let currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
+	const initialCursor = tokens.cursor
+	const currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables)
+		: tokens.currentToken
 
-    const stringLiteralAhead = isPunctuator(currentToken, '"')
-    tokens.cursor = initialCursor
+	const stringLiteralAhead = isPunctuator(currentToken, "\"")
+	tokens.cursor = initialCursor
 
-    return stringLiteralAhead
+	return stringLiteralAhead
 }
 
 export const lookAheadForSymbolLiteral = (tokens: TokenStream) => {
-    const initialCursor = tokens.cursor
-    let currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
+	const initialCursor = tokens.cursor
+	const currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables)
+		: tokens.currentToken
 
-    const symbolLiteralAhead = isPunctuator(currentToken, '\\')
-    tokens.cursor = initialCursor
+	const symbolLiteralAhead = isPunctuator(currentToken, "\\")
+	tokens.cursor = initialCursor
 
-    return symbolLiteralAhead
+	return symbolLiteralAhead
 }
 
 export const lookAheadForFunctionCall = (tokens: TokenStream) => {
-    const initialCursor = tokens.cursor
-    let currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
+	const initialCursor = tokens.cursor
+	const currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables)
+		: tokens.currentToken
 
-    const functionCallAhead = isPunctuator(currentToken, '(')
-    tokens.cursor = initialCursor
+	const functionCallAhead = isPunctuator(currentToken, "(")
+	tokens.cursor = initialCursor
 
-    return functionCallAhead
+	return functionCallAhead
 }
 
 export const lookAheadForPropertyAccess = (tokens: TokenStream) => {
-    const initialCursor = tokens.cursor
-    let currentToken = _skipables.includes(tokens.currentToken)
-        ? skip(tokens, _skipables)
-        : tokens.currentToken
+	const initialCursor = tokens.cursor
+	let currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables)
+		: tokens.currentToken
 
-    let propertyAccessAhead = false
-    if (isOperator(currentToken, '?'))
-        currentToken = skip(tokens, _skipables)
+	let propertyAccessAhead = false
+	if (isOperator(currentToken, "?"))
+		currentToken = skip(tokens, _skipables)
 
-    if (isPunctuator(currentToken, '['))
-        propertyAccessAhead = true
+	if (isPunctuator(currentToken, "["))
+		propertyAccessAhead = true
 
-    else {
-        currentToken = skipables.includes(tokens.currentToken)
-            ? skip(tokens, skipables)
-            : tokens.currentToken
+	else {
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-        const isDotOperator = isOperator(currentToken, '.') || isOperator(currentToken, '?.')
-        if (isDotOperator)
-            propertyAccessAhead = true
-    }
+		const isDotOperator = isOperator(currentToken, ".") || isOperator(currentToken, "?.")
+		if (isDotOperator)
+			propertyAccessAhead = true
+	}
 
-    tokens.cursor = initialCursor
-    return propertyAccessAhead
+	tokens.cursor = initialCursor
+	return propertyAccessAhead
 }
 
-export const blockedTypes: string[] = []
-export const isBlockedType = (type: string) => blockedTypes.includes(type)
-export const withBlocked = <T>(blocked: string[], callback: Function): T => {
-    blocked.forEach(x => blockedTypes.unshift(x))
-    const res: T = callback()
-    blocked.forEach(() => blockedTypes.shift())
-    return res
+export let blockedTypes: string[] = []
+export const isBlockedType = (type: string, ignored: string[] = []) =>
+	blockedTypes.includes(type) && !ignored.includes(type)
+
+export const withBlocked = <T>(blocked: string[], callback: (...a: unknown[]) => T): T => {
+	blockedTypes = [...new Set([...blocked, ...blockedTypes])]
+	const res: T = callback()
+	blockedTypes = blockedTypes.filter(x => !blocked.includes(x))
+	return res
 }
-export const withUnblocked = <T>(unblocked: string[], callback: Function): T => {
-    unblocked.forEach(x =>
-        blockedTypes.splice(((y = blockedTypes.indexOf(x)) => y == -1 ? Infinity : y)(), 1))
-    const res: T = callback()
-    unblocked.forEach(x => blockedTypes.unshift(x))
-    return res
+
+export const withUnblocked = <T>(unblocked: string[], callback: (...a: unknown[]) => T): T => {
+	const prevBlocked: string[] = []
+	blockedTypes = blockedTypes.filter(x => !(unblocked.includes(x) ? prevBlocked.unshift(x) : false))
+	const res: T = callback()
+	blockedTypes = [...new Set([...prevBlocked, ...blockedTypes])]
+	return res
 }

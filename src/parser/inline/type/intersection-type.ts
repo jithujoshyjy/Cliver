@@ -11,56 +11,56 @@ import { generateTypeName } from "./type-name.js"
 import { generateUnionType } from "./union-type.js"
 
 export function generateIntersectionType(context: string[], tokens: TokenStream): IntersectionType | MismatchToken {
-    const intersectionType: IntersectionType = {
-        type: "IntersectionType",
-        left: null!,
-        right: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const intersectionType: IntersectionType = {
+		type: "IntersectionType",
+		left: null!,
+		right: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    let initialCursor = tokens.cursor
-    const typeGenerators = [
-        generateUnionType, generateDifferenceType, generateNegateType,
-        generateFunctionType, generateFunctionCallType, generateStructureType, generateTypeName
-    ]
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
+	const typeGenerators = [
+		generateUnionType, generateDifferenceType, generateNegateType,
+		generateFunctionType, generateFunctionCallType, generateStructureType, generateTypeName
+	]
 
-    let typeMember: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
+	let typeMember: TypeName | UnionType | NegateType | DifferenceType | FunctionType | FunctionCallType | StructureType | MismatchToken = null!
 
-    for (let typeGenerator of typeGenerators) {
-        if (isBlockedType(typeGenerator.name.replace("generate", '')))
-            continue
+	for (const typeGenerator of typeGenerators) {
+		if (isBlockedType(typeGenerator.name.replace("generate", "")))
+			continue
 
-        typeMember = typeGenerator(["IntersectionType", ...context], tokens)
-        currentToken = tokens.currentToken
-        if (typeMember.type != "MismatchToken")
-            break
-    }
+		typeMember = typeGenerator(["IntersectionType", ...context], tokens)
+		currentToken = tokens.currentToken
+		if (typeMember.type != "MismatchToken")
+			break
+	}
 
-    if (typeMember.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return typeMember
-    }
+	if (typeMember.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return typeMember
+	}
 
-    intersectionType.left = typeMember
-    currentToken = skip(tokens, skipables)
+	intersectionType.left = typeMember
+	currentToken = skip(tokens, skipables)
 
-    if (!isOperator(currentToken, "&")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isOperator(currentToken, "&")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    currentToken = skip(tokens, skipables) // skip &
+	currentToken = skip(tokens, skipables) // skip &
 
-    const right = generateTypeExpression(["IntersectionType", ...context], tokens) // buggy :(
+	const right = generateTypeExpression(["IntersectionType", ...context], tokens) // buggy :(
 
-    if (right.type == "MismatchToken")
-        return right
+	if (right.type == "MismatchToken")
+		return right
 
-    intersectionType.right = right
+	intersectionType.right = right
 
-    return intersectionType
+	return intersectionType
 }

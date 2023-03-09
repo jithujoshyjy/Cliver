@@ -4,69 +4,75 @@ import { generateExpression, printExpression } from "./expression/expression.js"
 import { generateKeyword } from "./keyword.js"
 
 export function generateInline(context: string[], tokens: TokenStream): Inline | MismatchToken {
-    const inline: Inline = {
-        type: "Inline",
-        value: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const inline: Inline = {
+		type: "Inline",
+		value: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    const initialCursor = tokens.cursor
-    let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+    
+	if (skipables.includes(currentToken))
+		currentToken = skip(tokens, skipables)
 
-    if (skipables.includes(currentToken))
-        currentToken = skip(tokens, skipables)
+	const expression = generateExpression(["Inline", ...context], tokens)
+	if (expression.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return expression
+	}
 
-    const expression = generateExpression(["Inline", ...context], tokens)
-    if (expression.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return expression
-    }
+	const captureDelimiter = () => {
 
-    const captureDelimiter = () => {
-        currentToken = tokens.currentToken
+		currentToken = _skipables.includes(tokens.currentToken)
+			? skip(tokens, _skipables)
+			: tokens.currentToken
 
-        if (_skipables.includes(currentToken))
-            currentToken = skip(tokens, _skipables)
+		let isDelimited = currentToken.type == "Newline"
+		isDelimited ||= isPunctuator(currentToken, ";")
 
-        let isDelimited = currentToken.type == "Newline"
-            || [')', ']', '}', ';', ','].some(x => isPunctuator(currentToken, x))
-            || currentToken.type == "EOF"
+		const isExplicitDelimited = isDelimited
+		isDelimited ||= [")", "]", "}", ","].some(x => isPunctuator(currentToken, x))
+		isDelimited ||= currentToken.type == "EOF"
 
-        const resetCursorPoint = tokens.cursor
-        isDelimited ||= generateKeyword(["Inline", ...context], tokens).type == "Keyword"
-        tokens.cursor = resetCursorPoint
+		const resetCursorPoint = tokens.cursor
+		isDelimited ||= generateKeyword(["Inline", ...context], tokens).type == "Keyword"
+		tokens.cursor = resetCursorPoint
 
-        if (!isDelimited)
-            return createMismatchToken(currentToken)
+		if (!isDelimited)
+			return createMismatchToken(currentToken)
 
-        return currentToken
-    }
+		const prevToken = currentToken
+		currentToken = isExplicitDelimited
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-    inline.start = expression.start
-    inline.line = expression.line
-    inline.column = expression.column
-    inline.value = expression
+		return prevToken
+	}
 
-    const delimiter = captureDelimiter()
+	inline.start = expression.start
+	inline.line = expression.line
+	inline.column = expression.column
+	inline.value = expression
 
-    if (delimiter.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return delimiter
-    }
+	const delimiter = captureDelimiter()
 
-    currentToken = skip(tokens, skipables)
-    inline.end = delimiter.end
+	if (delimiter.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return delimiter
+	}
 
-    return inline
+	inline.end = delimiter.end
+	return inline
 }
 
 export function printInline(token: Inline, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
-    const space = ' '.repeat(4)
-    return "Inline\n" + space.repeat(indent) + endJoiner + printExpression(token.value, indent + 1)
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
+	const space = " ".repeat(4)
+	return "Inline\n" + space.repeat(indent) + endJoiner + printExpression(token.value, indent + 1)
 }

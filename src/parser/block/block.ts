@@ -11,69 +11,71 @@ import { generateUseDeclaration, printUseDeclaration } from "./use-declaration.j
 import { generateVariableDeclaration, printVariableDeclaration } from "./variable-declaration/variable-declaration.js"
 
 export function generateBlock(context: string[], tokens: TokenStream): Block | MismatchToken {
-    const block: Block = {
-        type: "Block",
-        value: null!,
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const block: Block = {
+		type: "Block",
+		value: null!,
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
-    
-    if (skipables.includes(currentToken))
-        currentToken = skip(tokens, skipables)
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const nodeGenerators = [
-        generateLabelDeclaration, generateUseDeclaration, generateDoCatchBlock,
-        generateForBlock, generateIfBlock, generateBlockMacroApplication,
-        generateNamedFunction, generateImportDeclaration, generateVariableDeclaration
-    ]
+	currentToken = skipables.includes(currentToken)
+		? skip(tokens, skipables)
+		: currentToken
 
-    let node: typeof block.value | MismatchToken = null!
-    for (let nodeGenerator of nodeGenerators) {
-        if (isBlockedType(nodeGenerator.name.replace("generate", '')))
-            continue
+	const nodeGenerators = [
+		generateLabelDeclaration, generateUseDeclaration, generateDoCatchBlock,
+		generateForBlock, generateIfBlock, generateBlockMacroApplication,
+		generateNamedFunction, generateImportDeclaration, generateVariableDeclaration
+	]
+
+	let node: typeof block.value | MismatchToken = null!
+	for (const nodeGenerator of nodeGenerators) {
+		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+			continue
+
+		node = nodeGenerator(["Block", ...context], tokens)
+		currentToken = tokens.currentToken
+
+		if (node.type != "MismatchToken")
+			break
         
-        node = nodeGenerator(["Block", ...context], tokens)
-        currentToken = tokens.currentToken
+		if (node.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return node
+		}
+	}
 
-        if (node.type != "MismatchToken")
-            break
 
-        if (node.errorDescription.severity <= 3) {
-            tokens.cursor = initialCursor
-            return node
-        }
-    }
+	if (node.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return node
+	}
 
-    if (node.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return node
-    }
+	block.start = node.start
+	block.end = node.end
+	block.value = node
 
-    block.start = node.start
-    block.end = node.end
-    block.value = node
-
-    block.line = node.line
-    block.column = node.column
-    return block
+	block.line = node.line
+	block.column = node.column
+	return block
 }
 
 export function printBlock(token: Block, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
-    const printers = [
-        printLabelDeclaration, printUseDeclaration, printDoCatchBlock,
-        printForBlock, printIfBlock, printBlockMacroApplication,
-        printNamedFunction, printImportDeclaration, printVariableDeclaration
-    ] as NodePrinter[]
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
+	const printers = [
+		printLabelDeclaration, printUseDeclaration, printDoCatchBlock,
+		printForBlock, printIfBlock, printBlockMacroApplication,
+		printNamedFunction, printImportDeclaration, printVariableDeclaration
+	] as NodePrinter[]
 
-    const printer = pickPrinter(printers, token.value)!
-    const space = ' '.repeat(4)
-    return "Block\n" + space.repeat(indent) + endJoiner + printer(token.value, indent+1)
+	const printer = pickPrinter(printers, token.value)!
+	const space = " ".repeat(4)
+	return "Block\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

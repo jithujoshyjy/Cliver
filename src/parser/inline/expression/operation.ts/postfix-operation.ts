@@ -30,6 +30,7 @@ export function generatePostfixOperation(context: string[], tokens: TokenStream)
     for (let operandGenerator of operandGenerators) {
         if (isBlockedType(operandGenerator.name.replace("generate", '')))
             continue
+        
         operand = operandGenerator(["PostfixOperation", ...context], tokens)
         currentToken = tokens.currentToken
 
@@ -59,7 +60,7 @@ export function generatePostfixOperation(context: string[], tokens: TokenStream)
 
     currentToken = skipables.includes(tokens.currentToken)
         ? skip(tokens, skipables)
-        : tokens.currentToken // skip operand
+        : tokens.currentToken
 
     let _operator: NonVerbalOperator
         | VerbalOperator
@@ -80,7 +81,7 @@ export function generatePostfixOperation(context: string[], tokens: TokenStream)
         return createMismatchToken(currentToken, partialParse)
     }
 
-    const getPrecidence = (op: NonVerbalOperator | VerbalOperator): number => {
+    const getPrecedence = (op: NonVerbalOperator | VerbalOperator): number => {
         switch (op.type) {
             case "VerbalOperator":
             case "NonVerbalOperator": {
@@ -90,12 +91,11 @@ export function generatePostfixOperation(context: string[], tokens: TokenStream)
         }
     }
 
-
     postfixOperation.end = _operator.end
     _operator.kind = "postfix"
-    _operator.precedence = getPrecidence(_operator)
+    _operator.precedence = getPrecedence(_operator)
     postfixOperation.operator = _operator
-
+    
     return postfixOperation
 }
 

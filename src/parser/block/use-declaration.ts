@@ -4,105 +4,105 @@ import { generateStringLiteral, printStringLiteral } from "../inline/literal/str
 import { createMismatchToken, isPunctuator, skip, _skipables, type Node, isKeyword } from "../utility.js"
 
 export function generateUseDeclaration(context: string[], tokens: TokenStream): UseDeclaration | MismatchToken {
-    const useDeclar: UseDeclaration = {
-        type: "UseDeclaration",
-        rules: [],
-        line: 0,
-        column: 0,
-        start: 0,
-        end: 0
-    }
+	const useDeclar: UseDeclaration = {
+		type: "UseDeclaration",
+		rules: [],
+		line: 0,
+		column: 0,
+		start: 0,
+		end: 0
+	}
 
-    let currentToken = tokens.currentToken
-    const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const initialCursor = tokens.cursor
 
-    const useKeyword = generateKeyword(["UseDeclaration", ...context], tokens)
-    if (useKeyword.type == "MismatchToken") {
-        tokens.cursor = initialCursor
-        return useKeyword
-    }
+	const useKeyword = generateKeyword(["UseDeclaration", ...context], tokens)
+	if (useKeyword.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return useKeyword
+	}
 
-    if (!isKeyword(useKeyword, "use")) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (!isKeyword(useKeyword, "use")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    useDeclar.start = useKeyword.start
-    useDeclar.line = useKeyword.line
-    useDeclar.column = useKeyword.column
+	useDeclar.start = useKeyword.start
+	useDeclar.line = useKeyword.line
+	useDeclar.column = useKeyword.column
 
-    let isInitial = true, lastDelim: LexicalToken | MismatchToken | null = null
-    const parseRule = () => {
-        currentToken = _skipables.includes(tokens.currentToken)
-            ? skip(tokens, _skipables)
-            : tokens.currentToken
+	let isInitial = true, lastDelim: LexicalToken | MismatchToken | null = null
+	const parseRule = () => {
+		currentToken = _skipables.includes(tokens.currentToken)
+			? skip(tokens, _skipables)
+			: tokens.currentToken
 
-        let rule = generateStringLiteral(["UseDeclaration", ...context], tokens)
+		const rule = generateStringLiteral(["UseDeclaration", ...context], tokens)
 
-        if (rule.type == "MismatchToken" || rule.kind == "inline")
-            return rule
+		if (rule.type == "MismatchToken" || rule.kind == "inline")
+			return rule
 
-        lastDelim = null
-        return createMismatchToken(currentToken)
-    }
+		lastDelim = null
+		return createMismatchToken(currentToken)
+	}
 
-    const captureComma = () => {
-        const initialToken = tokens.currentToken
+	const captureComma = () => {
+		const initialToken = tokens.currentToken
 
-        if (!isPunctuator(initialToken, ","))
-            return createMismatchToken(initialToken)
+		if (!isPunctuator(initialToken, ","))
+			return createMismatchToken(initialToken)
 
-        currentToken = skip(tokens, _skipables)
-        return initialToken
-    }
+		currentToken = skip(tokens, _skipables)
+		return initialToken
+	}
 
-    while (!tokens.isFinished) {
+	while (!tokens.isFinished) {
         
-        if (currentToken.type == "EOF" || currentToken.type == "Newline" || isPunctuator(currentToken, ';')) {
-            useDeclar.end = currentToken.end
-            tokens.advance()
-            break
-        }
+		if (currentToken.type == "EOF" || currentToken.type == "Newline" || isPunctuator(currentToken, ";")) {
+			useDeclar.end = currentToken.end
+			tokens.advance()
+			break
+		}
 
-        if (!isInitial && lastDelim == null) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+		if (!isInitial && lastDelim == null) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
-        if (lastDelim?.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return lastDelim
-        }
+		if (lastDelim?.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return lastDelim
+		}
 
-        const rule = parseRule()
-        if (rule.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return rule
-        }
+		const rule = parseRule()
+		if (rule.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return rule
+		}
 
-        useDeclar.rules.push(rule)
-        currentToken = _skipables.includes(tokens.currentToken)
-            ? skip(tokens, _skipables)
-            : tokens.currentToken
+		useDeclar.rules.push(rule)
+		currentToken = _skipables.includes(tokens.currentToken)
+			? skip(tokens, _skipables)
+			: tokens.currentToken
 
-        lastDelim = captureComma()
-        isInitial = false
-    }
+		lastDelim = captureComma()
+		isInitial = false
+	}
 
-    if (useDeclar.rules.length == 0) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+	if (useDeclar.rules.length == 0) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    return useDeclar
+	return useDeclar
 }
 
 export function printUseDeclaration(token: UseDeclaration, indent = 0) {
-    const middleJoiner = "├── "
-    const endJoiner = "└── "
-    const trailJoiner = "│\t"
-    const space = ' '.repeat(4)
-    return "UseDeclaration" +
-        token.rules.reduce((a, c, i, arr) => a + '\n' + space.repeat(indent) +
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
+	const space = " ".repeat(4)
+	return "UseDeclaration" +
+        token.rules.reduce((a, c, i, arr) => a + "\n" + space.repeat(indent) +
             (i == arr.length - 1 ? endJoiner : middleJoiner) + printStringLiteral(c, indent + 1), "")
 }

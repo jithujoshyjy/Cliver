@@ -694,7 +694,7 @@ type Literal = {
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | SymbolFragment | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ObjectExtendNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | AssignExpr | DoExpr | GroupExpression,
+    value: MetaDataInterpolation | TaggedSymbol | SymbolFragment | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | DoExpr | GroupExpression,
     line: number,
     column: number,
     start: number,
@@ -741,7 +741,7 @@ type TypeAssertion = {
 type LabelDeclaration = {
     type: "LabelDeclaration",
     name: Identifier,
-    body: IfBlock | ForBlock | DoCatchBlock | MatchInline | AnonFunction | UnitFunction,
+    body: IfBlock | ForBlock | DoCatchBlock,
     line: number,
     column: number,
     start: number,
@@ -1135,8 +1135,8 @@ type FunctionCallType = {
 
 type PropertyAccess = {
     type: "PropertyAccess",
-    accessor: Literal | TaggedSymbol | TaggedString | ImplicitMultiplication | TaggedNumber | FunctionCall | GroupExpression | PropertyAccess,
-    field: IntegerLiteral | Identifier | Keyword | ArrayLiteral,
+    accessor: Keyword | Literal | TaggedSymbol | TaggedString | ImplicitMultiplication | TaggedNumber | FunctionCall | GroupExpression | PropertyAccess,
+    field: FunctionCall | IntegerLiteral | Identifier | Keyword | ArrayLiteral,
     optional: boolean,
     computed: boolean,
     line: number,
