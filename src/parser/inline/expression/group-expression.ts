@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, skip, skipables, type Node, NodePrinter, pickPrinter, isPunctuator, PartialParse } from "../../utility.js"
+import { createMismatchToken, skip, skipables, type Node, NodePrinter, pickPrinter, isPunctuator, PartialParse, withUnblocked } from "../../utility.js"
 import { printLiteral } from "../literal/literal.js"
 import { printTerm } from "../term/term.js"
 import { generateExpression } from "./expression.js"
@@ -20,6 +20,11 @@ export function generateGroupExpression(context: string[], tokens: TokenStream):
 	let currentToken = tokens.currentToken
 	const initialCursor = tokens.cursor
 
+	const unblockedTypes = [
+		"FunctionCall", "PropertyAccess",
+		"TaggedSymbol", "TaggedString"
+	]
+	
 	if (!isPunctuator(currentToken, "(")) {
 		tokens.cursor = initialCursor
 		return createMismatchToken(currentToken)
@@ -31,9 +36,10 @@ export function generateGroupExpression(context: string[], tokens: TokenStream):
 
 	currentToken = skip(tokens, skipables) // skip (
 
-	const expression: Expression | MismatchToken = generateExpression(["GroupExpression", ...context], tokens)
-	currentToken = tokens.currentToken
-
+	const expression: Expression
+		| MismatchToken
+		= withUnblocked(unblockedTypes, () => generateExpression(["GroupExpression", ...context], tokens))
+	
 	if (expression.type == "MismatchToken") {
 		tokens.cursor = initialCursor
 		return expression
@@ -46,13 +52,13 @@ export function generateGroupExpression(context: string[], tokens: TokenStream):
 		: tokens.currentToken
 
 	if (!isPunctuator(currentToken, ")")) {
-		tokens.cursor = initialCursor
 
 		const partialParse: PartialParse = {
 			result: expression,
-			cursor: currentToken.end
+			cursor: tokens.cursor
 		}
 
+		tokens.cursor = initialCursor
 		return createMismatchToken(currentToken, partialParse)
 	}
 

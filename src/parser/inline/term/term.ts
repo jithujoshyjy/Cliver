@@ -1,11 +1,11 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, NodePrinter, pickPrinter, type Node, PartialParse, isBlockedType } from "../../utility.js"
+import { NodePrinter, pickPrinter, isBlockedType, generateOneOf, withBlocked, createMismatchToken } from "../../utility.js"
 import { generateAnonFunction } from "./anon-function/anon-function.js"
 import { generateUnitFunction, printUnitFunction } from "./unit-function.js"
 import { generateTypeAssertion } from "../type/type-assertion.js"
 import { generateExternalCallbackNotation } from "./external-callback-notation.js"
 import { generateForInline, printForInline } from "./for-inline.js"
-import { generateFunctionCall, printFunctionCall } from "./function-call.js"
+import { generateFunctionCall, generateTaggedTermFunctionCall, printFunctionCall, printTaggedTermFunctionCall } from "./function-call.js"
 import { generateIfInline, printIfInline } from "./if-inline.js"
 import { generateImplicitMultiplication, printImplicitMultiplication } from "./implicit-multiplication.js"
 import { generateInlineMacroApplication, printInlineMacroApplication } from "./inline-macro-application.js"
@@ -13,11 +13,10 @@ import { generateInlineStringFragment, printInlineStringFragment } from "./inlin
 import { generateMetaDataInterpolation, printMetaDataInterpolation } from "./meta-data-interpolation.js"
 import { generateObjectCascadeNotation } from "./object-cascade-notation.js"
 import { generatePipelineNotation } from "./pipeline-notation/pipeline-notation.js"
-import { generatePropertyAccess, printPropertyAccess } from "./property-access.js"
+import { generatePropertyAccess, generateTaggedTermPropertyAccess, printPropertyAccess, printTaggedTermPropertyAccess } from "./property-access.js"
 import { generateTaggedNumber, printTaggedNumber } from "./tagged-number.js"
 import { generateTaggedString, printTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol, printTaggedSymbol } from "./tagged-symbol.js"
-import { generateAssignExpr } from "../expression/assign-expression.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateSymbolFragment, printSymbolFragment } from "./symbol-fragment.js"
 import { generateMatchInline, printMatchInline } from "./match-inline.js"
@@ -33,15 +32,13 @@ export function generateTerm(context: string[], tokens: TokenStream): Term | Mis
 		end: 0,
 	}
 
-	let currentToken = tokens.currentToken
 	const initialCursor = tokens.cursor
 
 	const nodeGenerators = [
 		// generateTypeAssertion, generatePipelineNotation, generateObjectCascadeNotation,
 		/* generateExternalCallbackNotation, generateAnonFunction, */ generateUnitFunction,
-		generateMetaDataInterpolation, generateTaggedSymbol,
-		generateSymbolFragment, generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
-		generateMatchInline, generateIfInline, generateDoExpr, generateGroupExpression, generateInlineMacroApplication, generatePropertyAccess, generateFunctionCall,
+		generateMetaDataInterpolation, generateTaggedTermPropertyAccess, generateTaggedTermFunctionCall, generateTaggedSymbol, generateSymbolFragment, generateTaggedString, generateInlineStringFragment, generateImplicitMultiplication, generateTaggedNumber, generateForInline,
+		generateMatchInline, generateIfInline, generateDoExpr, generateInlineMacroApplication, generateEitherPropertyAccessOrFunctionCall, generateGroupExpression,
 	]
 
 	let node: typeof term.value | MismatchToken = null!
@@ -49,9 +46,8 @@ export function generateTerm(context: string[], tokens: TokenStream): Term | Mis
 
 		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
 			continue
-        
+
 		node = nodeGenerator(["Term", ...context], tokens)
-		currentToken = tokens.currentToken
 
 		if (node.type != "MismatchToken")
 			break
@@ -66,7 +62,7 @@ export function generateTerm(context: string[], tokens: TokenStream): Term | Mis
 		tokens.cursor = initialCursor
 		return node
 	}
-    
+
 	term.start = node.start
 	term.end = node.end
 	term.value = node
@@ -77,18 +73,39 @@ export function generateTerm(context: string[], tokens: TokenStream): Term | Mis
 	return term
 }
 
+export function generateEitherPropertyAccessOrFunctionCall(context: string[], tokens: TokenStream): PropertyAccess | FunctionCall | MismatchToken {
+
+	const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+	const nodeGenerators = [generatePropertyAccess, generateFunctionCall]
+
+	let node: PropertyAccess
+		| FunctionCall
+		| MismatchToken = createMismatchToken(currentToken)
+
+	node = generateOneOf(tokens, context, nodeGenerators)
+
+	if (node.type == "PropertyAccess" && node.field.type == "FunctionCall") {
+		const { field: functionCall } = node, { caller } = functionCall
+		node.field = caller as Identifier | Keyword
+		node.end = caller.end
+		functionCall.caller = node
+		node = functionCall
+	}
+
+	return node
+}
+
 export function printTerm(token: Term, indent = 0) {
-	const middleJoiner = "├── "
 	const endJoiner = "└── "
-	const trailJoiner = "│\t"
 
 	const printers = [
-		printMetaDataInterpolation, printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, printMatchInline, printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printDoExpr, printPropertyAccess, /* printTypeAssertion, */ printGroupExpression
+		printMetaDataInterpolation, printTaggedTermPropertyAccess, printTaggedTermFunctionCall, printTaggedSymbol, printSymbolFragment, printTaggedString, printInlineStringFragment, printImplicitMultiplication, printTaggedNumber, printForInline, printMatchInline, printIfInline, /* printAnonFunction, */ printUnitFunction, /* printObjectCascadeNotation, printObjectExtendNotation, printExternalCallbackNotation, printPipelineNotation, */printFunctionCall, printInlineMacroApplication, printDoExpr, printPropertyAccess, /* printTypeAssertion, */ printGroupExpression
 	] as NodePrinter[]
 
 	const printer = pickPrinter(printers, token.value)!
 
 	const space = " ".repeat(4)
 	return "Term" +
-        "\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
+		"\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
 }

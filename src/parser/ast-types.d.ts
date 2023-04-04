@@ -890,10 +890,7 @@ type TaggedString = {
     line: number,
     column: number,
     start: number,
-    end: number,
-    meta: {
-        resumeFrom?: number
-    }
+    end: number
 }
 
 type TaggedSymbol = {
@@ -903,10 +900,7 @@ type TaggedSymbol = {
     line: number,
     column: number,
     start: number,
-    end: number,
-    meta: {
-        resumeFrom?: number
-    }
+    end: number
 }
 
 type SymbolFragment = {

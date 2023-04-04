@@ -3,8 +3,6 @@ import { createMismatchToken, isOperator, skip, type Node, _skipables, NodePrint
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateNumericLiteral, printNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"
-import { generateFunctionCall } from "./function-call.js"
-import { generatePropertyAccess } from "./property-access.js"
 
 export function generateTaggedNumber(context: string[], tokens: TokenStream): TaggedNumber | MismatchToken {
 	const taggedNumber: TaggedNumber = {

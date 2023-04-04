@@ -70,17 +70,17 @@ export function generateParenPattern(context: string[], tokens: TokenStream): Pa
 	const parseValue = () => {
 
 		let value: PairPattern
-            | AsExpression
-            | TypeAssertion
-            | BracePattern
-            | BracketPattern
-            | ParenPattern
-            | PrefixPattern
-            | InfixPattern
-            | PostfixPattern
-            | InterpPattern
-            | Literal
-            | MismatchToken = null!
+			| AsExpression
+			| TypeAssertion
+			| BracePattern
+			| BracketPattern
+			| ParenPattern
+			| PrefixPattern
+			| InfixPattern
+			| PostfixPattern
+			| InterpPattern
+			| Literal
+			| MismatchToken = null!
 
 		for (const nodeGenerator of nodeGenerators) {
 
@@ -168,13 +168,13 @@ export function generateParenPattern(context: string[], tokens: TokenStream): Pa
 			}
 
 			parenPattern.includesNamed ||=
-                value.type == "AsExpression" ||
-                value.type == "Literal" && value.value.type == "Identifier" ||
-                value.type != "Literal" && value.type != "TypeAssertion" && value.includesNamed
+				value.type == "AsExpression" ||
+				value.type == "Literal" && value.value.type == "Identifier" ||
+				value.type != "Literal" && value.type != "TypeAssertion" && value.includesNamed
 
 			parenPattern[argType].push(value as any)
 		}
-        
+
 		currentToken = skipables.includes(tokens.currentToken)
 			? skip(tokens, skipables)
 			: tokens.currentToken
@@ -195,28 +195,25 @@ export function generateParenPattern(context: string[], tokens: TokenStream): Pa
 		isInitial = false
 	}
 
-	const hasValidArgs = parenPattern.keyword.length >= 1 ||
-        parenPattern.positional.length > 1 ||
-        parenPattern.positional.length == 1 &&
-        lastDelim?.type != "MismatchToken"
+	const hasValidArgs = parenPattern.keyword.length >= 1
+		|| parenPattern.positional.length > 1
+		|| parenPattern.positional.length == 1 && lastDelim?.type != "MismatchToken"
+
+	const hasSingleExpression = parenPattern.positional.length == 1
+		&& lastDelim?.type != "MismatchToken"
+
+	if (!hasValidArgs && hasSingleExpression) {
+		let partialParse: PartialParse = {
+			cursor: tokens.cursor,
+			result: parenPattern.positional.pop()!
+		}
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken, partialParse)
+	}
 
 	if (!hasValidArgs) {
 		tokens.cursor = initialCursor
-		let partialParse: PartialParse | undefined
-
-		if (parenPattern.positional.length == 1 && lastDelim?.type != "MismatchToken")
-			partialParse = {
-				cursor: tokens.cursor,
-				result: parenPattern.positional.pop()!
-			}
-
-		const diagnostics: DiagnosticDescriptionObj = {
-			message: "Unexpected token '{0}' on {1}:{2}",
-			args: [currentToken.type, currentToken.line, currentToken.column],
-			severity: 3,
-		}
-
-		return createMismatchToken(currentToken, { partialParse, diagnostics })
+		return createMismatchToken(currentToken)
 	}
 
 	return parenPattern

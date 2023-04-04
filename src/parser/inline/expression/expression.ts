@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, operatorPrecedence, skip, skipables, type Node, pickPrinter, NodePrinter, isBlockedType, blockedTypes } from "../../utility.js"
+import { createMismatchToken, isOperator, operatorPrecedence, skip, skipables, type Node, pickPrinter, NodePrinter, isBlockedType } from "../../utility.js"
 import { generateLiteral, printLiteral } from "../literal/literal.js"
 import { generateTerm, printTerm } from "../term/term.js"
 import { generateAssignExpr, printAssignExpr } from "./assign-expression.js"
@@ -25,7 +25,7 @@ export function generateExpression(context: string[], tokens: TokenStream): Expr
 	const initialCursor = tokens.cursor
 
 	const nodeGenerators = [
-		generateAssignExpr, /* generateInfixOperation, generatePrefixOperation, generatePostfixOperation, */
+		generateAssignExpr, generateInfixOperation, generatePrefixOperation, generatePostfixOperation,
 		generateTerm, generateLiteral
 	]
 

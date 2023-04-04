@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, _skipables, type Node, skipables, NodePrinter, pickPrinter, isBlockedType } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, _skipables, type Node, skipables, NodePrinter, pickPrinter, isBlockedType, withPartialParsed } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { printInfixOperation } from "../expression/operation.ts/infix-operation.js"
 import { generatePostfixOperation, printPostfixOperation } from "../expression/operation.ts/postfix-operation.js"
@@ -54,8 +54,11 @@ export function generateInlineMacroApplication(context: string[], tokens: TokenS
 		for (const nodeGenerator of nodeGenerators) {
 			if (isBlockedType(nodeGenerator.name.replace("generate", "")))
 				continue
-            
-			caller = nodeGenerator(["InlineMacroApplication", ...context], tokens)
+			
+			caller = caller?.type == "MismatchToken" && caller.partialParse
+			? withPartialParsed(caller.partialParse, () => nodeGenerator(["InlineMacroApplication", ...context], tokens))
+			: nodeGenerator(["InlineMacroApplication", ...context], tokens)
+			
 			currentToken = tokens.currentToken
 
 			if (caller.type != "MismatchToken")

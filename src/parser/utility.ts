@@ -3,18 +3,18 @@ import { generateComment } from "./comment.js"
 import diagnosticMessages from "./diagnostic-messages.js"
 
 export type Node = {
-    type: string,
-    line: number,
-    column: number,
-    start: number,
-    end: number
+	type: string,
+	line: number,
+	column: number,
+	start: number,
+	end: number
 } & { [x: string]: any }
 
 export type DiagnosticMessage = keyof typeof diagnosticMessages
 export type DiagnosticDescription = {
-    code: string,
-    severity: number,
-    catagory: string
+	code: string,
+	severity: number,
+	catagory: string
 }
 
 export const createDiagnosticMessage = <T extends DiagnosticMessage>(message: T, ...args: unknown[]): T => {
@@ -71,8 +71,8 @@ export type PartialParse = { result: Node, cursor: number, meta?: { [x: string]:
 export type DiagnosticDescriptionObj = Partial<DiagnosticDescription> & { message: DiagnosticMessage, args: any[] }
 
 type DiagnosticObj = {
-    partialParse?: PartialParse,
-    diagnostics: DiagnosticDescriptionObj
+	partialParse?: PartialParse,
+	diagnostics: DiagnosticDescriptionObj
 }
 
 export const createMismatchToken = (token: LexicalToken, error?: [DiagnosticMessage, ...any] | PartialParse | DiagnosticObj): MismatchToken => {
@@ -131,7 +131,7 @@ export const createMismatchToken = (token: LexicalToken, error?: [DiagnosticMess
 }
 
 type Skipable = {
-    includes: (token: LexicalToken) => boolean
+	includes: (token: LexicalToken) => boolean
 }
 
 export type NodePrinter = (token: Node, indent?: number) => string
@@ -142,22 +142,22 @@ export const pickPrinter = (printers: Array<NodePrinter>, token: Node) =>
 export const skipables: Skipable = {
 	includes(token: LexicalToken) {
 		return token.type == "Punctuator" && token.value == "#" ||
-            token.type == "Whitespace" ||
-            token.type == "Newline"
+			token.type == "Whitespace" ||
+			token.type == "Newline"
 	}
 }
 
 export const _skipables: Skipable = {
 	includes(token: LexicalToken) {
 		return token.type == "Punctuator" && token.value == "#" ||
-            token.type == "Whitespace"
+			token.type == "Whitespace"
 	}
 }
 
 type PrecidenceType = {
-    infix: { left: { [key: string]: number }, right: { [key: string]: number }, },
-    prefix: { [key: string]: number },
-    postfix: { [key: string]: number },
+	infix: { left: { [key: string]: number }, right: { [key: string]: number }, },
+	prefix: { [key: string]: number },
+	postfix: { [key: string]: number },
 }
 
 export const operatorPrecedence: PrecidenceType = {
@@ -257,9 +257,13 @@ export const lookAheadForPropertyAccess = (tokens: TokenStream) => {
 	return propertyAccessAhead
 }
 
-export let blockedTypes: string[] = []
+let blockedTypes: string[] = [], partialParsed: Array<{ [x: PartialParse["result"]["type"]]: PartialParse }> = []
+
 export const isBlockedType = (type: string, ignored: string[] = []) =>
 	blockedTypes.includes(type) && !ignored.includes(type)
+
+export const getPartialParsed = () =>
+	partialParsed[0] ?? null
 
 export const withBlocked = <T>(blocked: string[], callback: (...a: unknown[]) => T): T => {
 	blockedTypes = [...new Set([...blocked, ...blockedTypes])]
@@ -274,4 +278,37 @@ export const withUnblocked = <T>(unblocked: string[], callback: (...a: unknown[]
 	const res: T = callback()
 	blockedTypes = [...new Set([...prevBlocked, ...blockedTypes])]
 	return res
+}
+
+export const withPartialParsed = <T>(partialParse: PartialParse, callback: (...a: unknown[]) => T): T => {
+	partialParsed.unshift({ [partialParse.result.type]: partialParse })
+	const res: T = callback()
+	partialParsed.shift()
+	return res
+}
+type NodeGenerator = (context: string[], tokens: TokenStream) => Node
+
+export const generateOneOf = <T extends Node>(tokens: TokenStream, context: string[], nodeGenerators: NodeGenerator[], blockedTypes: string[] = []): T => {
+	const initialCursor = tokens.cursor
+	let currentToken = tokens.currentToken
+
+	let node: ReturnType<typeof generateOneOf> = createMismatchToken(currentToken)
+
+	for (const nodeGenerator of nodeGenerators) {
+
+		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+			continue
+
+		node = withBlocked(blockedTypes, () => nodeGenerator(context, tokens))
+
+		if (node.type != "MismatchToken")
+			break
+
+		if (node.errorDescription.severity <= 3) {
+			tokens.cursor = initialCursor
+			return node as T
+		}
+	}
+
+	return node as T
 }

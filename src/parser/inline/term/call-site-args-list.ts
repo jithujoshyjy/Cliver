@@ -25,6 +25,10 @@ export function generateCallSiteArgsList(context: string[], tokens: TokenStream)
 		return createMismatchToken(currentToken)
 	}
 
+	callSiteArgsList.start = currentToken.start
+	callSiteArgsList.line = currentToken.line
+	callSiteArgsList.column = currentToken.column
+
 	currentToken = skip(tokens, skipables)
 
 	let lastDelim: LexicalToken | MismatchToken | null = null
@@ -36,10 +40,10 @@ export function generateCallSiteArgsList(context: string[], tokens: TokenStream)
 			: tokens.currentToken
 
 		let arg: FunctionPrototype
-            | Expression
-            | Pair
-            | Identifier
-            | MismatchToken = null!
+			| Expression
+			| Pair
+			| Identifier
+			| MismatchToken = null!
 
 		const positionalArgGenerators = [generateFunctionPrototype, generatePair, generateExpression]
 		const keywordArgGenerators = [generatePair]
@@ -54,7 +58,7 @@ export function generateCallSiteArgsList(context: string[], tokens: TokenStream)
 		for (const argGenerator of argGenerators) {
 			if (isBlockedType(argGenerator.name.replace("generate", "")))
 				continue
-                
+
 			arg = argGenerator(["CallSiteArgsList", ...context], tokens)
 			currentToken = tokens.currentToken
 
@@ -142,7 +146,7 @@ export function generateCallSiteArgsList(context: string[], tokens: TokenStream)
 
 		isInitial = false
 	}
-    
+
 	return callSiteArgsList
 }
 
@@ -161,26 +165,26 @@ export function printCallSiteArgsList(token: CallSiteArgsList, indent = 0) {
 	const space = " ".repeat(4)
 	return "CallSiteArgsList\n" + space.repeat(indent) +
 
-        (!!token.positional.length && !!token.keyword.length && !!token.captured.length
-        	? middleJoiner
-        	: endJoiner) +
+		(!!token.positional.length && !!token.keyword.length && !!token.captured.length
+			? middleJoiner
+			: endJoiner) +
 
-        (token.positional.length ? "positional\n" +
-            token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
-                (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                pickPrinter(posArgPrinters, c)!(c, indent + 2) + "\n", "") : "") +
+		(token.positional.length ? "positional\n" +
+			token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+				(i == arr.length - 1 ? endJoiner : middleJoiner) +
+				pickPrinter(posArgPrinters, c)!(c, indent + 2) + "\n", "") : "") +
 
-        (token.keyword.length ? (token.positional.length ? space.repeat(indent) + endJoiner : "") + "keyword\n" +
-            token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
-                (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                pickPrinter(kwArgPrinters, c)!(c, indent + 2) + "\n", "") : "") +
+		(token.keyword.length ? (token.positional.length ? space.repeat(indent) + endJoiner : "") + "keyword\n" +
+			token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+				(i == arr.length - 1 ? endJoiner : middleJoiner) +
+				pickPrinter(kwArgPrinters, c)!(c, indent + 2) + "\n", "") : "") +
 
-        (token.captured.length ? (token.positional.length && token.keyword.length
-        	? space.repeat(indent) + endJoiner
-        	: "") +
-            "captured\n" +
-            token.captured.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
-                (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                printIdentifier(c, indent + 2) + "\n", "") : "")
+		(token.captured.length ? (token.positional.length && token.keyword.length
+			? space.repeat(indent) + endJoiner
+			: "") +
+			"captured\n" +
+			token.captured.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+				(i == arr.length - 1 ? endJoiner : middleJoiner) +
+				printIdentifier(c, indent + 2) + "\n", "") : "")
 
 }

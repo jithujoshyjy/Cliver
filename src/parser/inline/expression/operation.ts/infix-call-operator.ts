@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { createMismatchToken, isBlockedType, isOperator, isPunctuator, skip, _skipables, type Node } from "../../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, isPunctuator, skip, _skipables, type Node, withPartialParsed } from "../../../utility.js"
 import { generateIdentifier } from "../../literal/identifier.js"
 import { generatePropertyAccess } from "../../term/property-access.js"
 
@@ -34,8 +34,11 @@ export function generateInfixCallOperator(context: string[], tokens: TokenStream
 	for (const nodeGenerator of nodeGenerators) {
 		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
 			continue
+		
+		caller = caller?.type == "MismatchToken" && caller.partialParse
+			? withPartialParsed(caller.partialParse, () => nodeGenerator(["InfixCallOperator", ...context], tokens))
+			: nodeGenerator(["InfixCallOperator", ...context], tokens)
 
-		caller = nodeGenerator(["InfixCallOperator", ...context], tokens)
 		currentToken = tokens.currentToken
 		if (caller.type != "MismatchToken")
 			break

@@ -2,7 +2,7 @@ import { TokenStream } from "../../lexer/token.js"
 import { generateNonVerbalOperator } from "../inline/expression/operation.ts/non-verbal-operator.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generatePropertyAccess } from "../inline/term/property-access.js"
-import { createMismatchToken, skip, _skipables, isBlockedType } from "../utility.js"
+import { createMismatchToken, skip, _skipables, isBlockedType, withPartialParsed } from "../utility.js"
 
 export function generateBlockMacroApplication(context: string[], tokens: TokenStream): BlockMacroApplication | MismatchToken {
 	const blockMacroApplication: BlockMacroApplication = {
@@ -43,14 +43,17 @@ export function generateBlockMacroApplication(context: string[], tokens: TokenSt
 	]
 
 	let caller: Identifier
-        | PropertyAccess
-        | MismatchToken = null!
+		| PropertyAccess
+		| MismatchToken = null!
 
 	for (const nodeGenerator of nodeGenerators) {
 		if (isBlockedType(nodeGenerator.name.replace("generate", "")))
 			continue
-        
-		caller = nodeGenerator(["BlockMacroApplication", ...context], tokens)
+
+		caller = caller?.type == "MismatchToken" && caller.partialParse
+			? withPartialParsed(caller.partialParse, () => nodeGenerator(["BlockMacroApplication", ...context], tokens))
+			: nodeGenerator(["BlockMacroApplication", ...context], tokens)
+		
 		currentToken = tokens.currentToken
 
 		if (caller.type != "MismatchToken")

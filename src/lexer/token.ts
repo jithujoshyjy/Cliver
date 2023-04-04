@@ -23,7 +23,7 @@ export class TokenStream {
 			this.#tokens.push(EOF)
 		}
 
-		this.#length = tokens.length
+		this.#length = this.#tokens.length
 		if (tokens.length === 0)
 			this.#isFinished = true
 	}

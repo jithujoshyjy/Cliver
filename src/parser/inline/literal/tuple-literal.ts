@@ -26,7 +26,7 @@ export function generateTupleLiteral(context: string[], tokens: TokenStream): Tu
 	tupleLiteral.column = currentToken.column
 	tupleLiteral.start = currentToken.start
 
-	currentToken = skip(tokens, skipables)
+	currentToken = skip(tokens, skipables) // skip (
 
 	const captureComma = () => {
 		const initialToken = tokens.currentToken
@@ -153,8 +153,9 @@ export function generateTupleLiteral(context: string[], tokens: TokenStream): Tu
 			tupleLiteral[argType].push(value as any)
 		}
 
-		if (skipables.includes(currentToken))
-			currentToken = skip(tokens, skipables)
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
 		lastDelim = captureComma()
 
@@ -172,28 +173,25 @@ export function generateTupleLiteral(context: string[], tokens: TokenStream): Tu
 		isInitial = false
 	}
 
-	const hasValidArgs = tupleLiteral.keyword.length >= 1 ||
-        tupleLiteral.positional.length > 1 ||
-        tupleLiteral.positional.length == 1 &&
-        lastDelim?.type != "MismatchToken"
+	const hasValidArgs = tupleLiteral.keyword.length >= 1
+		|| tupleLiteral.positional.length > 1
+		|| tupleLiteral.positional.length == 1 && lastDelim?.type != "MismatchToken"
+
+	const hasSingleExpression = tupleLiteral.positional.length == 1
+		&& lastDelim?.type != "MismatchToken"
+
+	if (!hasValidArgs && hasSingleExpression) {
+		let partialParse: PartialParse = {
+			cursor: tokens.cursor,
+			result: tupleLiteral.positional.pop()!
+		}
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken, partialParse)
+	}
 
 	if (!hasValidArgs) {
 		tokens.cursor = initialCursor
-		let partialParse: PartialParse | undefined
-
-		if (tupleLiteral.positional.length == 1 && lastDelim?.type != "MismatchToken")
-			partialParse = {
-				cursor: tokens.cursor,
-				result: tupleLiteral.positional.pop()!
-			}
-
-		const diagnostics: DiagnosticDescriptionObj = {
-			message: "Unexpected token '{0}' on {1}:{2}",
-			args: [currentToken.type, currentToken.line, currentToken.column],
-			severity: 3,
-		}
-
-		return createMismatchToken(currentToken, { partialParse, diagnostics })
+		return createMismatchToken(currentToken)
 	}
 
 	return tupleLiteral
@@ -206,16 +204,16 @@ export function printTupleLiteral(token: TupleLiteral, indent = 0) {
 	const space = " ".repeat(4)
 	return "TupleLiteral\n" + space.repeat(indent) +
 
-        (!!token.positional.length && !!token.keyword.length ? middleJoiner : endJoiner) +
+		(!!token.positional.length && !!token.keyword.length ? middleJoiner : endJoiner) +
 
-        (token.positional.length ? "positional\n" +
-            token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
-                (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                printExpression(c, indent + 2) + "\n", "") : "") +
+		(token.positional.length ? "positional\n" +
+			token.positional.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+				(i == arr.length - 1 ? endJoiner : middleJoiner) +
+				printExpression(c, indent + 2) + "\n", "") : "") +
 
-        (token.keyword.length ? (token.positional.length ? space.repeat(indent) + endJoiner : "") + "keyword\n" +
-            token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
-                (i == arr.length - 1 ? endJoiner : middleJoiner) +
-                (c.type == "Expression" ? printExpression(c, indent + 2) : printPair(c, indent + 2)) + "\n", "") : "")
+		(token.keyword.length ? (token.positional.length ? space.repeat(indent) + endJoiner : "") + "keyword\n" +
+			token.keyword.reduce((a, c, i, arr) => a + space.repeat(indent + 1) +
+				(i == arr.length - 1 ? endJoiner : middleJoiner) +
+				(c.type == "Expression" ? printExpression(c, indent + 2) : printPair(c, indent + 2)) + "\n", "") : "")
 
 }

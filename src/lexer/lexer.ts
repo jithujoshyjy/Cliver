@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { EOL } from "os"
 import { operators, punctuators } from "../parser/utility.js"
 import { TokenStream } from "./token.js"
