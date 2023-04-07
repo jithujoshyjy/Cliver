@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, skipables, type Node } from "../../../utility.js"
+import { skip, skipables, type Node, generateOneOf, isOperator, createMismatchToken, withBlocked } from "../../../utility.js"
 import { generateAsExpression } from "../../expression/as-expression.js"
 import { generateExpression } from "../../expression/expression.js"
 import { generateErrorPipeline } from "./error-pipeline.js"
@@ -20,47 +20,69 @@ export function generatePipelineNotation(context: string[], tokens: TokenStream)
 	let currentToken = tokens.currentToken
 	const initialCursor = tokens.cursor
 
-	let expression: AsExpression | Expression | MismatchToken = generateAsExpression(["PipelineNotation", ...context], tokens)
-	if (expression.type == "MismatchToken") {
-		expression = generateExpression(["PipelineNotation", ...context], tokens)
-	}
+	const nodeGenerators = [
+		generateAsExpression, generateExpression
+	]
+
+	let expression: AsExpression
+		| Expression
+		| MismatchToken = withBlocked(["PipelineNotation"],
+			() => generateOneOf(tokens, ["PipelineNotation", ...context], nodeGenerators))
 
 	if (expression.type == "MismatchToken") {
 		tokens.cursor = initialCursor
 		return expression
 	}
 
+	pipelineNotation.start = expression.start
+	pipelineNotation.line = expression.line
+	pipelineNotation.column = expression.column
+
 	pipelineNotation.expression = expression
 	pipelineNotation.kind = expression.type == "AsExpression" ? "pointed" : "pointfree"
 
-	while(!tokens.isFinished) {
-		const pipe = parsePipe()
-		currentToken = tokens.currentToken
+	const pipelineOperators = ["``", ".``", "??", ".??"]
+	const pipelineGenerators = [
+		generateTransformPipeline, generateErrorPipeline
+	]
 
-		if(pipe.type == "MismatchToken" && pipelineNotation.pipes.length == 0) {
+	let isInitial = true
+	while (!tokens.isFinished) {
+
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
+
+		const isPipelineOperator = pipelineOperators.some(x => isOperator(currentToken, x))
+
+		if (isInitial && !isPipelineOperator) {
 			tokens.cursor = initialCursor
-			return pipe
+			return createMismatchToken(currentToken)
 		}
-
-		if(pipe.type == "MismatchToken") {
+		else if (!isPipelineOperator)
 			break
+
+		const pipeline: TransformPipeline
+			| ErrorPipeline
+			| MismatchToken = generateOneOf(tokens, ["PipelineNotation", ...context], pipelineGenerators)
+
+		if (pipeline.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return pipeline
 		}
 
-		pipelineNotation.pipes.push(pipe)
+		isInitial = false
+
+		pipelineNotation.end = pipeline.end
+		pipelineNotation.pipes.push(pipeline)
 	}
 
 	return pipelineNotation
+}
 
-	function parsePipe() {
-		currentToken = skip(tokens, skipables) // `` | .`` | ??
-		let pipe: TransformPipeline
-            | ErrorPipeline
-            | MismatchToken = generateTransformPipeline(["PipelineNotation", ...context], tokens)
+export function printPipelineNotation(token: PipelineNotation, indent = 0) {
+	const endJoiner = "└── "
 
-		if(pipe.type == "MismatchToken") {
-			pipe = generateErrorPipeline(["PipelineNotation", ...context], tokens)
-		}
-
-		return pipe
-	}
+	const space = " ".repeat(4)
+	return "PipelineNotation"
 }

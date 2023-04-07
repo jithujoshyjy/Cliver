@@ -5,21 +5,21 @@ import { generateFunctionType } from "./function-type.js"
 import { generateStructureType } from "./structure-type.js"
 
 export function generateTypeConstraint(context: string[], tokens: TokenStream): TypeConstraint | MismatchToken {
-	const typeConstraint: TypeConstraint = {
-		type: "TypeConstraint",
-		assert: null,
-		structure: null,
-		body: null,
-		line: 0,
-		column: 0,
-		start: 0,
-		end: 0
-	}
+    const typeConstraint: TypeConstraint = {
+        type: "TypeConstraint",
+        assert: null,
+        structure: null,
+        body: null,
+        line: 0,
+        column: 0,
+        start: 0,
+        end: 0
+    }
 
-	const initialCursor = tokens.cursor
-	const currentToken = tokens.currentToken
+    const initialCursor = tokens.cursor
+    const currentToken = tokens.currentToken
 
-	/* const typeGenerators = [
+    /* const typeGenerators = [
         generateFunctionType, generateTupleLiteral, generateStructureType
     ]
 
@@ -84,6 +84,6 @@ export function generateTypeConstraint(context: string[], tokens: TokenStream): 
     else {
         typeConstraint.structure = typeMember
     } */
-
-	return typeConstraint
+    return createMismatchToken(currentToken)
+    return typeConstraint
 }

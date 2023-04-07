@@ -1,7 +1,7 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateKeyword } from "../../inline/keyword.js"
 import { generateTypeExpression } from "../../inline/type/type-expression.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node, isKeyword, _skipables, DiagnosticMessage } from "../../utility.js"
+import { createMismatchToken, isOperator, isPunctuator, skip, skipables, isKeyword, _skipables, DiagnosticMessage } from "../../utility.js"
 import { generateVariableDeclarator } from "./variable-declarator.js"
 
 export function generateVariableDeclaration(context: string[], tokens: TokenStream): VariableDeclaration | MismatchToken {

@@ -101,9 +101,7 @@ type TypeDeclarator = {
 
 type UnitFunction = {
     type: "UnitFunction",
-    positional: Array<AssignExpr | Pattern>,
-    keyword: Array<AssignExpr>,
-    captured: Array<Identifier>,
+    parameters: ParamList,
     signature: TypeExpression | null,
     body: Expression,
     line: number,
@@ -123,8 +121,7 @@ type AnonFunction = {
 
 type InlineAnonFunction = {
     type: "InlineAnonFunction",
-    params: Array<AssignExpr | Pattern>,
-    signature: TypeExpression | null,
+    parameters: ParamList,
     body: Expression,
     line: number,
     column: number,
@@ -134,8 +131,8 @@ type InlineAnonFunction = {
 
 type BlockAnonFunction = {
     type: "BlockAnonFunction",
-    kind: string[],
-    params: Array<AssignExpr | Pattern>,
+    kinds: KindList,
+    parameters: ParamList,
     signature: TypeExpression | null,
     body: Array<Inline | Block>,
     line: number,
@@ -146,9 +143,9 @@ type BlockAnonFunction = {
 
 type NamedFunction = {
     type: "NamedFunction",
-    name: Identifier,
-    kind: FunctionKind[],
-    params: Array<AssignExpr | Pattern>,
+    name: PropertyAccess | Identifier,
+    kinds: KindList,
+    parameters: ParamList,
     signature: TypeExpression | null,
     body: Array<Inline | Block>,
     line: number,
@@ -256,6 +253,26 @@ type OperatorRef = {
     end: number
 }
 
+type KindList = {
+    type: "KindList",
+    kinds: Identifier[],
+    line: number,
+    column: number,
+    start: number,
+    end: number
+}
+
+type ParamList = {
+    type: "ParamList",
+    positional: Array<AssignExpr | Identifier>,
+    keyword: Array<AssignExpr | Identifier>,
+    captured: Array<Identifier>,
+    line: number,
+    column: number,
+    start: number,
+    end: number
+}
+
 type CallSiteArgsList = {
     type: "CallSiteArgsList",
     positional: Array<Pair | Expression | FunctionPrototype>,
@@ -290,7 +307,7 @@ type PipelineNotation = {
 type ErrorPipeline = {
     type: "ErrorPipeline",
     expression: Expression,
-    handler: Expression,
+    isIterative: boolean,
     line: number,
     column: number,
     start: number,
@@ -300,7 +317,7 @@ type ErrorPipeline = {
 type TransformPipeline = {
     type: "TransformPipeline",
     expression: Expression,
-    transformer: Expression,
+    isIterative: boolean,
     line: number,
     column: number,
     start: number,
@@ -340,6 +357,7 @@ type BlockMacroApplication = {
 
 type ObjectCascadeNotation = {
     type: "ObjectCascadeNotation",
+    object: Term | Literal,
     body: Array<ObjectOptionalCascade | ObjectRegularCascade>,
     line: number,
     column: number,
@@ -349,7 +367,7 @@ type ObjectCascadeNotation = {
 
 type ObjectOptionalCascade = {
     type: "ObjectOptionalCascade",
-    body: Array<FunctionCall | AssignExpr>,
+    body: PropertyAccess | FunctionCall | Keyword | Identifier,
     line: number,
     column: number,
     start: number,
@@ -358,7 +376,7 @@ type ObjectOptionalCascade = {
 
 type ObjectRegularCascade = {
     type: "ObjectRegularCascade",
-    body: Array<FunctionCall | AssignExpr>,
+    body: PropertyAccess | FunctionCall | Keyword | Identifier,
     line: number,
     column: number,
     start: number,
@@ -694,7 +712,7 @@ type Literal = {
 
 type Term = {
     type: "Term",
-    value: MetaDataInterpolation | TaggedSymbol | SymbolFragment | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | TypeAssertion | DoExpr | GroupExpression,
+    value: MetaDataInterpolation | TaggedSymbol | SymbolFragment | TaggedString | InlineStringFragment | ImplicitMultiplication | TaggedNumber | ForInline | MatchInline | IfInline | AnonFunction | UnitFunction | ObjectCascadeNotation | ExternalCallbackNotation | PipelineNotation | FunctionCall | InlineMacroApplication | PropertyAccess | DoExpr | GroupExpression,
     line: number,
     column: number,
     start: number,
@@ -703,7 +721,7 @@ type Term = {
 
 type Expression = {
     type: "Expression",
-    value: AssignExpr | InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: AssignExpr | TypeAssertion | InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     line: number,
     column: number,
     start: number,
@@ -712,7 +730,7 @@ type Expression = {
 
 type GroupExpression = {
     type: "GroupExpression",
-    value: AssignExpr | InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
+    value: AssignExpr | TypeAssertion | InfixOperation | PrefixOperation | PostfixOperation | Term | Literal | GroupExpression,
     line: number,
     column: number,
     start: number,

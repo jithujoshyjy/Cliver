@@ -1,105 +1,64 @@
 import { TokenStream } from "../../../../lexer/token.js"
 import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../../utility.js"
-import { generateAssignExpr } from "../../expression/assign-expression.js"
 import { generateExpression } from "../../expression/expression.js"
-import { generatePattern } from "../../expression/pattern/pattern.js"
-import { generateTypeExpression } from "../../type/type-expression.js"
+import { generateKeyword } from "../../keyword.js"
+import { generateParamList } from "../param-list.js"
 
 export function generateInlineAnonFunction(context: string[], tokens: TokenStream): InlineAnonFunction | MismatchToken {
 	const inlineAnonFunction: InlineAnonFunction = {
 		type: "InlineAnonFunction",
 		body: null!,
-		params: [],
-		signature: null,
+		parameters: null!,
 		line: 0,
 		column: 0,
 		start: 0,
 		end: 0
 	}
 
-	const currentToken = skip(tokens, skipables) // skip fun
+	let currentToken = tokens.currentToken
 	const initialCursor = tokens.cursor
 
-	/* const captureSignature = () => {
-        currentToken = skip(tokens, skipables) // skip ::
-        const signature = generateTypeExpression(inlineAnonFunction, tokens)
-        return signature
-    }
+    const maybeKeyword = generateKeyword(["InlineAnonFunction", ...context], tokens)
 
-    if (isOperator(currentToken, "::")) {
-        const signature = captureSignature()
-        if (signature.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return signature
-        }
-        inlineAnonFunction.signature = signature
-        currentToken = skip(tokens, skipables)
-    }
-
-    const captureComma = () => {
-        currentToken = skip(tokens, skipables)
-        if (!isOperator(currentToken, ",")) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
-
-        return currentToken
-    }
-
-    if (currentToken.type != TokenType.ParenEnclosed) {
+    if(!isKeyword(maybeKeyword, "fun")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
+    inlineAnonFunction.start = maybeKeyword.start
+    inlineAnonFunction.line = maybeKeyword.line
+    inlineAnonFunction.column = maybeKeyword.column
 
-    const parseParam = () => {
-        currentToken = parenTokens.currentToken
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
-        if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
-            currentToken = skip(parenTokens, skipables)
-
-        let param: AssignExpr | Pattern | MismatchToken = generateAssignExpr(inlineAnonFunction, parenTokens)
-
-        if (param.type == "MismatchToken")
-            param = generatePattern(inlineAnonFunction, parenTokens)
-
-        return param
+    const paramList = generateParamList(["InlineAnonFunction", ...context], tokens)
+    if(paramList.type == "MismatchToken") {
+        tokens.cursor = initialCursor
+        return paramList
     }
 
-    while (!parenTokens.isFinished) {
-        const param = parseParam()
+    inlineAnonFunction.parameters = paramList
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
-        if (param.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return param
-        }
-
-        inlineAnonFunction.params.push(param)
-        const comma = captureComma()
-
-        if (comma.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return comma
-        }
-    }
-
-    currentToken = tokens.currentToken // :
-
-    if (!isOperator(currentToken, ":")) {
+    if(!isOperator(currentToken, ":")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
-    currentToken = skip(tokens, skipables) // skip :
+    currentToken = skip(tokens, skipables)
+    const expression = generateExpression(["InlineAnonFunction", ...context], tokens)
 
-    const expression = generateExpression(inlineAnonFunction, tokens)
-    if (expression.type == "MismatchToken") {
+    if(expression.type == "MismatchToken") {
         tokens.cursor = initialCursor
         return expression
     }
 
-    inlineAnonFunction.body = expression */
+    inlineAnonFunction.body = expression
+    inlineAnonFunction.end = expression.end
 
 	return inlineAnonFunction
 }

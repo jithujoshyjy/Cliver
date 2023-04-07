@@ -1,15 +1,14 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, operatorPrecedence, skip, skipables, type Node, pickPrinter, NodePrinter, isBlockedType } from "../../utility.js"
+import { pickPrinter, NodePrinter, isBlockedType } from "../../utility.js"
 import { generateLiteral, printLiteral } from "../literal/literal.js"
 import { generateTerm, printTerm } from "../term/term.js"
+import { generateTypeAssertion, printTypeAssertion } from "../type/type-assertion.js"
 import { generateAssignExpr, printAssignExpr } from "./assign-expression.js"
-import { generateGroupExpression, printGroupExpression } from "./group-expression.js"
+import { printGroupExpression } from "./group-expression.js"
 import { generateInfixOperation, printInfixOperation } from "./operation.ts/infix-operation.js"
-import { generateNonVerbalOperator } from "./operation.ts/non-verbal-operator.js"
 import { generatePostfixOperation, printPostfixOperation } from "./operation.ts/postfix-operation.js"
 // import { generatePostfixOperation } from "./operation.ts/postfix-operation.js"
 import { generatePrefixOperation, printPrefixOperation } from "./operation.ts/prefix-operation.js"
-import { generateVerbalOperator } from "./operation.ts/verbal-operator.js"
 
 export function generateExpression(context: string[], tokens: TokenStream): Expression | MismatchToken {
 	const expression: Expression = {
@@ -25,7 +24,7 @@ export function generateExpression(context: string[], tokens: TokenStream): Expr
 	const initialCursor = tokens.cursor
 
 	const nodeGenerators = [
-		generateAssignExpr, generateInfixOperation, generatePrefixOperation, generatePostfixOperation,
+		generateAssignExpr, generateTypeAssertion, generateInfixOperation, generatePrefixOperation, generatePostfixOperation,
 		generateTerm, generateLiteral
 	]
 
@@ -69,7 +68,7 @@ export function printExpression(token: Expression, indent = 0) {
 
 	const printers = [
 		printAssignExpr, printInfixOperation, printPrefixOperation, printPostfixOperation,
-		printTerm, printLiteral, printGroupExpression
+		printTerm, printLiteral, printGroupExpression, printTypeAssertion
 	] as NodePrinter[]
 
 	const printer = pickPrinter(printers, token.value)!

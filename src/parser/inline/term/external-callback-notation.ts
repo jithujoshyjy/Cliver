@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { skip, skipables, type Node, PartialParse, createMismatchToken } from "../../utility.js"
+import { skip, skipables, PartialParse, createMismatchToken } from "../../utility.js"
 import { generateDoExpr } from "./do-expr.js"
 import { generateFunctionCall } from "./function-call.js"
 
@@ -22,10 +22,6 @@ export function generateExternalCallbackNotation(context: string[], tokens: Toke
 		tokens.cursor = initialCursor
 		return functionCall
 	}
-
-	currentToken = skipables.includes(tokens.currentToken)
-		? skip(tokens, skipables)
-		: tokens.currentToken
     
 	if(!functionCall.externcallback) {
 		const partialParse: PartialParse = {
@@ -37,6 +33,13 @@ export function generateExternalCallbackNotation(context: string[], tokens: Toke
 	}
 
 	externalCallbackNotation.caller = functionCall
+	externalCallbackNotation.start = functionCall.start
+	externalCallbackNotation.line = functionCall.line
+	externalCallbackNotation.column = functionCall.column
+
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
 	const doExpr = generateDoExpr(["ExternalCallbackNotation", ...context], tokens)
 	if(doExpr.type == "MismatchToken") {
@@ -45,5 +48,14 @@ export function generateExternalCallbackNotation(context: string[], tokens: Toke
 	}
 
 	externalCallbackNotation.callback = doExpr
+	externalCallbackNotation.end = doExpr.end
+
 	return externalCallbackNotation
+}
+
+export function printExternalCallbackNotation(token: ExternalCallbackNotation, indent = 0) {
+	const endJoiner = "└── "
+
+	const space = " ".repeat(4)
+	return "ExternalCallbackNotation"
 }

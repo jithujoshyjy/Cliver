@@ -144,7 +144,7 @@ export function generatePropertyAccess(context: string[], tokens: TokenStream): 
 
 		for (const fieldGenerator of fieldGenerators) {
 
-			if (isBlockedType(fieldGenerator.name.replace("generate", ""), ["FunctionCall"]))
+			if (isBlockedType(fieldGenerator.name.replace("generate", "")))
 				continue
 
 			field = withBlocked(["PropertyAccess"],

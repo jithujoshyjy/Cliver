@@ -1,10 +1,9 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { generateBlock } from "../../block/block.js"
-import { createMismatchToken, isKeyword, skip, type Node, _skipables, skipables, isPunctuator, isOperator, isBlockedType } from "../../utility.js"
+import { createMismatchToken, isKeyword, skip, _skipables, skipables, isOperator, isBlockedType } from "../../utility.js"
 import { printCaseExpr } from "../expression/case-expression.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
 import { generatePattern } from "../expression/pattern/pattern.js"
-import { generateInline } from "../inline.js"
 import { generateKeyword } from "../keyword.js"
 
 export function generateMatchInline(context: string[], tokens: TokenStream): MatchInline | MismatchToken {

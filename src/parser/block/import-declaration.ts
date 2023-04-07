@@ -6,7 +6,7 @@ import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
 import { generateTaggedSymbol } from "../inline/term/tagged-symbol.js"
-import { createMismatchToken, isBlockedType, isKeyword, isOperator, isPunctuator, skip, skipables, _skipables, type Node } from "../utility.js"
+import { createMismatchToken, isBlockedType, isKeyword, isPunctuator, skip, skipables, _skipables } from "../utility.js"
 
 export function generateImportDeclaration(context: string[], tokens: TokenStream): ImportDeclaration | MismatchToken {
 	const importDeclr: ImportDeclaration = {

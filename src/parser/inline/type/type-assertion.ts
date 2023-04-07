@@ -19,8 +19,9 @@ export function generateTypeAssertion(context: string[], tokens: TokenStream): T
 	const initialCursor = tokens.cursor
 
 	const expression: Expression | MismatchToken
-        = withBlocked(["AssignExpr"], () => generateExpression(["TypeAssertion", ...context], tokens))
-    
+		= withBlocked(["AssignExpr", "TypeAssertion"],
+			() => generateExpression(["TypeAssertion", ...context], tokens))
+
 	if (expression.type == "MismatchToken") {
 		tokens.cursor = initialCursor
 		return expression
@@ -35,22 +36,12 @@ export function generateTypeAssertion(context: string[], tokens: TokenStream): T
 		? skip(tokens, skipables)
 		: tokens.currentToken
 
-	const doubleColon = generateNonVerbalOperator(["TypeAssertion", ...context], tokens)
-
-	if (doubleColon.type == "MismatchToken") {
-		tokens.cursor = initialCursor
-		return doubleColon
-	}
-
-	if(doubleColon.name != "::") {
+	if (!isOperator(currentToken, "::")) {
 		tokens.cursor = initialCursor
 		return createMismatchToken(currentToken)
 	}
 
-	currentToken = skipables.includes(tokens.currentToken)
-		? skip(tokens, skipables)
-		: tokens.currentToken
-    
+	currentToken = skip(tokens, skipables) // skip ::
 	const typeExpr = generateTypeExpression(["TypeAssertion", ...context], tokens)
 
 	if (typeExpr.type == "MismatchToken") {
@@ -64,3 +55,11 @@ export function generateTypeAssertion(context: string[], tokens: TokenStream): T
 	return typeAssertion
 }
 
+export function printTypeAssertion(token: TypeAssertion, indent = 0) {
+	const middleJoiner = "├── "
+	const endJoiner = "└── "
+	const trailJoiner = "│\t"
+
+	const space = " ".repeat(4)
+	return "TypeAssertion"
+}

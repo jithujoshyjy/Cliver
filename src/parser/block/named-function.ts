@@ -1,43 +1,61 @@
 import { TokenStream } from "../../lexer/token.js"
-import { generateAssignExpr } from "../inline/expression/assign-expression.js"
-import { generatePattern } from "../inline/expression/pattern/pattern.js"
+import { generateInline } from "../inline/inline.js"
+import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
+import { generateKindList } from "../inline/term/kind-list.js"
+import { generateParamList } from "../inline/term/param-list.js"
+import { generatePropertyAccess } from "../inline/term/property-access.js"
 import { generateTypeExpression } from "../inline/type/type-expression.js"
-import { generateProgram } from "../program.js"
-import { createMismatchToken, isKeyword, isOperator, isPunctuator, skip, skipables, type Node } from "../utility.js"
+import { createMismatchToken, isKeyword, isOperator, skip, skipables, isBlockedType, generateOneOf, withBlocked } from "../utility.js"
+import { generateBlock } from "./block.js"
 
 export function generateNamedFunction(context: string[], tokens: TokenStream): NamedFunction | MismatchToken {
-	const namedFunction: NamedFunction = {
-		type: "NamedFunction",
-		body: [],
-		kind: ["return"],
-		name: null!,
-		params: [],
-		signature: null,
-		line: 0,
-		column: 0,
-		start: 0,
-		end: 0
-	}
-
-	const currentToken = tokens.currentToken
-	const initialCursor = tokens.cursor
-
-	/* const captureSignature = () => {
-        currentToken = skip(tokens, skipables) // skip ::
-        const signature = generateTypeExpression(namedFunction, tokens)
-        return signature
+    const namedFunction: NamedFunction = {
+        type: "NamedFunction",
+        body: [],
+        kinds: null!,
+        name: null!,
+        parameters: null!,
+        signature: null,
+        line: 0,
+        column: 0,
+        start: 0,
+        end: 0
     }
 
-    if (isOperator(currentToken, "::")) {
-        const signature = captureSignature()
-        if (signature.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return signature
-        }
-        namedFunction.signature = signature
+    let currentToken = tokens.currentToken
+    const initialCursor = tokens.cursor
+
+    const maybeKeyword = generateKeyword(["NamedFunction", ...context], tokens)
+
+    if (!isKeyword(maybeKeyword, "fun")) {
+        tokens.cursor = initialCursor
+        return createMismatchToken(currentToken)
     }
-    const name = generateIdentifier(namedFunction, tokens)
+
+    namedFunction.start = maybeKeyword.start
+    namedFunction.line = maybeKeyword.line
+    namedFunction.column = maybeKeyword.column
+
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    const nameBlockers = [
+        "FunctionCall", "ImplicitMultiplication", "TaggedNumber",
+        "GroupExpression", "MapLiteral", "TupleLiteral", "ArrayLiteral", "StringLiteral",
+        "CharLiteral", "SymbolLiteral", "NumericLiteral", "OperatorRef"
+    ]
+
+    const nameGenerators = [
+        (context: string[], tokens: TokenStream) =>
+            withBlocked(nameBlockers, () => generatePropertyAccess(context, tokens)),
+        generateIdentifier
+    ]
+
+    const name: PropertyAccess
+        | Identifier
+        | MismatchToken = generateOneOf(tokens, ["NamedFunction", ...context], nameGenerators)
 
     if (name.type == "MismatchToken") {
         tokens.cursor = initialCursor
@@ -45,127 +63,126 @@ export function generateNamedFunction(context: string[], tokens: TokenStream): N
     }
 
     namedFunction.name = name
-    currentToken = skip(tokens, skipables)
 
-    const captureComma = () => {
-        currentToken = skip(tokens, skipables)
-        if (!isPunctuator(currentToken, ",")) {
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
+
+    if (isOperator(currentToken, "<")) {
+        const defaultReturnKindId: Identifier = {
+            type: "Identifier",
+            name: "return",
+            line: currentToken.line,
+            column: -1,
+            start: -1,
+            end: -1
+        }
+
+        const kindList: KindList
+            | MismatchToken = generateKindList(["NamedFunction", ...context], tokens)
+
+        if (kindList.type == "MismatchToken") {
+            const defaultKindList: KindList = {
+                type: "KindList",
+                kinds: [defaultReturnKindId],
+                line: currentToken.line,
+                column: -1,
+                start: -1,
+                end: -1
+            }
+
+            namedFunction.kinds = defaultKindList
             tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
+            return kindList
         }
 
-        return currentToken
+        kindList.kinds.unshift(defaultReturnKindId)
+        namedFunction.kinds = kindList
+
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
     }
 
-    const captureFunctionKind = () => {
-        currentToken = skip(tokens, skipables)
-        const name = generateIdentifier(namedFunction, tokens)
-        return name
-    }
-
-    if (isOperator(currentToken, "<"))
-        while (!tokens.isFinished) {
-
-            const kind = captureFunctionKind()
-            if (kind.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return kind
-            }
-
-            namedFunction.kind.push(kind.name as FunctionKind)
-
-            if (!tokens.isFinished) {
-                const comma = captureComma()
-                if (comma.type == "MismatchToken" && isOperator(currentToken, ">")) {
-                    currentToken = skip(tokens, skipables)
-                    break
-                }
-
-                if (comma.type == "MismatchToken") {
-                    tokens.cursor = initialCursor
-                    return comma
-                }
-            }
-        }
-
-    if (currentToken.type != "Punctuator") {
+    const paramList = generateParamList(["NamedFunction", ...context], tokens)
+    if (paramList.type == "MismatchToken") {
         tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
+        return paramList
     }
 
-    const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-
-    const parseParam = () => {
-        currentToken = parenTokens.currentToken
-
-        if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
-            currentToken = skip(parenTokens, skipables)
-
-        let param: AssignExpr | Pattern | MismatchToken = generateAssignExpr(namedFunction, parenTokens)
-
-        if (param.type == "MismatchToken")
-            param = generatePattern(namedFunction, parenTokens)
-
-        return param
-    }
-
-    while (!parenTokens.isFinished) {
-        const param = parseParam()
-
-        if (param.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return param
-        }
-
-        namedFunction.params.push(param)
-        if(!parenTokens.isFinished) {
-            const comma = captureComma()
-
-            if (comma.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return comma
-            }
-        }
-    }
-
-    currentToken = tokens.currentToken
+    namedFunction.parameters = paramList
+    currentToken = skipables.includes(tokens.currentToken)
+        ? skip(tokens, skipables)
+        : tokens.currentToken
 
     if (isOperator(currentToken, "::")) {
+        currentToken = skip(tokens, skipables) // skip ::
+        const typeExpression = generateTypeExpression(["NamedFunction", ...context], tokens)
 
-        const signature = captureSignature()
-        if (signature.type == "MismatchToken")
-            return signature
+        if (typeExpression.type == "MismatchToken") {
+            tokens.cursor = initialCursor
+            return typeExpression
+        }
 
-        if (namedFunction.signature !== null)
-            return createMismatchToken(currentToken)
-
-        namedFunction.signature = signature
+        namedFunction.signature = typeExpression
     }
 
-    const nodes = generateProgram(namedFunction, tokens)
+    const nodeGenerators = [
+        generateBlock, generateInline
+    ]
 
-    for (let node of nodes) {
+    while (currentToken.type != "EOF") {
 
-        currentToken = tokens.currentToken
+        currentToken = skipables.includes(tokens.currentToken)
+            ? skip(tokens, skipables)
+            : tokens.currentToken
 
-        if (node.type == "MismatchToken" && isKeyword(currentToken, "end"))
+        const resetCursorPoint = tokens.cursor
+        const endKeyword = generateKeyword(["NamedFunction", ...context], tokens)
+
+        if (isKeyword(endKeyword, "end")) {
+            namedFunction.end = endKeyword.end
             break
-        else if (node.type == "MismatchToken") {
+        }
+
+        let node: Block
+            | Inline
+            | MismatchToken = null!
+
+        tokens.cursor = resetCursorPoint
+        for (const nodeGenerator of nodeGenerators) {
+
+            if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+                continue
+
+            node = nodeGenerator(["NamedFunction", ...context], tokens)
+            currentToken = tokens.currentToken
+
+            if (node.type != "MismatchToken")
+                break
+
+            if (node.errorDescription.severity <= 3) {
+                tokens.cursor = initialCursor
+                return node
+            }
+        }
+
+        if (node.type == "MismatchToken") {
             tokens.cursor = initialCursor
             return node
         }
 
         namedFunction.body.push(node)
-    } */
+    }
 
-	return /* namedFunction */ createMismatchToken(currentToken)
+    return namedFunction
 }
 
 export function printNamedFunction(token: NamedFunction, indent = 0) {
-	const middleJoiner = "├── "
-	const endJoiner = "└── "
-	const trailJoiner = "│\t"
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
 
-	const space = " ".repeat(4)
-	return "NamedFunction\n"
+    const space = " ".repeat(4)
+    return "NamedFunction\n"
 }

@@ -10,7 +10,6 @@ import { generateImplicitMultiplication } from "./implicit-multiplication.js"
 import { generateTaggedNumber } from "./tagged-number.js"
 import { generateTaggedString } from "./tagged-string/tagged-string.js"
 import { generateTaggedSymbol } from "./tagged-symbol.js"
-import { generatePropertyAccess } from "./property-access.js"
 
 export function generateFunctionCall(context: string[], tokens: TokenStream): FunctionCall | MismatchToken {
 	let functionCall: FunctionCall = {

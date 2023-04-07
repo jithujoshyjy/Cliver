@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { type Node } from "../../../utility.js"
+import { generateOneOf } from "../../../utility.js"
 import { generateBlockAnonFunction } from "./block-anon-function.js"
 import { generateInlineAnonFunction } from "./inline-anon-function.js"
 
@@ -17,17 +17,27 @@ export function generateAnonFunction(context: string[], tokens: TokenStream): An
 	const currentToken = tokens.currentToken
 	const initialCursor = tokens.cursor
 
-	let value: typeof anonFunction.value | MismatchToken = generateInlineAnonFunction(["AnonFunction", ...context], tokens)
-	if(value.type == "MismatchToken") {
-		value = generateBlockAnonFunction(["AnonFunction", ...context], tokens)
-	}
+	const nodeGenerators = [generateInlineAnonFunction, generateBlockAnonFunction]
+	let node: typeof anonFunction.value
+		| MismatchToken = generateOneOf(tokens, ["AnonFunction", ...context], nodeGenerators)
 
-	if(value.type == "MismatchToken") {
+	if (node.type == "MismatchToken") {
 		tokens.cursor = initialCursor
-		return value
+		return node
 	}
 
-	anonFunction.value = value
+	anonFunction.value = node
+	anonFunction.start = node.start
+	anonFunction.column = node.column
+	anonFunction.line = node.line
+	anonFunction.end = node.end
 
 	return anonFunction
+}
+
+export function printAnonFunction(token: AnonFunction, indent = 0) {
+	const endJoiner = "└── "
+
+	const space = " ".repeat(4)
+	return "AnonFunction"
 }

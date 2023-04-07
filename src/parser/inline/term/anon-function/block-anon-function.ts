@@ -1,17 +1,18 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { generateProgram } from "../../../program.js"
-import { createMismatchToken, isKeyword, isOperator, skip, skipables, type Node } from "../../../utility.js"
-import { generateAssignExpr } from "../../expression/assign-expression.js"
-import { generatePattern } from "../../expression/pattern/pattern.js"
+import { createMismatchToken, isKeyword, isOperator, skip, skipables, isBlockedType } from "../../../utility.js"
 import { generateTypeExpression } from "../../type/type-expression.js"
-import { generateIdentifier } from "../../literal/identifier.js"
+import { generateKeyword } from "../../keyword.js"
+import { generateParamList } from "../param-list.js"
+import { generateBlock } from "../../../block/block.js"
+import { generateInline } from "../../inline.js"
+import { generateKindList } from "../kind-list.js"
 
 export function generateBlockAnonFunction(context: string[], tokens: TokenStream): BlockAnonFunction | MismatchToken {
 	const blockAnonFunction: BlockAnonFunction = {
 		type: "BlockAnonFunction",
 		body: [],
-		kind: ["return"],
-		params: [],
+		kinds: null!,
+		parameters: null!,
 		signature: null,
 		line: 0,
 		column: 0,
@@ -19,130 +20,130 @@ export function generateBlockAnonFunction(context: string[], tokens: TokenStream
 		end: 0
 	}
 
-	const currentToken = skip(tokens, skipables) // skip fun
+	let currentToken = tokens.currentToken
 	const initialCursor = tokens.cursor
 
-	/* const captureSignature = () => {
-        currentToken = skip(tokens, skipables) // skip ::
-        const signature = generateTypeExpression(blockAnonFunction, tokens)
-        return signature
-    }
+	const maybeKeyword = generateKeyword(["BlockAnonFunction", ...context], tokens)
 
-    if (isOperator(currentToken, "::")) {
-        const signature = captureSignature()
-        if (signature.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return signature
-        }
-        blockAnonFunction.signature = signature
-        currentToken = skip(tokens, skipables)
-    }
+	if (!isKeyword(maybeKeyword, "fun")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
 
-    const captureComma = () => {
-        currentToken = skip(tokens, skipables)
-        if (!isOperator(currentToken, ",")) {
-            tokens.cursor = initialCursor
-            return createMismatchToken(currentToken)
-        }
+	blockAnonFunction.start = maybeKeyword.start
+	blockAnonFunction.line = maybeKeyword.line
+	blockAnonFunction.column = maybeKeyword.column
 
-        return currentToken
-    }
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
-    const captureFunctionKind = () => {
-        currentToken = skip(tokens, skipables)
-        const name = generateIdentifier(blockAnonFunction, tokens)
-        return name
-    }
+	if (isOperator(currentToken, "<")) {
+		const defaultReturnKindId: Identifier = {
+			type: "Identifier",
+			name: "return",
+			line: currentToken.line,
+			column: -1,
+			start: -1,
+			end: -1
+		}
 
-    if (isOperator(currentToken, "<"))
-        while (!tokens.isFinished) {
+		const kindList: KindList
+			| MismatchToken = generateKindList(["BlockAnonFunction", ...context], tokens)
 
-            const kind = captureFunctionKind()
-            if (kind.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return kind
-            }
+		if (kindList.type == "MismatchToken") {
+			const defaultKindList: KindList = {
+				type: "KindList",
+				kinds: [defaultReturnKindId],
+				line: currentToken.line,
+				column: -1,
+				start: -1,
+				end: -1
+			}
 
-            blockAnonFunction.kind.push(kind.name as FunctionKind)
+			blockAnonFunction.kinds = defaultKindList
+			tokens.cursor = initialCursor
+			return kindList
+		}
 
-            const comma = captureComma()
-            if (comma.type == "MismatchToken" && isOperator(currentToken, ">")) {
-                currentToken = skip(tokens, skipables)
-                break
-            }
-            else if (comma.type == "MismatchToken") {
-                tokens.cursor = initialCursor
-                return comma
-            }
-        }
+		kindList.kinds.unshift(defaultReturnKindId)
+		blockAnonFunction.kinds = kindList
 
-    if (currentToken.type != TokenType.ParenEnclosed) {
-        tokens.cursor = initialCursor
-        return createMismatchToken(currentToken)
-    }
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
+	}
 
-    const parenTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
+	const paramList = generateParamList(["BlockAnonFunction", ...context], tokens)
+	if (paramList.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return paramList
+	}
 
-    const parseParam = () => {
-        currentToken = parenTokens.currentToken
+	blockAnonFunction.parameters = paramList
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
-        if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
-            currentToken = skip(parenTokens, skipables)
+	if (isOperator(currentToken, "::")) {
+		currentToken = skip(tokens, skipables) // skip ::
+		const typeExpression = generateTypeExpression(["BlockAnonFunction", ...context], tokens)
 
-        let param: AssignExpr | Pattern | MismatchToken = generateAssignExpr(blockAnonFunction, parenTokens)
+		if (typeExpression.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return typeExpression
+		}
 
-        if (param.type == "MismatchToken")
-            param = generatePattern(blockAnonFunction, parenTokens)
+		blockAnonFunction.signature = typeExpression
+	}
 
-        return param
-    }
+	const nodeGenerators = [
+		generateBlock, generateInline
+	]
 
-    while (!parenTokens.isFinished) {
-        const param = parseParam()
+	while (currentToken.type != "EOF") {
 
-        if (param.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return param
-        }
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
 
-        blockAnonFunction.params.push(param)
-        const comma = captureComma()
+		const resetCursorPoint = tokens.cursor
+		const endKeyword = generateKeyword(["BlockAnonFunction", ...context], tokens)
 
-        if (comma.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return comma
-        }
-    }
+		if (isKeyword(endKeyword, "end")) {
+			blockAnonFunction.end = endKeyword.end
+			break
+		}
 
-    currentToken = tokens.currentToken
+		let node: Block
+			| Inline
+			| MismatchToken = null!
 
-    if (isOperator(currentToken, "::")) {
+		tokens.cursor = resetCursorPoint
+		for (const nodeGenerator of nodeGenerators) {
 
-        const signature = captureSignature()
-        if (signature.type == "MismatchToken")
-            return signature
+			if (isBlockedType(nodeGenerator.name.replace("generate", "")))
+				continue
 
-        if (blockAnonFunction.signature !== null)
-            return createMismatchToken(currentToken)
+			node = nodeGenerator(["BlockAnonFunction", ...context], tokens)
+			currentToken = tokens.currentToken
 
-        blockAnonFunction.signature = signature
-    }
+			if (node.type != "MismatchToken")
+				break
 
-    const nodes = generateProgram(blockAnonFunction, tokens)
+			if (node.errorDescription.severity <= 3) {
+				tokens.cursor = initialCursor
+				return node
+			}
+		}
 
-    for (let node of nodes) {
+		if (node.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return node
+		}
 
-        currentToken = tokens.currentToken
-
-        if (node.type == "MismatchToken" && isKeyword(currentToken, "end"))
-            break
-        else if (node.type == "MismatchToken") {
-            tokens.cursor = initialCursor
-            return node
-        }
-
-        blockAnonFunction.body.push(node)
-    } */
+		blockAnonFunction.body.push(node)
+	}
 
 	return blockAnonFunction
 }

@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isBlockedType, isOperator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, skip, skipables, type Node, withBlocked } from "../../utility.js"
 import { generateDifferenceType } from "./difference-type.js"
 
 import { generateFunctionCallType } from "./function-call-type.js"
@@ -34,7 +34,8 @@ export function generateIntersectionType(context: string[], tokens: TokenStream)
 		if (isBlockedType(typeGenerator.name.replace("generate", "")))
 			continue
 
-		typeMember = typeGenerator(["IntersectionType", ...context], tokens)
+		typeMember = withBlocked(["IntersectionType"],
+			() => typeGenerator(["IntersectionType", ...context], tokens))
 		currentToken = tokens.currentToken
 		if (typeMember.type != "MismatchToken")
 			break
@@ -55,7 +56,8 @@ export function generateIntersectionType(context: string[], tokens: TokenStream)
 
 	currentToken = skip(tokens, skipables) // skip &
 
-	const right = generateTypeExpression(["IntersectionType", ...context], tokens) // buggy :(
+	const right = withBlocked(["IntersectionType"],
+		() => generateTypeExpression(["IntersectionType", ...context], tokens)) // buggy :(
 
 	if (right.type == "MismatchToken")
 		return right
