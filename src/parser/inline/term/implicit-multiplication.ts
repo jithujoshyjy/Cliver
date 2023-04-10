@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isBlockedType, NodePrinter, pickPrinter, type Node } from "../../utility.js"
+import { isBlockedType, NodePrinter, pickPrinter } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateNumericLiteral, printNumericLiteral } from "../literal/numeric-literal/numericLiteral.js"

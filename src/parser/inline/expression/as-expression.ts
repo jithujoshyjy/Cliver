@@ -1,9 +1,8 @@
 import { TokenStream } from "../../../lexer/token.js"
 import { createMismatchToken, isKeyword, skip, _skipables, type Node, PartialParse, pickPrinter, NodePrinter, withBlocked } from "../../utility.js"
 import { generateKeyword } from "../keyword.js"
-import { generateIdentifier } from "../literal/identifier.js"
-import { generateCaseExpr, printCaseExpr } from "./case-expression.js"
 import { generateExpression, printExpression } from "./expression.js"
+import { generatePattern, printPattern } from "./pattern/pattern.js"
 
 export function generateAsExpression(context: string[], tokens: TokenStream): AsExpression | MismatchToken {
 	const asExpression: AsExpression = {
@@ -20,8 +19,8 @@ export function generateAsExpression(context: string[], tokens: TokenStream): As
 	const initialCursor = tokens.cursor
 
 	const left: Expression | MismatchToken
-        = withBlocked(["AssignExpr"], () => generateExpression(["AsExpression", ...context], tokens))
-    
+		= withBlocked(["AssignExpr"], () => generateExpression(["AsExpression", ...context], tokens))
+
 	if (left.type == "MismatchToken") {
 		tokens.cursor = initialCursor
 		return left
@@ -51,11 +50,11 @@ export function generateAsExpression(context: string[], tokens: TokenStream): As
 		? skip(tokens, _skipables)
 		: tokens.currentToken
 
-	let right: Identifier
-        | CaseExpr
-        | MismatchToken = null!
+	let right: Pattern
+		| MismatchToken = null!
 
-	right = generateIdentifier(["AsExpression", ...context], tokens)
+	right = withBlocked(["AsExpression"],
+		() => generatePattern(["AsExpression", ...context], tokens))
 
 	if (right.type == "MismatchToken") {
 		tokens.cursor = initialCursor
@@ -64,7 +63,7 @@ export function generateAsExpression(context: string[], tokens: TokenStream): As
 
 	asExpression.right = right
 	asExpression.end = right.end
-    
+
 	return asExpression
 }
 
@@ -73,15 +72,15 @@ export function printAsExpression(token: AsExpression, indent = 0) {
 	const endJoiner = "└── "
 	const trailJoiner = "│\t"
 
-	const printers = [printCaseExpr, printExpression] as NodePrinter[]
+	const printers = [printPattern, printExpression] as NodePrinter[]
 	const printer = pickPrinter(printers, token.right)!
 
 	const space = " ".repeat(4)
 	return "AsExpression" +
-        "\n" + space.repeat(indent) + middleJoiner + "left" +
-        "\n" + space.repeat(indent + 1) + endJoiner +
-        printExpression(token.left, indent + 2) +
-        "\n" + space.repeat(indent) + endJoiner + "body" +
-        "\n" + space.repeat(indent + 1) + endJoiner +
-        printer(token.right, indent + 1)
+		"\n" + space.repeat(indent) + middleJoiner + "left" +
+		"\n" + space.repeat(indent + 1) + endJoiner +
+		printExpression(token.left, indent + 2) +
+		"\n" + space.repeat(indent) + endJoiner + "body" +
+		"\n" + space.repeat(indent + 1) + endJoiner +
+		printer(token.right, indent + 1)
 }

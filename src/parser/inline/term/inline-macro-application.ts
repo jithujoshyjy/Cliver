@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, _skipables, type Node, skipables, NodePrinter, pickPrinter, isBlockedType, withPartialParsed } from "../../utility.js"
+import { createMismatchToken, isOperator, skip, _skipables, skipables, NodePrinter, pickPrinter, isBlockedType, withPartialParsed } from "../../utility.js"
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { printInfixOperation } from "../expression/operation.ts/infix-operation.js"
 import { generatePostfixOperation, printPostfixOperation } from "../expression/operation.ts/postfix-operation.js"
@@ -8,7 +8,7 @@ import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateLiteral, printLiteral } from "../literal/literal.js"
 import { generateCallSiteArgsList, printCallSiteArgsList } from "./call-site-args-list.js"
 import { generatePropertyAccess, printPropertyAccess } from "./property-access.js"
-import { generateTerm, printTerm } from "./term.js"
+import { generateJustPropertyAccess, generateTerm, printTerm } from "./term.js"
 
 export function generateInlineMacroApplication(context: string[], tokens: TokenStream): InlineMacroApplication | MismatchToken {
 	const inlineMacroApplication: InlineMacroApplication = {
@@ -48,7 +48,7 @@ export function generateInlineMacroApplication(context: string[], tokens: TokenS
             | MismatchToken = null!
 
 		const nodeGenerators = [
-			generatePropertyAccess, generateIdentifier
+			generateJustPropertyAccess, generateIdentifier
 		]
 
 		for (const nodeGenerator of nodeGenerators) {

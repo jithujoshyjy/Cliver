@@ -1,8 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, _skipables, type Node, isPunctuator, isBlockedType } from "../../utility.js"
-import { generateAssignExpr } from "../expression/assign-expression.js"
+import { createMismatchToken, isOperator, skip, skipables, _skipables, isPunctuator } from "../../utility.js"
 import { generateExpression, printExpression } from "../expression/expression.js"
-import { generatePattern } from "../expression/pattern/pattern.js"
 import { generateIdentifier } from "../literal/identifier.js"
 import { generateParamList } from "./param-list.js"
 
@@ -27,7 +25,11 @@ export function generateUnitFunction(context: string[], tokens: TokenStream): Un
 			tokens.cursor = initialCursor
 			return paramList
 		}
+		
 		unitFunction.parameters = paramList
+		unitFunction.start = paramList.start
+		unitFunction.line = paramList.line
+		unitFunction.column = paramList.column
 	}
 	else {
 
@@ -50,9 +52,9 @@ export function generateUnitFunction(context: string[], tokens: TokenStream): Un
 			return identifier
 		}
 
-		paramList.start = identifier.start
-		paramList.line = identifier.line
-		paramList.column = identifier.column
+		paramList.start = unitFunction.start = identifier.start
+		paramList.line = unitFunction.line = identifier.line
+		paramList.column = unitFunction.column = identifier.column
 		paramList.end = identifier.end
 
 		paramList.positional.push(identifier)

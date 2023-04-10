@@ -253,5 +253,5 @@ export function printDoCatchBlock(token: DoCatchBlock, indent = 0) {
 	const trailJoiner = "│\t"
 
 	const space = " ".repeat(4)
-	return "DoCatchBlock\n"
+	return "DoCatchBlock"
 }

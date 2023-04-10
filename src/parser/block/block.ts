@@ -50,7 +50,6 @@ export function generateBlock(context: string[], tokens: TokenStream): Block | M
 		}
 	}
 
-
 	if (node.type == "MismatchToken") {
 		tokens.cursor = initialCursor
 		return node

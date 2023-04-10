@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createDiagnosticMessage, createMismatchToken, DiagnosticMessage, isPunctuator, type Node } from "../../utility.js"
+import { createMismatchToken, DiagnosticMessage, isPunctuator } from "../../utility.js"
 import { generateEscapeSequence } from "./escape-sequence.js"
 
 export function generateStringLiteral(context: string[], tokens: TokenStream): StringLiteral | MismatchToken {

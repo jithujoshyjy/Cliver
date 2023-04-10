@@ -95,21 +95,19 @@ export function generateEitherPropertyAccessOrFunctionCall(context: string[], to
 	return node
 }
 
-export function generateJustPropertyAccess(context: string[], tokens: TokenStream): PropertyAccess | FunctionCall | MismatchToken {
+export function generateJustPropertyAccess(context: string[], tokens: TokenStream): PropertyAccess | MismatchToken {
 
 	const initialCursor = tokens.cursor
 	let currentToken = tokens.currentToken
 	const nodeGenerators = [generatePropertyAccess, generateFunctionCall]
 
 	let node: PropertyAccess
-		| FunctionCall
 		| MismatchToken = createMismatchToken(currentToken)
 
 	node = generateOneOf(tokens, context, nodeGenerators)
 
 	if (node.type == "PropertyAccess" && node.field.type == "FunctionCall") {
 		const { field: functionCall } = node
-		node = functionCall
 		const partialParse: PartialParse = {
 			cursor: tokens.cursor,
 			result: functionCall
@@ -121,7 +119,7 @@ export function generateJustPropertyAccess(context: string[], tokens: TokenStrea
 	return node
 }
 
-export function generateJustFunctionCall(context: string[], tokens: TokenStream): PropertyAccess | FunctionCall | MismatchToken {
+export function generateJustFunctionCall(context: string[], tokens: TokenStream): FunctionCall | MismatchToken {
 	const initialCursor = tokens.cursor
 	let currentToken = tokens.currentToken
 	const nodeGenerators = [generatePropertyAccess, generateFunctionCall]
@@ -163,8 +161,5 @@ export function printTerm(token: Term, indent = 0) {
 	const space = " ".repeat(4)
 	return "Term" +
 		"\n" + space.repeat(indent) + endJoiner + printer(token.value, indent + 1)
-}
-function printTypeAssertion(token: Node, indent?: number | undefined): string {
-	throw new Error("Function not implemented.")
 }
 

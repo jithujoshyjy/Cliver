@@ -48,14 +48,3 @@ export function printAssignExpr(token: Expression, indent = 0) {
 	const space = " ".repeat(4)
 	return "AssignExpr\n"
 }
-
-/* 
-AssignExpr ::= (Pattern = Expression)
-Expression ::= (AssignExpr | Operation | Term)
-Pattern ::= ...
-*/
-
-/*
-AssignExpr ::= Pattern _AssignExpr
-_AssignExpr ::= '=' Expression _AssignExpr | e
-*/

@@ -24,8 +24,7 @@ export function generateExpression(context: string[], tokens: TokenStream): Expr
 	const initialCursor = tokens.cursor
 
 	const nodeGenerators = [
-		generateAssignExpr, generateTypeAssertion, generateInfixOperation, generatePrefixOperation, generatePostfixOperation,
-		generateTerm, generateLiteral
+		generateAssignExpr, generateTypeAssertion, generateInfixOperation, generatePrefixOperation, generatePostfixOperation, generateTerm, generateLiteral
 	]
 
 	let node: typeof expression.value | MismatchToken = null!

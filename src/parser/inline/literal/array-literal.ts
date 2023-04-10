@@ -24,7 +24,7 @@ export function generateArrayLiteral(context: string[], tokens: TokenStream): Ar
 	arrayLiteral.line = currentToken.line
 	arrayLiteral.column = currentToken.column
 
-	currentToken = skip(tokens, skipables)
+	currentToken = skip(tokens, skipables) // skip [
 
 	const captureComma = () => {
 		const initialToken = tokens.currentToken

@@ -222,5 +222,5 @@ export function printIfBlock(token: IfBlock, indent = 0) {
 	const trailJoiner = "│\t"
 
 	const space = " ".repeat(4)
-	return "IfBlock\n"
+	return "IfBlock"
 }

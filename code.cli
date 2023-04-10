@@ -1,1 +1,7 @@
-a :: A
+import y from Y
+# import ... from (StringLiteral | TaggedSymbol | Identifier)
+# import ...Identifier from (StringLiteral | TaggedSymbol | Identifier)
+# import (StringLiteral | TaggedSymbol | Identifier) (, (StringLiteral | TaggedSymbol | Identifier))*
+# import Identifier (, Identifier)* from (StringLiteral | TaggedSymbol | Identifier)
+
+const importKeyword = 

@@ -6,7 +6,7 @@ import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
 import { generateTaggedSymbol } from "../inline/term/tagged-symbol.js"
-import { createMismatchToken, isBlockedType, isKeyword, isPunctuator, skip, skipables, _skipables } from "../utility.js"
+import { createMismatchToken, isBlockedType, isKeyword, isPunctuator, skip, skipables, _skipables, generateOneOf, withBlocked } from "../utility.js"
 
 export function generateImportDeclaration(context: string[], tokens: TokenStream): ImportDeclaration | MismatchToken {
 	const importDeclr: ImportDeclaration = {
@@ -37,84 +37,113 @@ export function generateImportDeclaration(context: string[], tokens: TokenStream
 	importDeclr.line = importKeyword.line
 	importDeclr.column = importKeyword.column
 
-	const captureComma = () => {
-		currentToken = skipables.includes(tokens.currentToken)
-			? skip(tokens, skipables)
-			: tokens.currentToken
+	const taggedSymbolGenerator = (context: string[], tokens: TokenStream) =>
+		withBlocked(["TaggedSymbol", "PropertyAccess", "FunctionCall", "GroupExpression", "TaggedString"],
+			() => generateTaggedSymbol(context, tokens))
 
-		if (!isPunctuator(currentToken, ",")) {
-			tokens.cursor = initialCursor
-			return createMismatchToken(currentToken)
+	const specifierGenerators = [
+		taggedSymbolGenerator, generateStringLiteral,
+		generateAsExpression, generatePrefixOperation,
+		generateNonVerbalOperator, generateIdentifier
+	]
+
+	const captureComma = () => {
+		const initialToken = tokens.currentToken
+
+		if (!isPunctuator(initialToken, ",")) {
+			return createMismatchToken(initialToken)
 		}
 
-		return currentToken
+		currentToken = skip(tokens, skipables)
+		return initialToken
 	}
 
+	let lastDelim: LexicalToken | MismatchToken | null = null
+
 	const captureSpecifier = () => {
-		currentToken = skipables.includes(tokens.currentToken)
-			? skip(tokens, skipables)
-			: tokens.currentToken
-
-		const specifierGenerators = [
-			generateAsExpression,
-			generateIdentifier, generatePrefixOperation, generateNonVerbalOperator
-		]
-
 		let specifier: AsExpression
-            | Identifier
-            | PrefixOperation
-            | NonVerbalOperator
-            | MismatchToken = null!
+			| Identifier
+			| PrefixOperation
+			| NonVerbalOperator
+			| StringLiteral
+			| TaggedSymbol
+			| MismatchToken = null!
 
-		for (const specifierGenerator of specifierGenerators) {
-			if (isBlockedType(specifierGenerator.name.replace("generate", "")))
-				continue
-            
-			specifier = specifierGenerator(["ImportDeclaration", ...context], tokens)
-			if (specifier.type != "MismatchToken")
-				break
-		}
+		const currentToken = tokens.currentToken
+		specifier = generateOneOf(tokens, ["ImportDeclaration", ...context], specifierGenerators)
 
+		const isNotImportAllSpecifier = specifier.type == "NonVerbalOperator"
+			&& specifier.name != "..."
+
+		const isNotImportAllAsSpecifier = specifier.type == "PrefixOperation"
+			&& (specifier.operand.type != "Literal"
+				|| specifier.operand.type == "Literal"
+				&& specifier.operand.value.type != "Identifier")
+
+		if (isNotImportAllSpecifier || isNotImportAllAsSpecifier)
+			specifier = createMismatchToken(currentToken)
+
+		lastDelim = specifier.type == "MismatchToken" ? lastDelim : null
 		return specifier
 	}
 
+	let isInitial = true
 	while (!tokens.isFinished) {
+
+		if (!isInitial && lastDelim?.type == "MismatchToken")
+			break
+
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
+
 		const specifier = captureSpecifier()
 
-		if (specifier.type == "MismatchToken")
+		if (specifier.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return specifier
+		}
+
+		if (["TaggedSymbol", "StringLiteral"].includes(specifier.type))
 			break
 
 		importDeclr.specifiers.push(specifier)
 		if (["PrefixOperation", "NonVerbalOperator"].includes(specifier.type))
 			break
-		const comma = captureComma()
 
-		if (comma.type == "MismatchToken") {
-			tokens.cursor = initialCursor
-			return comma
-		}
+		lastDelim = captureComma()
+		isInitial = false
 	}
 
+	const sourceGenerators = [taggedSymbolGenerator, generateStringLiteral, generateIdentifier]
 	const parseSource = () => {
 		let source: MismatchToken
-            | TaggedSymbol
-            | StringLiteral = generateTaggedSymbol(["ImportDeclaration", ...context], tokens)
+			| TaggedSymbol
+			| StringLiteral = null!
 
-		if (source.type == "MismatchToken") {
-			source = generateStringLiteral(["ImportDeclaration", ...context], tokens)
-		}
+		source = generateOneOf(tokens, ["ImportDeclaration", ...context], sourceGenerators)
 
-		if (source.type == "StringLiteral" && source.kind != "inline") {
-			tokens.cursor = initialCursor
-			return createMismatchToken(tokens.currentToken)
-		}
+		if (source.type == "StringLiteral" && source.kind != "inline")
+			source = createMismatchToken(tokens.currentToken)
 
 		return source
 	}
 
 	const parseSources = () => {
-		const sources: Array<TaggedSymbol | StringLiteral> = []
+		const sources: Array<TaggedSymbol | StringLiteral | Identifier> = []
+
+		let isInitial = true
+		let lastDelim: LexicalToken | MismatchToken | null = null
+
 		while (!tokens.isFinished) {
+
+			if (!isInitial && lastDelim?.type == "MismatchToken")
+				break
+
+			currentToken = skipables.includes(tokens.currentToken)
+				? skip(tokens, skipables)
+				: tokens.currentToken
+
 			const source = parseSource()
 
 			if (source.type == "MismatchToken") {
@@ -122,46 +151,41 @@ export function generateImportDeclaration(context: string[], tokens: TokenStream
 				return source
 			}
 
+			importDeclr.end = source.end
 			sources.push(source)
 
-			const comma = captureComma()
-
-			if (comma.type == "MismatchToken") {
-				break
-			}
-			currentToken = skip(tokens, skipables)
+			lastDelim = captureComma()
+			isInitial = false
 		}
+
 		return sources
 	}
 
-	if (importDeclr.specifiers.length === 0) {
-		const sources = parseSources()
-		if (!Array.isArray(sources)) {
-			tokens.cursor = initialCursor
-			return sources
-		}
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
-		importDeclr.sources = sources
-	}
-	else {
-		currentToken = skip(tokens, skipables) // from
+	const fromKeyword = generateKeyword(["ImportDeclaration", ...context], tokens)
 
-		if (!isKeyword(currentToken, "from") && importDeclr.specifiers.every(x => x.type == "Identifier")) {
-			importDeclr.sources = importDeclr.specifiers as Identifier[]
-			importDeclr.specifiers = []
-		}
-
-		currentToken = skip(tokens, skipables) // skip from
-
-		const sources = parseSources()
-		if (!Array.isArray(sources)) {
-			tokens.cursor = initialCursor
-			return sources
-		}
-
-		importDeclr.sources = sources
+	if (fromKeyword.type == "MismatchToken") {
+		tokens.cursor = initialCursor
+		return fromKeyword
 	}
 
+	if (!isKeyword(fromKeyword, "from")) {
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
+
+	const sources = parseSources()
+	console.log(sources);
+	
+	if (!Array.isArray(sources)) {
+		tokens.cursor = initialCursor
+		return sources
+	}
+
+	importDeclr.sources = sources
 	return importDeclr
 }
 

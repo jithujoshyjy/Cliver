@@ -24,7 +24,7 @@ type MismatchToken = {
 
 type ImportDeclaration = {
     type: "ImportDeclaration",
-    specifiers: Array<AsExpression | Identifier | ObjectExtendNotation | PrefixOperation | NonVerbalOperator>,
+    specifiers: Array<AsExpression | Identifier | PrefixOperation | NonVerbalOperator | StringLiteral | TaggedSymbol>,
     sources: Array<StringLiteral | TaggedSymbol | FunctionCall | Identifier | PropertyAccess>,
     line: number,
     column: number,
@@ -439,7 +439,7 @@ type IfInline = {
 type AsExpression = {
     type: "AsExpression",
     left: Expression,
-    right: Identifier | CaseExpr,
+    right: Pattern,
     line: number,
     column: number,
     start: number,

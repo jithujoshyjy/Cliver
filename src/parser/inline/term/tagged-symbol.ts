@@ -3,8 +3,8 @@ import { createMismatchToken, skip, _skipables, NodePrinter, pickPrinter, isBloc
 import { generateGroupExpression, printGroupExpression } from "../expression/group-expression.js"
 import { generateIdentifier, printIdentifier } from "../literal/identifier.js"
 import { generateSymbolLiteral, printSymbolLiteral } from "../literal/symbol-literal.js"
-import { generateFunctionCall, printFunctionCall } from "./function-call.js"
-import { generatePropertyAccess, printPropertyAccess } from "./property-access.js"
+import { printFunctionCall } from "./function-call.js"
+import { printPropertyAccess } from "./property-access.js"
 import { generateTaggedString, printTaggedString } from "./tagged-string/tagged-string.js"
 import { generateEitherPropertyAccessOrFunctionCall } from "./term.js"
 

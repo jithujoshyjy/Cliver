@@ -23,8 +23,7 @@ export function generateForBlock(context: string[], tokens: TokenStream): ForBlo
 	const initialCursor = tokens.cursor
 
 	let isSingleItemBlock = false
-	let blockHolder: ForBlock
-        | DoneBlock = forBlock
+	let blockHolder: ForBlock | DoneBlock = forBlock
 	let blockHolderBody = forBlock.body
 
 	const nodeGenerators = [
@@ -175,5 +174,5 @@ export function printForBlock(token: ForBlock, indent = 0) {
 	const trailJoiner = "│\t"
 
 	const space = " ".repeat(4)
-	return "ForBlock\n"
+	return "ForBlock"
 }
