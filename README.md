@@ -140,15 +140,11 @@ type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: T
 ```
 
 ```julia
-@impl
-fun Just<self>(a) :: Maybe(a)
-    @@where
+impl Just<self>(a) :: Maybe(a)
     fun unwrap(): a
 end
 
-@impl
-fun None<self>() :: Maybe(a)
-    @@where
+impl None<self>() :: Maybe(a)
     fun unwrap(b): throw PatternError("attempt to unwarp a None value")
 end
 ```
@@ -374,27 +370,6 @@ Objects are similar to most other programming languages. They are created by Con
 ```julia
 CtorFunctionA()
 CtorFunctionB()
-```
-
-##### Object extend notation
-
-You can create a new object containing the intrinsics of another one.
-
-```julia
-# creating a new object from the StaticConstructor Object
-val objA = Object.{
-    var propA = value
-    fun methodA()
-        # ...
-    end
-}
-
-val objB = objA.{
-    var propB = value
-    fun methodB()
-        # ...
-    end
-}
 ```
 
 ##### Object Cascade Notation
