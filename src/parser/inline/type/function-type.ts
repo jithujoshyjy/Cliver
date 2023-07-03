@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isBlockedType, isOperator, skip, skipables, _skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, skip, skipables, _skipables } from "../../utility.js"
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateTupleType } from "./tuple-type.js"
 import { generateTypeExpression } from "./type-expression.js"
@@ -28,7 +28,7 @@ export function generateFunctionType(context: string[], tokens: TokenStream): Fu
 	for (const headGenerator of headGenerators) {
 		if (isBlockedType(headGenerator.name.replace("generate", "")))
 			continue
-        
+
 		typeMember = headGenerator(["FunctionType", ...context], tokens) as FunctionCallType | TypeName | TupleType | MismatchToken
 		if (typeMember.type != "MismatchToken")
 			break
@@ -40,8 +40,14 @@ export function generateFunctionType(context: string[], tokens: TokenStream): Fu
 	}
 
 	functionType.head = typeMember
+	functionType.start = typeMember.start
+	functionType.line = typeMember.line
+	functionType.column = typeMember.column
 
-	currentToken = skip(tokens, _skipables) // ->
+	currentToken = _skipables.includes(tokens.currentToken)
+		? skip(tokens, _skipables) // ->
+		: tokens.currentToken
+
 	if (!isOperator(currentToken, "->")) {
 		tokens.cursor = initialCursor
 		return createMismatchToken(currentToken)
@@ -49,13 +55,14 @@ export function generateFunctionType(context: string[], tokens: TokenStream): Fu
 
 	currentToken = skip(tokens, skipables) // skip ->
 
-	const body = generateTypeExpression(["FunctionType", ...context], tokens) // buggy :(
+	const body = generateTypeExpression(["FunctionType", ...context], tokens)
 	if (body.type == "MismatchToken") {
 		tokens.cursor = initialCursor
 		return body
 	}
 
 	functionType.body = body
+	functionType.end = body.end
 
 	return functionType
 }

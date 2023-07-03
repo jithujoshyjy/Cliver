@@ -989,6 +989,16 @@ type Pair = {
     end: number
 }
 
+type PairType = {
+    type: "PairType",
+    key: TypeName | NegateType | FunctionCallType | TupleType | GroupTypeExpression | StructureType,
+    value: TypeExpression,
+    line: number,
+    column: number,
+    start: number,
+    end: number
+}
+
 type MetaDataInterpolation = {
     type: "MetaDataInterpolation",
     body: Array<Inline | Block>,
@@ -1128,7 +1138,8 @@ type StructureType = {
 
 type TupleType = {
     type: "TupleType",
-    values: Array<TypeExpression>,
+    positional: Array<TypeExpression>,
+    keyword: Array<PairType | TypeExpression>,
     line: number,
     column: number,
     start: number,

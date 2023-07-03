@@ -1,7 +1,9 @@
-import y from Y
-# import ... from (StringLiteral | TaggedSymbol | Identifier)
-# import ...Identifier from (StringLiteral | TaggedSymbol | Identifier)
-# import (StringLiteral | TaggedSymbol | Identifier) (, (StringLiteral | TaggedSymbol | Identifier))*
-# import Identifier (, Identifier)* from (StringLiteral | TaggedSymbol | Identifier)
-
-const importKeyword = 
+if a
+	1
+elseif b
+	2
+elseif c
+	3
+else
+	4
+end

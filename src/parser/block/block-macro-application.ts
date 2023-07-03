@@ -1,7 +1,6 @@
 import { TokenStream } from "../../lexer/token.js"
-import { generateNonVerbalOperator } from "../inline/expression/operation.ts/non-verbal-operator.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
-import { createMismatchToken, skip, _skipables } from "../utility.js"
+import { createMismatchToken, skip, _skipables, isOperator } from "../utility.js"
 
 export function generateBlockMacroApplication(context: string[], tokens: TokenStream): BlockMacroApplication | MismatchToken {
 	const blockMacroApplication: BlockMacroApplication = {
@@ -18,13 +17,7 @@ export function generateBlockMacroApplication(context: string[], tokens: TokenSt
 	const initialCursor = tokens.cursor
 	let currentToken = tokens.currentToken
 
-	const maybeOperator = generateNonVerbalOperator(["BlockMacroApplication", ...context], tokens)
-	if (maybeOperator.type == "MismatchToken") {
-		tokens.cursor = initialCursor
-		return maybeOperator
-	}
-
-	if (maybeOperator.name != "@@") {
+	if (!isOperator(currentToken, "@@")) {
 		tokens.cursor = initialCursor
 		return createMismatchToken(currentToken)
 	}
@@ -33,10 +26,7 @@ export function generateBlockMacroApplication(context: string[], tokens: TokenSt
 	blockMacroApplication.line = currentToken.line
 	blockMacroApplication.column = currentToken.column
 
-	currentToken = _skipables.includes(tokens.currentToken)
-		? skip(tokens, _skipables)
-		: tokens.currentToken
-
+	currentToken = skip(tokens, _skipables)
 	let caller = generateIdentifier(["BlockMacroApplication", ...context], tokens)
 
 	if (caller.type == "MismatchToken") {

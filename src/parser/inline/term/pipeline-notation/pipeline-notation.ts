@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { skip, skipables, type Node, generateOneOf, isOperator, createMismatchToken, withBlocked } from "../../../utility.js"
+import { skip, skipables, generateOneOf, isOperator, createMismatchToken, withBlocked, PartialParse } from "../../../utility.js"
 import { generateAsExpression } from "../../expression/as-expression.js"
 import { generateExpression } from "../../expression/expression.js"
 import { generateErrorPipeline } from "./error-pipeline.js"
@@ -75,6 +75,15 @@ export function generatePipelineNotation(context: string[], tokens: TokenStream)
 
 		pipelineNotation.end = pipeline.end
 		pipelineNotation.pipes.push(pipeline)
+	}
+
+	if(pipelineNotation.pipes.length < 1) {
+		const partialParse: PartialParse = {
+			cursor: tokens.cursor,
+			result: pipelineNotation.expression
+		}
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken, partialParse)
 	}
 
 	return pipelineNotation

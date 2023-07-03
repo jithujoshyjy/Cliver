@@ -1,7 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isBlockedType, isOperator, skip, skipables, type Node, withBlocked } from "../../utility.js"
+import { createMismatchToken, isBlockedType, isOperator, skip, skipables, withBlocked } from "../../utility.js"
 import { generateDifferenceType } from "./difference-type.js"
-
 import { generateFunctionCallType } from "./function-call-type.js"
 import { generateFunctionType } from "./function-type.js"
 import { generateNegateType } from "./negate-type.js"
@@ -23,6 +22,7 @@ export function generateIntersectionType(context: string[], tokens: TokenStream)
 
 	let currentToken = tokens.currentToken
 	const initialCursor = tokens.cursor
+
 	const typeGenerators = [
 		generateUnionType, generateDifferenceType, generateNegateType,
 		generateFunctionType, generateFunctionCallType, generateStructureType, generateTypeName
@@ -46,8 +46,14 @@ export function generateIntersectionType(context: string[], tokens: TokenStream)
 		return typeMember
 	}
 
+	intersectionType.start = typeMember.start
+	intersectionType.line = typeMember.line
+	intersectionType.column = typeMember.column
 	intersectionType.left = typeMember
-	currentToken = skip(tokens, skipables)
+
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
 	if (!isOperator(currentToken, "&")) {
 		tokens.cursor = initialCursor
@@ -57,11 +63,14 @@ export function generateIntersectionType(context: string[], tokens: TokenStream)
 	currentToken = skip(tokens, skipables) // skip &
 
 	const right = withBlocked(["IntersectionType"],
-		() => generateTypeExpression(["IntersectionType", ...context], tokens)) // buggy :(
+		() => generateTypeExpression(["IntersectionType", ...context], tokens))
 
-	if (right.type == "MismatchToken")
+	if (right.type == "MismatchToken") {
+		tokens.cursor = initialCursor
 		return right
+	}
 
+	intersectionType.end = right.end
 	intersectionType.right = right
 
 	return intersectionType

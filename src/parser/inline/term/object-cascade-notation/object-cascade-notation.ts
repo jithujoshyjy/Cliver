@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../../lexer/token.js"
-import { withBlocked, skipables, skip, _skipables, createMismatchToken, isOperator, generateOneOf } from "../../../utility.js"
+import { withBlocked, skipables, skip, _skipables, createMismatchToken, isOperator, generateOneOf, PartialParse } from "../../../utility.js"
 import { generateLiteral } from "../../literal/literal.js"
 import { generateTerm } from "../term.js"
 import { generateObjectOptionalCascade } from "./object-optional-cascade.js"
@@ -71,6 +71,15 @@ export function generateObjectCascadeNotation(context: string[], tokens: TokenSt
 		objectCascadeNotation.body.push(cascade)
 
 		isInitial = false
+	}
+
+	if(objectCascadeNotation.body.length < 1) {
+		const partialParse: PartialParse = {
+			cursor: tokens.cursor,
+			result: objectCascadeNotation.object
+		}
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken, partialParse)
 	}
 
 	return objectCascadeNotation

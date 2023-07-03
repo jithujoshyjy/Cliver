@@ -64,4 +64,10 @@ export default {
 		"severity": 2,
 		"catagory": "error"
 	},
+
+	"Multiple done blocks within {0} on {1}:{2}": {
+		"code": "CLE0012",
+		"severity": 2,
+		"catagory": "error"
+	},
 }

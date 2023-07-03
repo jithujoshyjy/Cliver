@@ -1,7 +1,7 @@
 import { TokenStream } from "../lexer/token.js"
 import { generateBlock, printBlock } from "./block/block.js"
 import { generateInline, printInline } from "./inline/inline.js"
-import { skip, skipables, type Node } from "./utility.js"
+import { skip, skipables } from "./utility.js"
 
 export function generateProgram(context: string[], tokens: TokenStream): Program | MismatchToken {
 	const program: Program = {

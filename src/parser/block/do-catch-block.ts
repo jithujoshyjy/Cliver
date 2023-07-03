@@ -4,7 +4,7 @@ import { generateInline } from "../inline/inline.js"
 import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
-import { createMismatchToken, isKeyword, skip, skipables, type Node, DiagnosticMessage, _skipables, isPunctuator, isOperator, PartialParse, isBlockedType } from "../utility.js"
+import { createMismatchToken, isKeyword, skip, skipables, _skipables, isPunctuator, generateOneOf, PartialParse, DiagnosticMessage } from "../utility.js"
 import { generateBlock } from "./block.js"
 
 export function generateDoCatchBlock(context: string[], tokens: TokenStream): DoCatchBlock | MismatchToken {
@@ -38,7 +38,210 @@ export function generateDoCatchBlock(context: string[], tokens: TokenStream): Do
 	doCatchBlock.line = doKeyword.line
 	doCatchBlock.column = doKeyword.column
 
-	const parseCatchParams = (catchBlock: CatchBlock) => {
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
+
+	const nodeGenerators = [generateBlock, generateInline]
+	const doBlockBody = captureBody(doCatchBlock)
+
+	if (!Array.isArray(doBlockBody)) {
+		tokens.cursor = initialCursor
+		return doBlockBody
+	}
+
+	doCatchBlock.body = doBlockBody
+
+	const captureComma = () => {
+		const initialToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
+
+		if (!isPunctuator(initialToken, ",")) {
+			return createMismatchToken(initialToken)
+		}
+
+		currentToken = skip(tokens, skipables)
+		return initialToken
+	}
+
+	while (!tokens.isFinished) {
+
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
+
+		const maybeKeyword = generateKeyword(["DoCatchBlock", ...context], tokens)
+
+		currentToken = skipables.includes(tokens.currentToken)
+			? skip(tokens, skipables)
+			: tokens.currentToken
+
+		if (maybeKeyword.type == "MismatchToken") {
+			tokens.cursor = initialCursor
+			return maybeKeyword
+		}
+
+		if (isKeyword(maybeKeyword, "end")) {
+			doCatchBlock.end = maybeKeyword.end
+			break
+		}
+
+		if (doCatchBlock.done != null) {
+			const error: DiagnosticMessage = "Multiple done blocks within {0} on {1}:{2}"
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken, [error, doCatchBlock.type, currentToken.line, currentToken.column])
+		}
+
+		if (isKeyword(maybeKeyword, "done")) {
+
+			const doneBlock: DoneBlock = {
+				type: "DoneBlock",
+				body: [],
+				status: null!,
+				line: maybeKeyword.line,
+				column: maybeKeyword.column,
+				start: maybeKeyword.start,
+				end: maybeKeyword.end
+			}
+
+			const nodeGenerators = [generateIdentifier, generateStringLiteral]
+			const doneStatus: Identifier
+				| StringLiteral
+				| MismatchToken = generateOneOf(tokens, ["DoCatchBlock", ...context], nodeGenerators)
+
+			if (doneStatus.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return doneStatus
+			}
+
+			doneBlock.status = doneStatus
+			const doneBlockBody = captureBody(doneBlock)
+
+			if (!Array.isArray(doneBlockBody)) {
+				tokens.cursor = initialCursor
+				return doneBlockBody
+			}
+
+			doneBlock.body = doneBlockBody
+			doneBlock.end = doneBlockBody.at(-1)?.end ?? doneBlock.end
+
+			doCatchBlock.done = doneBlock
+			continue
+		}
+
+		if (!isKeyword(maybeKeyword, "catch")) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
+
+		const catchBlock: CatchBlock = {
+			type: "CatchBlock",
+			body: [],
+			params: [],
+			line: maybeKeyword.line,
+			column: maybeKeyword.column,
+			start: maybeKeyword.start,
+			end: maybeKeyword.end
+		}
+
+		const catchParams = captureCatchParams()
+		if (!Array.isArray(catchParams)) {
+			tokens.cursor = initialCursor
+			return catchParams
+		}
+
+		catchBlock.params = catchParams
+		const catchBlockBody = captureBody(catchBlock)
+
+		if (!Array.isArray(catchBlockBody)) {
+			tokens.cursor = initialCursor
+			return catchBlockBody
+		}
+
+		catchBlock.body = catchBlockBody
+		catchBlock.end = catchBlockBody.at(-1)?.end ?? catchBlock.end
+
+		doCatchBlock.handlers.push(catchBlock)
+	}
+
+	if (doCatchBlock.done == null && doCatchBlock.handlers.length == 0) {
+		const partialParse: PartialParse = {
+			cursor: tokens.cursor,
+			result: doCatchBlock
+		}
+		tokens.cursor = initialCursor
+		return createMismatchToken(currentToken)
+	}
+
+	return doCatchBlock
+
+	function captureCatchParams() {
+		currentToken = _skipables.includes(tokens.currentToken)
+			? skip(tokens, _skipables)
+			: tokens.currentToken
+
+		let lastDelim: LexicalToken | MismatchToken | null = null, isInitial = true
+		const catchParams: Pattern[] = []
+
+		while (!tokens.isFinished) {
+			if (!isInitial && lastDelim?.type == "MismatchToken")
+				break
+
+			currentToken = skipables.includes(tokens.currentToken)
+				? skip(tokens, skipables)
+				: tokens.currentToken
+
+			const catchParam = generatePattern(["DoCatchBlock", ...context], tokens)
+			lastDelim = catchParam.type == "MismatchToken" ? lastDelim : null
+
+			if (catchParam.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return catchParam
+			}
+
+			catchParams.push(catchParam)
+			lastDelim = captureComma()
+			isInitial = false
+		}
+
+		return catchParams
+	}
+
+	function captureBody(blockHolder: DoCatchBlock | CatchBlock | DoneBlock) {
+		const blockHolderBody: Array<Block | Inline> = []
+		while (!tokens.isFinished) {
+
+			currentToken = skipables.includes(tokens.currentToken)
+				? skip(tokens, skipables)
+				: tokens.currentToken
+
+			const resetCursorPoint = tokens.cursor
+			const maybeKeyword = generateKeyword(["DoCatchBlock", ...context], tokens)
+
+			tokens.cursor = resetCursorPoint
+			if (["catch", "done", "end"].some(x => isKeyword(maybeKeyword, x as KeywordKind))) {
+				if (isKeyword(maybeKeyword, "end"))
+					blockHolder.end = maybeKeyword.end
+				break
+			}
+
+			const bodyItem: Block
+				| Inline
+				| MismatchToken = generateOneOf(tokens, ["DoCatchBlock", ...context], nodeGenerators)
+
+			if (bodyItem.type == "MismatchToken") {
+				tokens.cursor = initialCursor
+				return bodyItem
+			}
+
+			blockHolderBody.push(bodyItem)
+		}
+		return blockHolderBody
+	}
+}
+
+/* const parseCatchParams = (catchBlock: CatchBlock) => {
 
 		const capturePattern = () => {
 			currentToken = skipables.includes(tokens.currentToken)
@@ -76,22 +279,20 @@ export function generateDoCatchBlock(context: string[], tokens: TokenStream): Do
 				return pattern
 
 			catchBlock.params.push(pattern)
+			currentToken = tokens.currentToken
 		}
 
 		return catchBlock
 	}
 
-	const parseDoneParam = (doneBlock: DoneBlock) => {
+	const parseDoneParam = () => {
 		currentToken = skipables.includes(tokens.currentToken)
 			? skip(tokens, skipables)
 			: tokens.currentToken
 
 		let status: Identifier
-            | StringLiteral
-            | MismatchToken = generateIdentifier(["DoneBlock", ...context], tokens)
-
-		if (status.type == "MismatchToken")
-			status = generateStringLiteral(["DoneBlock", ...context], tokens)
+			| StringLiteral
+			| MismatchToken = generateOneOf(tokens, ["DoneBlock", ...context], [generateIdentifier, generateStringLiteral])
 
 		return status
 	}
@@ -101,8 +302,8 @@ export function generateDoCatchBlock(context: string[], tokens: TokenStream): Do
 	]
 
 	let blockHolder: DoCatchBlock
-        | CatchBlock
-        | DoneBlock = doCatchBlock
+		| CatchBlock
+		| DoneBlock = doCatchBlock
 
 	let blockHolderBody = doCatchBlock.body
 	let isSingleItemBlock = false
@@ -170,7 +371,7 @@ export function generateDoCatchBlock(context: string[], tokens: TokenStream): Do
 				end: 0
 			}
 
-			const doneBlockParam = parseDoneParam(doneBlock)
+			const doneBlockParam = parseDoneParam()
 			if (doneBlockParam.type == "MismatchToken") {
 				tokens.cursor = initialCursor
 				return doneBlockParam
@@ -196,8 +397,8 @@ export function generateDoCatchBlock(context: string[], tokens: TokenStream): Do
 		}
 
 		let node: Block
-            | Inline
-            | MismatchToken = null!
+			| Inline
+			| MismatchToken = null!
 
 		tokens.cursor = resetCursorPoint
 		for (const nodeGenerator of nodeGenerators) {
@@ -242,10 +443,7 @@ export function generateDoCatchBlock(context: string[], tokens: TokenStream): Do
 		}
 		tokens.cursor = initialCursor
 		return createMismatchToken(tokens.currentToken, partialParse)
-	}
-
-	return doCatchBlock
-}
+	} */
 
 export function printDoCatchBlock(token: DoCatchBlock, indent = 0) {
 	const middleJoiner = "├── "

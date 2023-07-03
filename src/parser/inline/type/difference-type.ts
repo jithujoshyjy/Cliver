@@ -33,7 +33,7 @@ export function generateDifferenceType(context: string[], tokens: TokenStream): 
 	for (const typeGenerator of typeGenerators) {
 		if (isBlockedType(typeGenerator.name.replace("generate", "")))
 			continue
-		
+
 		typeMember = withBlocked(["DifferenceType"],
 			() => typeGenerator(["DifferenceType", ...context], tokens))
 		currentToken = tokens.currentToken
@@ -53,8 +53,13 @@ export function generateDifferenceType(context: string[], tokens: TokenStream): 
 	}
 
 	differenceType.left = typeMember
-	if (skipables.includes(currentToken))
-		currentToken = skip(tokens, skipables)
+	differenceType.start = typeMember.start
+	differenceType.line = typeMember.line
+	differenceType.column = typeMember.column
+
+	currentToken = skipables.includes(tokens.currentToken)
+		? skip(tokens, skipables)
+		: tokens.currentToken
 
 	if (!isOperator(currentToken, "-")) {
 		tokens.cursor = initialCursor
@@ -72,6 +77,7 @@ export function generateDifferenceType(context: string[], tokens: TokenStream): 
 	}
 
 	differenceType.right = right
+	differenceType.end = right.end
 
 	return differenceType
 }

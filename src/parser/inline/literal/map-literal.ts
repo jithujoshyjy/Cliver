@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, isPunctuator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, isPunctuator, skip, skipables } from "../../utility.js"
 import { generatePair, printPair } from "../term/pair.js"
 import { generateIdentifier, printIdentifier } from "./identifier.js"
 

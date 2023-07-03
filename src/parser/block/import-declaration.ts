@@ -6,7 +6,7 @@ import { generateKeyword } from "../inline/keyword.js"
 import { generateIdentifier } from "../inline/literal/identifier.js"
 import { generateStringLiteral } from "../inline/literal/string-literal.js"
 import { generateTaggedSymbol } from "../inline/term/tagged-symbol.js"
-import { createMismatchToken, isBlockedType, isKeyword, isPunctuator, skip, skipables, _skipables, generateOneOf, withBlocked } from "../utility.js"
+import { createMismatchToken, isKeyword, isPunctuator, skip, skipables, _skipables, generateOneOf, withBlocked } from "../utility.js"
 
 export function generateImportDeclaration(context: string[], tokens: TokenStream): ImportDeclaration | MismatchToken {
 	const importDeclr: ImportDeclaration = {
@@ -97,6 +97,7 @@ export function generateImportDeclaration(context: string[], tokens: TokenStream
 			? skip(tokens, skipables)
 			: tokens.currentToken
 
+		const cursorResetPoint = tokens.cursor
 		const specifier = captureSpecifier()
 
 		if (specifier.type == "MismatchToken") {
@@ -104,12 +105,27 @@ export function generateImportDeclaration(context: string[], tokens: TokenStream
 			return specifier
 		}
 
-		if (["TaggedSymbol", "StringLiteral"].includes(specifier.type))
+		const isSource = ["TaggedSymbol", "StringLiteral"].includes(specifier.type)
+
+		if (isInitial && isSource) {
+			tokens.cursor = cursorResetPoint
 			break
+		}
+		else if (isSource) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
 		importDeclr.specifiers.push(specifier)
-		if (["PrefixOperation", "NonVerbalOperator"].includes(specifier.type))
+		const isSingularSpecifier = ["PrefixOperation", "NonVerbalOperator"].includes(specifier.type)
+
+		if (isInitial && isSingularSpecifier) {
 			break
+		}
+		else if (isSingularSpecifier) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
 
 		lastDelim = captureComma()
 		isInitial = false
@@ -166,20 +182,24 @@ export function generateImportDeclaration(context: string[], tokens: TokenStream
 		: tokens.currentToken
 
 	const fromKeyword = generateKeyword(["ImportDeclaration", ...context], tokens)
+	const isAllSpecifiersIds = () => importDeclr.specifiers.length > 0
+		&& importDeclr.specifiers.every(x => x.type == "Identifier")
 
-	if (fromKeyword.type == "MismatchToken") {
-		tokens.cursor = initialCursor
-		return fromKeyword
+	let sources: MismatchToken | Array<Identifier | StringLiteral | TaggedSymbol> = []
+	if (fromKeyword.type == "MismatchToken" && isAllSpecifiersIds()) {
+		sources = importDeclr.specifiers as Identifier[]
+		importDeclr.specifiers = []
+		importDeclr.end = sources.at(-1)!.end
+	}
+	else {
+		if (importDeclr.specifiers.length > 0 && !isKeyword(fromKeyword, "from")) {
+			tokens.cursor = initialCursor
+			return createMismatchToken(currentToken)
+		}
+
+		sources = parseSources()
 	}
 
-	if (!isKeyword(fromKeyword, "from")) {
-		tokens.cursor = initialCursor
-		return createMismatchToken(currentToken)
-	}
-
-	const sources = parseSources()
-	console.log(sources);
-	
 	if (!Array.isArray(sources)) {
 		tokens.cursor = initialCursor
 		return sources
@@ -195,5 +215,5 @@ export function printImportDeclaration(token: ImportDeclaration, indent = 0) {
 	const trailJoiner = "│\t"
 
 	const space = " ".repeat(4)
-	return "ImportDeclaration\n"
+	return "ImportDeclaration"
 }

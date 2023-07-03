@@ -1,7 +1,6 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, skip, skipables, type Node, isOperator, withBlocked } from "../../utility.js"
+import { createMismatchToken, skip, skipables, isOperator, withBlocked } from "../../utility.js"
 import { generateExpression } from "../expression/expression.js"
-import { generateNonVerbalOperator } from "../expression/operation.ts/non-verbal-operator.js"
 import { generateTypeExpression } from "./type-expression.js"
 
 export function generateTypeAssertion(context: string[], tokens: TokenStream): TypeAssertion | MismatchToken {

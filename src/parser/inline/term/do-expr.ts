@@ -36,7 +36,7 @@ export function generateDoExpr(context: string[], tokens: TokenStream): DoExpr |
 		generateBlock, generateInline
 	]
 
-	while (currentToken.type != "EOF") {
+	while (!tokens.isFinished) {
 
 		currentToken = skipables.includes(tokens.currentToken)
 			? skip(tokens, skipables)

@@ -1,5 +1,5 @@
 import { TokenStream } from "../../../lexer/token.js"
-import { createMismatchToken, isOperator, skip, skipables, type Node } from "../../utility.js"
+import { createMismatchToken, skip, skipables, isPunctuator } from "../../utility.js"
 import { generateTypeAssertion } from "./type-assertion.js"
 
 export function generateStructureType(context: string[], tokens: TokenStream): StructureType | MismatchToken {
@@ -13,50 +13,82 @@ export function generateStructureType(context: string[], tokens: TokenStream): S
     }
 
     const initialCursor = tokens.cursor
-    const currentToken = tokens.currentToken
+    let currentToken = tokens.currentToken
 
-    /* if(currentToken.type != TokenType.BraceEnclosed) {
+    if (!isPunctuator(currentToken, "{")) {
         tokens.cursor = initialCursor
         return createMismatchToken(currentToken)
     }
 
+    structureType.start = currentToken.start
+    structureType.line = currentToken.line
+    structureType.column = currentToken.column
+
+    currentToken = skip(tokens, skipables) // skip {
+
     const captureComma = () => {
+        const initialToken = tokens.currentToken
+
+        if (!isPunctuator(currentToken, ",")) {
+            return createMismatchToken(initialToken)
+        }
+
         currentToken = skip(tokens, skipables)
-        if (!isOperator(currentToken, ",")) {
+        return initialToken
+    }
+
+    let isInitial = true, lastDelim: LexicalToken | MismatchToken | null = null
+    const parseTypeAssertion = (isInitial: boolean) => {
+
+        let typeAssertion = generateTypeAssertion(["StructureType", ...context], tokens)
+        currentToken = tokens.currentToken
+
+        lastDelim = null
+        return typeAssertion
+    }
+
+    while (!tokens.isFinished) {
+
+        if (isPunctuator(currentToken, "}")) {
+            structureType.end = currentToken.end
+            tokens.advance()
+            break
+        }
+
+        if (!isInitial && lastDelim == null) {
             tokens.cursor = initialCursor
             return createMismatchToken(currentToken)
         }
-        return currentToken
-    }
 
-    const braceTokens = new TokenStream(currentToken.value as Array<typeof currentToken>)
-    const parseTypeMember = () => {
-        currentToken = braceTokens.currentToken
-
-        if (skipables.includes(currentToken.type) || isOperator(currentToken, ","))
-            currentToken = skip(braceTokens, skipables)
-
-        let typeMember: TypeAssertion | MismatchToken = generateTypeAssertion(structureType, braceTokens)
-
-        return typeMember
-    }
-
-    while (!braceTokens.isFinished) {
-        const typeMember = parseTypeMember()
-
-        if (typeMember.type == "MismatchToken") {
+        if (lastDelim?.type == "MismatchToken") {
             tokens.cursor = initialCursor
-            return typeMember
+            return lastDelim
         }
 
-        structureType.fields.push(typeMember)
-        const comma = captureComma()
+        const typeAssertion = parseTypeAssertion(isInitial)
 
-        if (comma.type == "MismatchToken") {
+        if (typeAssertion.type == "MismatchToken") {
             tokens.cursor = initialCursor
-            return comma
+            return typeAssertion
         }
-    } */
-    return createMismatchToken(currentToken)
+
+        structureType.fields.push(typeAssertion)
+        if (skipables.includes(currentToken))
+            currentToken = skip(tokens, skipables)
+
+        lastDelim = captureComma()
+        isInitial = false
+    }
+
     return structureType
+}
+
+export function printStructureType(token: StructureType, indent = 0) {
+    const middleJoiner = "├── "
+    const endJoiner = "└── "
+    const trailJoiner = "│\t"
+    const space = " ".repeat(4)
+
+
+    return "StructureType"
 }
