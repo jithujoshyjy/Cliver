@@ -73,9 +73,7 @@ There are a whole bunch of standard types and the type system is flexible enough
 ```julia
 # type alias
 type NewType = ExistingType
-
-# type constructor without parameters
-type TypeCtor<data>() = DataCtorA | DataCtorB
+type NewType(a, b) = ExistingType
 ```
 Type constructors can take parameters; the parameter can be a generic type, an abstract type or a concrete type.<br/>
 If the parameter is not annotated with a type, then it is considered generic.<br/>
@@ -83,7 +81,7 @@ If the parameter is abstract, the parameter value should be a subtype of the spe
 If it's a concrete type, the parameter value should be a literal value of that type.<br/>
 ```julia
 # type constructor with parameters
-type TypeCtor<data>(a, b :: AbstractType, c :: ConcreteType) = DataCtorA | DataCtorB(c, b)
+type TypeCtor(a, b :: AbstractType, c :: ConcreteType) :: DataType = DataCtorA | DataCtorB(c, b)
 ```
 
 #### Abstract and Concrete types
@@ -95,10 +93,11 @@ Subtyping is only possible with Abstract types. The root abstract type is DataTy
 Concrete types have one or more data constructors associated with them. All data constructors are publically accessable values.
 ```julia
 # abstract type decalration
-type AbstractCtor<abstract>() :: DataType
+type AbstractCtor() :: DataType
 
 # concrete type declaration
-type ConcreteCtor<data>() :: AbstractType = DataCtorA | DataCtorB
+type ConcreteCtor() :: DataType = DataCtorA | DataCtorB
+type ConcreteCtor() :: AbstractType = DataCtorA | DataCtorB
 ```
 
 #### Type Constraints
@@ -106,9 +105,9 @@ type ConcreteCtor<data>() :: AbstractType = DataCtorA | DataCtorB
 type constraints follow the same rules as type constructor parameters.
 
 ```julia
-type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where a :: Type
+type ConcreteCtor() :: DataType = DataCtorA | DataCtorB(a, b) where a :: Type
 # multiple constraints
-type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
+type ConcreteCtor() :: DataType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 #### Structural Typing
@@ -116,39 +115,46 @@ type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: T
 Structural typing defines the object structure of a type. They can have value assertion to check whether the value associated with the type meets certain conditions.
 
 ```julia
-type AbstractCtor<abstract>() :: DataType = where {
-    propertyA :: Type,
-    methodB :: Type
-}
+type AbstractCtor() :: DataType =
+    propertyA :: Type
+    methodB   :: Type
 
 # with value assertions
-type AbstractCtor<abstract>() :: DataType = where {
-    value -> boolean_expression,
-    propertyA :: Type,
-    methodB :: Type
-}
+type AbstractCtor() :: DataType =
+    value -> boolean_expression
+    propertyA :: Type
+    methodB   :: Type
 
 # with lone value assertion
-type AbstractCtor<abstract>() :: DataType = where value -> boolean_expression
+type AbstractCtor() :: DataType where value -> boolean_expression
 
 # in concrete types
-
-type ConcreteCtor<data>() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type) {
-    propertyA :: Type,
+type InterfaceType =
+	propertyA :: Type
     methodB :: Type
-}
+
+type ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 ```julia
-impl Just<self>(a) :: Maybe(a)
-    fun unwrap(): a
+
+type Maybe(a) = Just(a) | None
+
+type Iterable as f =
+  map :: (a -> b) -> f(b)
+
+impl self :: Maybe(a)
+	fun unwrap(): match self
+		case Just(x): x
+		case None: throw Error("Failed to unwrap Maybe value as it is 'None'")
 end
 
-impl None<self>() :: Maybe(a)
-    fun unwrap(b): throw PatternError("attempt to unwarp a None value")
+impl f :: Iterable for self :: Maybe(a)
+  fun map(f): match self
+	case Just(x): Just(f(x))
+	case None: None
 end
 ```
-
 
 #### Functions
 
@@ -310,11 +316,11 @@ Accessors, i.e getters and setters are special functions.
 
 fun CtorFunction<self>()
     
-    fun GetVal<getter>()
+    fun setVal<getter>()
         # getter logic
     end
 
-    fun SetVal<setter>(value)
+    fun getVal<setter>(value)
         # setter logic
     end
 end
