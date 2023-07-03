@@ -179,10 +179,10 @@ AnonFunctions / anonymous functions are of two varients.
 
 ```julia
 # inline varient
-fun(...parameters): expression
+fun(...parameters) -> Type: expression
 
 # block varient
-fun(paramA :: Type, paramB :: Type) :: Type
+fun(paramA :: Type, paramB :: Type) -> Type
     # ...
 end
 ```
@@ -622,7 +622,7 @@ This type is inspired by haskell. It is handy when dealing with potential empty 
 Maybe is a type constructor containing two data constructors.
 
 ```julia
-type Maybe<data>(a) = Just(a) | None
+type Maybe(a) :: DataType = Just(a) | None
 ```
 
 ```julia
@@ -649,7 +649,7 @@ The possible values of this type are primitive literals and expressions yielding
 References types or runtime types are not permitted. It has two data constructors: Literal and Apparent.
 
 ```julia
-type Mustbe<data>(a) = Literal(a) | Apparent(a)
+type Mustbe(a) :: DataType = Literal(a) | Apparent(a)
 ```
 
 ```julia
@@ -683,7 +683,7 @@ print(match isEven(10) case Apparent(n): n case _: False) # True
 This type constructor only contains 2 values, True and False
 
 ```julia
-type Boolean<data>() = True | False
+type Boolean() :: DataType = True | False
 ```
 
 ##### Number
@@ -745,7 +745,7 @@ print(fr.numer, fr.denom) # Numerator(1) Denominator(6)
 There are 3 values for this type NaN, Infinites and Infinity.
 
 ```julia
-type Irrational<data>() :: Real = NaN | Infinites | Infinity
+type Irrational() :: Real = NaN | Infinites | Infinity
 ```
 
 **Complex Numbers**<br/>
