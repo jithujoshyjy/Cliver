@@ -140,8 +140,8 @@ type ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: T
 
 type Maybe(a) = Just(a) | None
 
-type Iterable as f =
-  map :: (a -> b) -> f(b)
+type Iterable(a) =
+  map :: (a -> b) -> Iterable(b)
 
 impl self :: Maybe(a)
 	fun unwrap(): match self
@@ -149,7 +149,7 @@ impl self :: Maybe(a)
 		case None: throw Error("Failed to unwrap Maybe value as it is 'None'")
 end
 
-impl f :: Iterable for self :: Maybe(a)
+impl Iterable(self) for self :: Maybe(a)
   fun map(f): match self
 	case Just(x): Just(f(x))
 	case None: None
