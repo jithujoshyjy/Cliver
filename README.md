@@ -130,7 +130,7 @@ type AbstractCtor() :: DataType where value -> boolean_expression
 
 # in concrete types
 type InterfaceType =
-	propertyA :: Type
+    propertyA :: Type
     methodB :: Type
 
 type ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
