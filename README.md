@@ -115,23 +115,26 @@ type ConcreteCtor() :: DataType = DataCtorA | DataCtorB(a, b) where (a :: Type, 
 Structural typing defines the object structure of a type. They can have value assertion to check whether the value associated with the type meets certain conditions.
 
 ```julia
-type AbstractCtor() :: DataType =
-    propertyA :: Type
+type AbstractCtor() :: DataType = {
+    propertyA :: Type,
     methodB   :: Type
+}
 
 # with value assertions
-type AbstractCtor() :: DataType =
-    value -> boolean_expression
-    propertyA :: Type
+type AbstractCtor() :: DataType = {
+    value -> boolean_expression,
+    propertyA :: Type,
     methodB   :: Type
+}
 
 # with lone value assertion
 type AbstractCtor() :: DataType where value -> boolean_expression
 
 # in concrete types
-type InterfaceType =
-    propertyA :: Type
+type InterfaceType = {
+    propertyA :: Type,
     methodB :: Type
+}
 
 type ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
@@ -173,9 +176,44 @@ These are simple one-line function expressions.
 (paramA :: Type, paramB :: Type) :: Type -> expression
 ```
 
+##### NamedFunctions
+
+A function body has two varient
+
+```julia
+# inline varient
+fun funName(...parameters): expression
+
+# block varient
+fun funName(paramA :: Type, paramB :: Type) :: Type
+    # ...
+end
+```
+
+The functions syntax is flexible enough to create constructs such as Constructors, Generators, Macros, etc.
+
+```julia
+# Constructor
+fun FunName<self>()
+    # ...
+end
+
+# Generator
+fun FunName<yield, payload>()
+    # ...
+end
+
+# Macro
+fun FunName<macro>()
+    # ...
+end
+
+# ...etc,.
+```
+
 ##### AnonFunction
 
-AnonFunctions / anonymous functions are of two varients.
+They are similar to NamedFunctions execpt they do not have a name.
 
 ```julia
 # inline varient
@@ -187,38 +225,7 @@ fun(paramA :: Type, paramB :: Type) :: Type
 end
 ```
 
-The syntax form of anonymous functions can be used to create other types such as Constructors, Generators, Macros, etc.
-
-```julia
-# Constructor
-fun<self>()
-    # ...
-end
-
-# Generator
-fun<yield, payload>()
-    # ...
-end
-
-# Macro
-fun<macro>()
-    # ...
-end
-
-# ...etc,.
-```
-
 > If the type annotations of a UnitFunction gets out of hand, consider switching to an AnonFunction.
-
-##### NamedFunctions
-
-They are similar to AnonFunctions execpt they have a name.
-
-```julia
-fun FunName()
-    # ...
-end
-```
 
 ##### Operators as Functions
 
@@ -273,19 +280,19 @@ If a function accepts atleast 2 or optionally many arguments, then it can be cal
     print(10 `add` 10.5) # 20.5
 ```
 
-###### External Callback Syntax
+###### External Callback Notation
 
 It is an alternative to the below approach.
 ```julia
 # without external callback and using regular callback
-funName(argA, fun(...args)
+funName(argA, fun(...args :: ...Int) :: String
     # ...
 end)
 ```
 
 ```julia
-# with external callback syntax
-funName(argA, fun(...args)) do
+# with external callback notation
+funName(argA, fun(...args :: ...Int) :: String) do
     # ...
 end
 ```
@@ -333,8 +340,8 @@ Cliver doesn't support inheritance in it's OO design.
 
 ```julia
 
-type AType = Constructor() -> { aProp :: Type }
-type BType = Constructor() -> { ...Object(AType), bProp :: Type }
+type AType = Constructor() -> self { aProp :: Type }
+type BType = Constructor() -> self { ...Object(AType), bProp :: Type }
 
 fun :: AType
 A<self>()
@@ -345,8 +352,10 @@ end
 fun :: BType
 B<self>()
     # ...
-    @@where
-    import ... from A()
+	import ...AType from A()
+
+    @@where ...AType
+	
     val bProp = value
 end
 ```
@@ -357,7 +366,7 @@ The methods and properties of a static constructor is bound to the constructor r
 
 ```julia
 
-fun CtorFunction<static>()
+fun CtorFunction<static>() :: static { propA :: Infer, methodB :: Infer }
     # static constructor logic...
 
     @@where
@@ -467,7 +476,7 @@ print(if condition: expression else: expression)
 
 Match expression is the pattern matching construct in Cliver.
 
-```julia
+```scala
 val value = match expression
     case pattern:
         expression
@@ -644,38 +653,34 @@ end
 
 ##### Mustbe
 
-It is simply a compiler constant.<br/>
+It is simply a compiler constant and is a type alias rather than being a distinct type.<br/>
 The possible values of this type are primitive literals and expressions yielding primitive values that can be infered at compile time.<br/>
-References types or runtime types are not permitted. It has two data constructors: Literal and Apparent.
+References types or runtime types are not permitted. Explicit type assertion is required for asserting Mustbe values.
 
 ```julia
-type Mustbe(a) :: DataType = Literal(a) | Apparent(a)
-```
 
-```julia
-val :: Mustbe(String)
-name = @literal "Abc"
+name = "Abc" :: Mustbe(String)
 
-name = @literal f"Abc" # error
+name = f"Abc" # error
 
 val newName = "Xyz"
-name = @apparent newName
+name = newName
 ```
 
 ```julia
 # returning Mustbe value
-fun :: Int -> Mustbe(Boolean)
+fun :: Int -> Infer
 isEven(num)
-    return @apparent num % 2 == 0
+    return num % 2 == 0 :: Mustbe(Boolean)
 end
 ```
 
 ```julia
 # handling Mustbe value
-print(isEven(10)) # Apparent(True)
+print(isEven(10)) # True
 
 # to get the actual value True
-print(match isEven(10) case Apparent(n): n case _: False) # True
+print(match isEven(10) case n: n case _: False) # True
 ```
 
 ##### Boolean
@@ -726,6 +731,15 @@ type.sub(type :: BigNumber)
 # Union(BigInt, BigFloat)
 ```
 
+> BigFloat types are really only useful when used in conjunction with GenericIrrational or Fractional types
+```julia
+val Pi = 22!p / 7!p # :: GenericIrrational
+val Tau = 2!p * Pi # :: GenericIrrational
+
+val x = BigFloat(32, Pi), y = BigFloat(32, Tau)
+print(x + y) # ...
+```
+
 <br/>
 
 **Fractional**<br/>
@@ -755,13 +769,13 @@ Unlike in mathematics, Complex is not a super type of Real rather they are sibli
 ###### Numeric Notations
 
 **Base-2 - decimal**<br/>
-Eg: `101!b, 1100!b, -1011!b, ...`<br/>
+Eg: `0b101, 0b1100, -0b1011, ...`<br/>
 
 **Base-8 - octal**<br/>
-Eg: `347!o, 6534!o, -5260!o, ...`<br/>
+Eg: `0o347, 0o6534, -0o5260, ...`<br/>
 
 **Base-16 - hexadecimal**<br/>
-Eg: `x\ff460, x\bc461, x\20cae, ...`<br/>
+Eg: `0xff460, 0xbc461, -0x20cae, ...`<br/>
 
 **Scientific Notation**<br/>
 Eg: `6.022!e + 23, 1.6!e - 35, -5.3!e + 4, ...`<br/>
@@ -782,18 +796,20 @@ print(5!fact) # 120
 When multiplying a number with a identifier, you can omit the (*) sign and deal with multiplications in a mathematically accurate notation.<br/>
 Eg: `2x + 1, -3y(5 + 2), 2.25z, ...`
 
+> Implicit multiplication involving 0 as the numeric operand is invalid however 0.0 is valid.<br/>
+Eg: `0x, 0y + 4, ...`
+
 ##### Char
 
 This data type represents either ASCII charactors or utf-8 unicode charactors.<br/>
 
 Eg: ASCIIChar - `'A', '7', '!', ...`<br/>
 Eg: UnicodeChar - `'🎉', 'Â', 'α', ...`<br/>
-Eg: SymChar - `\a, \B, \0, ...`<br/>
 
 ```julia
 type Char :: DataType
 type.sub(type :: Char)
-# Union(ASCIIChar, UnicodeChar, SymChar)
+# Union(ASCIIChar, UnicodeChar)
 ```
 
 ##### String
@@ -802,13 +818,21 @@ String is an Array of Char values.
 
 Eg: ASCIIString - `"Abc", "$7ffG", "Ab*8", ...`<br/>
 Eg: UnicodeString - `'🎉zzʑ', 'Âlp', 'α🕶ɜ', ...`<br/>
-Eg: SymString - `\abC, \Bcd, \012FF, ...`<br/>
+Eg: IdString - `\abC, \Bcd, \🎉ʑ01, ...`<br/>
 
 ```julia
 type String :: Array
 type.sub(type :: String)
-# Union(ASCIIString, UnicodeString, SymString)
+# Union(ASCIIString, UnicodeString, IdString)
 ```
+
+Strings are immutable but there exists a mutable version suffixed with `!`
+```julia
+# mutable String
+"Abc"!
+```
+
+> Notice however that IdStrings such as `\Abc!` is not mutable even though it is suffixed with `!`
 
 ###### String Fragments
 
@@ -816,7 +840,7 @@ When strings are placed next to each other, they can merge into a single string.
 ```julia
 print("abc" "def" "ghi") # abcdefghi
 
-# with SymString
+# with IdString
 print(\abc\def\ghi) # abcdefghi
 ```
 > This works with chars too; i.e they merge into a String in a similar fashion.
@@ -838,6 +862,14 @@ string
 """"
 ```
 
+```julia
+# mutable multiline string
+"""
+multiline
+string
+"""!
+```
+
 ###### Tagged Strings
 
 Strings can be tagged to enable interpolation and form special constructs.
@@ -848,7 +880,7 @@ val greet = f"hello {world}$punch"
 
 print(greet) # hello earth!
 
-# with SymString
+# with IdString
 print\hello # hello
 ```
 > tagging can also be done with multiline strings
@@ -860,12 +892,14 @@ They can be finite or infinite.
 type Range :: DataType
 
 type.sub(type :: Range)
-# Union(NumericRange, UnicodeRange)
+# Union(NumericRange, UnicodeRange, DateTimeRange)
 ```
+
 ```julia
 # syntax
 (start, step) to last
 ```
+
 Eg: NumericRange
 ```julia
 print(1 to 5) # 1 2 3 4 5
@@ -888,13 +922,36 @@ Most collections in Cliver are immutable and some even have mutable counterpart 
 
 ##### Array
 Arrays are the most basic collection type in Cliver.<br/>
-The super type is AbstractArray.
+The super type is AbstractArray. Array indexing starts at 1 rather than at 0
 
 ```julia
 val items :: Array(Type) = [A, B, C, D]
+```
 
+Items of an Array are accessed used the square bracket notation.
+
+```julia
+items[1] # A
+```
+
+```julia
 # mutable version
 val items :: Array!(Type) = [A, B, C, D]!
+
+# add a value to the end of the array
+items.add(value)
+
+# add a value at a specific index
+items.add(value; index: i)
+
+# update an existing index
+items[i] = value
+
+# remove an item at an index
+items.drop(i)
+
+# remove the first occurance of a value
+items.drop(item: value)
 ```
 
 The `in` operator can check for the presence of a value in an array.
@@ -914,14 +971,29 @@ Array comprehension is done using for expressions
 
 ##### Tuple
 
-Tuples are immutable, fixed sized collections. They can contain multiple types. Tuples are not iterable.
+Tuples are immutable, fixed sized collections. They can contain multiple types and can have named arguments. Tuples are not iterable.
 ```julia
-val :: Tuple(TypeA, TypeB, TypeC)
-items = (ValueA, ValueB, ValueC)
+val :: Tuple(TypeA, TypeB; TypeC, TypeD)
+items = (itemA, itemB; itemC, itemD: 0)
+```
+
+Values in a tuple are accessed using indexing just like Array. Also the indexing starts at 1.
+```julia
+items[1] # ValueA
+items[\itemD] # ValueD
+```
+
+Values can also be accessed using destructuring
+```julia
+val (itemA, itemB; itemC) = items
+
+fun(items.(itemA, itemB; itemC))
+    # ...
+end
 ```
 
 ##### Map
-Maps contain key-value pairs.<br/>
+Maps contain key-value pairs. By default they are immutable.<br/>
 The super type is AbstractMap.
 
 ```julia
@@ -929,9 +1001,39 @@ val pairs :: Map(KeyType, ValueType) = {
     keyA: valueA,
     keyB: valueB
 }
+
+val pairs = {:} # empty Map
+val pairs = {_:_} # empty Map
 ```
 
-The behaviour of the `in` operator varies in with the lhs value when used with a Map.
+Mutable Maps can be formed using `!` suffix.
+```julia
+val pairs :: Map!(KeyType, ValueType) = {
+    keyA: valueA,
+    keyB: valueB
+}!
+
+# add a new entry
+pairs.add(key: value)
+
+# update an existing entry
+pairs[key] = value
+
+# remove an entry
+pairs.drop(key)
+```
+
+Values within a map can be accessed using square bracket notation.
+```julia
+pairs[keyA] # valueA
+```
+
+> Any map that has an empty pair or that which contains atleast a single pair can have implicit keys; i.e the name of the identifier is the key of type IdString and the value being the value of the identifier
+```julia
+val pairs = {_:_, x, y, z}
+```
+
+The behaviour of the `in` operator varies with the lhs value when used on a Map.
 ```julia
 print(keyA in pairs) # True
 print((keyA: valueA) in pairs) # True
@@ -950,16 +1052,46 @@ end
 
 Map comprehension can be done using for expressions
 ```julia
-{for pair in pairs: if isValid(pair): pair}
-# or
 {for (key: value) in (pairs.keys, pairs.values): if isValid(key): (key: value)}
 ```
 
-> There are many more collection in Cliver with there on syntax varients!
+##### Set
+The collection type Set is a mathematical construct that can only contain unique values.
+```julia
+val items = {} # empty Set
+val items = {1, 2, 2, 3, 4, 1, 5} # {1, 2, 3, 4, 5}
+```
+
+Sets support union `(|)`, intersection `(&)` and other mathematical math operations.
+They are immutable by default. The mutable version suffixed with `!`.
+
+```julia
+val items = {1, 2, 3, 4}!
+
+items.add(5) # true - added
+items.add(3) # false - not added
+```
+
+Like Arrays, Sets also support comprehension notation.
+```julia
+{for item in items: if isValid(item): item}
+```
+
+##### Matrix
+It is another mathematical construct Cliver supports.
+They are similar to Arrays but contains data in rows and columns.
+```julia
+val mat = [
+	a, b, c;
+	d, e, f
+]
+
+mat.shape() # 2//3 - two rows and 3 columns
+```
 
 #### Metaprograming
 
-It is done mainly using Macros.
+Macros are the backbone of Cliver's metaprogramming system.
 
 ##### Macro
 A macro is a construct which can access and modify the AST structure of a supplied statement or expression.
