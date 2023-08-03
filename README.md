@@ -143,8 +143,9 @@ type ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: T
 
 type Maybe(a) = Just(a) | None
 
-type Iterable(a) =
+type Iterable(a) = {
   map :: (a -> b) -> Iterable(b)
+}
 
 impl self :: Maybe(a)
 	fun unwrap(): match self
