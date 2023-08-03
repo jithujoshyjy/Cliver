@@ -148,15 +148,15 @@ type Iterable(a) = {
 }
 
 impl self :: Maybe(a)
-	fun unwrap(): match self
-		case Just(x): x
-		case None: throw Error("Failed to unwrap Maybe value as it is 'None'")
+    fun unwrap(): match self
+        case Just(x): x
+        case None: throw Error("Failed to unwrap Maybe value as it is 'None'")
 end
 
 impl Iterable(self) for self :: Maybe(a)
-  fun map(f): match self
-	case Just(x): Just(f(x))
-	case None: None
+    fun map(f): match self
+        case Just(x): Just(f(x))
+        case None: None
 end
 ```
 
@@ -195,17 +195,17 @@ The functions syntax is flexible enough to create constructs such as Constructor
 
 ```julia
 # Constructor
-fun FunName<self>()
+fun FunName<self>() :: self { aProp :: Type, aMethod :: Type }
     # ...
 end
 
 # Generator
-fun FunName<yield, payload>()
+fun FunName<yield, payload>() :: yield Type <> payload Type
     # ...
 end
 
 # Macro
-fun FunName<macro>()
+fun FunName<macro>() :: macro Type
     # ...
 end
 
@@ -353,10 +353,10 @@ end
 fun :: BType
 B<self>()
     # ...
-	import ...AType from A()
+    val { ...AType } = A()
 
     @@where ...AType
-	
+    
     val bProp = value
 end
 ```
@@ -674,14 +674,8 @@ fun :: Int -> Infer
 isEven(num)
     return num % 2 == 0 :: Mustbe(Boolean)
 end
-```
 
-```julia
-# handling Mustbe value
 print(isEven(10)) # True
-
-# to get the actual value True
-print(match isEven(10) case n: n case _: False) # True
 ```
 
 ##### Boolean
@@ -1083,8 +1077,8 @@ It is another mathematical construct Cliver supports.
 They are similar to Arrays but contains data in rows and columns.
 ```julia
 val mat = [
-	a, b, c;
-	d, e, f
+    a, b, c;
+    d, e, f
 ]
 
 mat.shape() # 2//3 - two rows and 3 columns
