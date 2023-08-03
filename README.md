@@ -179,10 +179,10 @@ AnonFunctions / anonymous functions are of two varients.
 
 ```julia
 # inline varient
-fun(...parameters) -> Type: expression
+fun(...parameters): expression
 
 # block varient
-fun(paramA :: Type, paramB :: Type) -> Type
+fun(paramA :: Type, paramB :: Type) :: Type
     # ...
 end
 ```
