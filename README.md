@@ -483,16 +483,16 @@ Match expression is the pattern matching construct in Cliver. It has 2 syntatic 
 val value = match expression do
     case pattern:
         statement / expression
-		statement / expression
-		expression
+        statement / expression
+        expression
     case pattern:
         statement / expression
-		statement / expression
-		expression
+        statement / expression
+        expression
     case _:
         statement / expression
-		statement / expression
-		expression
+        statement / expression
+        expression
 end
 ```
 
