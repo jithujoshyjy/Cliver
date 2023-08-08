@@ -477,7 +477,7 @@ print(if condition: expression else: expression)
 
 Match expression is the pattern matching construct in Cliver. It has 2 syntatic variants.
 
-```scala
+```python
 # match expression - variant1
 
 val value = match expression do
@@ -496,7 +496,7 @@ val value = match expression do
 end
 ```
 
-```scala
+```python
 # match expression - variant2
 val value = match expression
     case pattern:
