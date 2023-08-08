@@ -475,9 +475,29 @@ print(if condition: expression else: expression)
 
 ##### Match Expression
 
-Match expression is the pattern matching construct in Cliver.
+Match expression is the pattern matching construct in Cliver. It has 2 syntatic variants.
 
 ```scala
+# match expression - variant1
+
+val value = match expression do
+    case pattern:
+        statement / expression
+		statement / expression
+		expression
+    case pattern:
+        statement / expression
+		statement / expression
+		expression
+    case _:
+        statement / expression
+		statement / expression
+		expression
+end
+```
+
+```scala
+# match expression - variant2
 val value = match expression
     case pattern:
         expression
