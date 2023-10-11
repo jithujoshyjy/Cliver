@@ -81,7 +81,7 @@ If the parameter is abstract, the parameter value should be a subtype of the spe
 If it's a concrete type, the parameter value should be a literal value of that type.<br/>
 ```julia
 # type constructor with parameters
-type TypeCtor(a, b :: AbstractType, c :: ConcreteType) :: DataType = DataCtorA | DataCtorB(c, b)
+datatype TypeCtor(a, b :: AbstractType, c :: ConcreteType) = DataCtorA | DataCtorB(c, b)
 ```
 
 #### Abstract and Concrete types
@@ -93,11 +93,11 @@ Subtyping is only possible with Abstract types. The root abstract type is DataTy
 Concrete types have one or more data constructors associated with them. All data constructors are publically accessable values.
 ```julia
 # abstract type decalration
-type AbstractCtor() :: DataType
+datatype AbstractCtor()
 
 # concrete type declaration
-type ConcreteCtor() :: DataType = DataCtorA | DataCtorB
-type ConcreteCtor() :: AbstractType = DataCtorA | DataCtorB
+datatype ConcreteCtor() = DataCtorA | DataCtorB
+datatype ConcreteCtor() = DataCtorA | DataCtorB
 ```
 
 #### Type Constraints
@@ -105,9 +105,9 @@ type ConcreteCtor() :: AbstractType = DataCtorA | DataCtorB
 type constraints follow the same rules as type constructor parameters.
 
 ```julia
-type ConcreteCtor() :: DataType = DataCtorA | DataCtorB(a, b) where a :: Type
+datatype ConcreteCtor() = DataCtorA | DataCtorB(a, b) where a :: Type
 # multiple constraints
-type ConcreteCtor() :: DataType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
+datatype ConcreteCtor() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 #### Structural Typing
@@ -115,35 +115,35 @@ type ConcreteCtor() :: DataType = DataCtorA | DataCtorB(a, b) where (a :: Type, 
 Structural typing defines the object structure of a type. They can have value assertion to check whether the value associated with the type meets certain conditions.
 
 ```julia
-type AbstractCtor() :: DataType = {
+datatype AbstractCtor() = {
     propertyA :: Type,
     methodB   :: Type
 }
 
 # with value assertions
-type AbstractCtor() :: DataType = {
+datatype AbstractCtor() = {
     value -> boolean_expression,
     propertyA :: Type,
     methodB   :: Type
 }
 
 # with lone value assertion
-type AbstractCtor() :: DataType where value -> boolean_expression
+datatype AbstractCtor() where value -> boolean_expression
 
 # in concrete types
-type InterfaceType = {
+datatype InterfaceType = {
     propertyA :: Type,
     methodB :: Type
 }
 
-type ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
+datatype ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 ```julia
 
-type Maybe(a) = Just(a) | None
+datatype Maybe(a) = Just(a) | None
 
-type Iterable(a) = {
+datatype Iterable(a) = {
   map :: (a -> b) -> Iterable(b)
 }
 
@@ -153,8 +153,8 @@ impl self :: Maybe(a)
         case None: throw Error("Failed to unwrap Maybe value as it is 'None'")
 end
 
-impl Iterable(self) for self :: Maybe(a)
-    fun map(f): match self
+impl self :: Iterable(a) for a :: Maybe(b)
+    fun map(f): match a
         case Just(x): Just(f(x))
         case None: None
 end
@@ -195,17 +195,17 @@ The functions syntax is flexible enough to create constructs such as Constructor
 
 ```julia
 # Constructor
-fun FunName<self>() :: self { aProp :: Type, aMethod :: Type }
+fun FunName<self S>() :: S({ aProp :: Type, aMethod :: Type })
     # ...
 end
 
 # Generator
-fun FunName<yield, payload>() :: yield Type <> payload Type
+fun FunName<yield Y, payload P, return R>() :: Y(Type) + P(Type) + R(Type)
     # ...
 end
 
 # Macro
-fun FunName<macro>() :: macro Type
+fun FunName<macro M>() :: M(Type)
     # ...
 end
 
@@ -286,14 +286,14 @@ If a function accepts atleast 2 or optionally many arguments, then it can be cal
 It is an alternative to the below approach.
 ```julia
 # without external callback and using regular callback
-funName(argA, fun(...args :: ...Int) :: String
+funName(argA, fun(...args :: Array(Int)) :: String
     # ...
 end)
 ```
 
 ```julia
 # with external callback notation
-funName(argA, fun(...args :: ...Int) :: String) do
+funName(argA, fun(...args :: Array(Int)) :: String) do
     # ...
 end
 ```
@@ -341,17 +341,17 @@ Cliver doesn't support inheritance in it's OO design.
 
 ```julia
 
-type AType = Constructor() -> self { aProp :: Type }
-type BType = Constructor() -> self { ...Object(AType), bProp :: Type }
+type AType(S) = Constructor() -> S({ aProp :: Type })
+type BType(S) = Constructor() -> Rt(AType(S)) + S({ bProp :: Type })
 
-fun :: AType
-A<self>()
+fun :: AType(S)
+A<self S>()
     # ...
     val aProp = value
 end
 
-fun :: BType
-B<self>()
+fun :: BType(S)
+B<self S>()
     # ...
     val { ...AType } = A()
 
@@ -367,7 +367,7 @@ The methods and properties of a static constructor is bound to the constructor r
 
 ```julia
 
-fun CtorFunction<static>() :: static { propA :: Infer, methodB :: Infer }
+fun CtorFunction<static S>() :: S({ propA :: Infer, methodB :: Infer })
     # static constructor logic...
 
     @@where
@@ -652,7 +652,7 @@ This type is inspired by haskell. It is handy when dealing with potential empty 
 Maybe is a type constructor containing two data constructors.
 
 ```julia
-type Maybe(a) :: DataType = Just(a) | None
+datatype Maybe(a) = Just(a) | None
 ```
 
 ```julia
@@ -703,7 +703,7 @@ print(isEven(10)) # True
 This type constructor only contains 2 values, True and False
 
 ```julia
-type Boolean() :: DataType = True | False
+datatype Boolean() = True | False
 ```
 
 ##### Number
@@ -716,7 +716,7 @@ Eg: `-1, -2, 0, 1, 2, 3, ...`
 There's also a Uint counterpart.<br/>
 
 ```julia
-type Int :: DataType
+datatype Int
 type.sub(type :: Int)
 # Union(Int8, Int16, Int32, Int128)
 ```
@@ -728,7 +728,7 @@ Eg: `-2.0, -0.5, 1.0, 1.5, 10.99, ...`<br/>
 There's also a Ufloat counterpart.
 
 ```julia
-type Float :: DataType
+datatype Float
 type.sub(type :: Float)
 # Union(Float16, Float32, Float128)
 ```
@@ -774,7 +774,7 @@ print(fr.numer, fr.denom) # Numerator(1) Denominator(6)
 There are 3 values for this type NaN, Infinites and Infinity.
 
 ```julia
-type Irrational() :: Real = NaN | Infinites | Infinity
+datatype Irrational() :: Real = NaN | Infinites | Infinity
 ```
 
 **Complex Numbers**<br/>
@@ -822,7 +822,7 @@ Eg: ASCIIChar - `'A', '7', '!', ...`<br/>
 Eg: UnicodeChar - `'🎉', 'Â', 'α', ...`<br/>
 
 ```julia
-type Char :: DataType
+datatype Char
 type.sub(type :: Char)
 # Union(ASCIIChar, UnicodeChar)
 ```
@@ -836,7 +836,7 @@ Eg: UnicodeString - `'🎉zzʑ', 'Âlp', 'α🕶ɜ', ...`<br/>
 Eg: IdString - `\abC, \Bcd, \🎉ʑ01, ...`<br/>
 
 ```julia
-type String :: Array
+datatype String :: Array
 type.sub(type :: String)
 # Union(ASCIIString, UnicodeString, IdString)
 ```
@@ -904,7 +904,7 @@ print\hello # hello
 
 They can be finite or infinite.
 ```julia
-type Range :: DataType
+datatype Range :: DataType
 
 type.sub(type :: Range)
 # Union(NumericRange, UnicodeRange, DateTimeRange)
