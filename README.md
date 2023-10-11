@@ -93,11 +93,11 @@ Subtyping is only possible with Abstract types. The root abstract type is DataTy
 Concrete types have one or more data constructors associated with them. All data constructors are publically accessable values.
 ```julia
 # abstract type decalration
-datatype AbstractCtor()
+datatype AbstractCtor
 
 # concrete type declaration
-datatype ConcreteCtor() = DataCtorA | DataCtorB
-datatype ConcreteCtor() = DataCtorA | DataCtorB
+datatype ConcreteCtor = DataCtorA | DataCtorB
+datatype ConcreteCtor(a, b) = DataCtorA | DataCtorB(a, b)
 ```
 
 #### Type Constraints
@@ -105,9 +105,9 @@ datatype ConcreteCtor() = DataCtorA | DataCtorB
 type constraints follow the same rules as type constructor parameters.
 
 ```julia
-datatype ConcreteCtor() = DataCtorA | DataCtorB(a, b) where a :: Type
+datatype ConcreteCtor = DataCtorA | DataCtorB(a, b) where a :: Type
 # multiple constraints
-datatype ConcreteCtor() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
+datatype ConcreteCtor = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 #### Structural Typing
@@ -115,20 +115,20 @@ datatype ConcreteCtor() = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Typ
 Structural typing defines the object structure of a type. They can have value assertion to check whether the value associated with the type meets certain conditions.
 
 ```julia
-datatype AbstractCtor() = {
+datatype AbstractCtor = {
     propertyA :: Type,
     methodB   :: Type
 }
 
 # with value assertions
-datatype AbstractCtor() = {
+datatype AbstractCtor = {
     value -> boolean_expression,
     propertyA :: Type,
     methodB   :: Type
 }
 
 # with lone value assertion
-datatype AbstractCtor() where value -> boolean_expression
+datatype AbstractCtor where value -> boolean_expression
 
 # in concrete types
 datatype InterfaceType = {
@@ -136,7 +136,7 @@ datatype InterfaceType = {
     methodB :: Type
 }
 
-datatype ConcreteCtor() :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
+datatype ConcreteCtor :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 ```
 
 ```julia
