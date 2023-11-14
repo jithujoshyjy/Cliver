@@ -81,7 +81,9 @@ If the parameter is abstract, the parameter value should be a subtype of the spe
 If it's a concrete type, the parameter value should be a literal value of that type.<br/>
 ```julia
 # type constructor with parameters
-datatype TypeCtor(a, b :: AbstractType, c :: ConcreteType) = DataCtorA | DataCtorB(c, b)
+type TypeCtor(a, b :: AbstractType, c :: ConcreteType) =
+    | DataCtorA
+    | DataCtorB(c, b)
 ```
 
 #### Abstract and Concrete types
@@ -93,11 +95,16 @@ Subtyping is only possible with Abstract types. The root abstract type is DataTy
 Concrete types have one or more data constructors associated with them. All data constructors are publically accessable values.
 ```julia
 # abstract type decalration
-datatype AbstractCtor
+type AbstractCtor
 
 # concrete type declaration
-datatype ConcreteCtor = DataCtorA | DataCtorB
-datatype ConcreteCtor(a, b) = DataCtorA | DataCtorB(a, b)
+type ConcreteCtor =
+    | DataCtorA
+    | DataCtorB
+
+type ConcreteCtor(a, b) =
+    | DataCtorA
+    | DataCtorB(a, b)
 ```
 
 #### Type Constraints
@@ -105,9 +112,16 @@ datatype ConcreteCtor(a, b) = DataCtorA | DataCtorB(a, b)
 type constraints follow the same rules as type constructor parameters.
 
 ```julia
-datatype ConcreteCtor = DataCtorA | DataCtorB(a, b) where a :: Type
+type ConcreteCtor =
+    | DataCtorA
+    | DataCtorB(a, b)
+where a :: Type
+
 # multiple constraints
-datatype ConcreteCtor = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
+type ConcreteCtor =
+    | DataCtorA
+    | DataCtorB(a, b)
+where (a :: Type, b :: Type)
 ```
 
 #### Structural Typing
@@ -115,46 +129,51 @@ datatype ConcreteCtor = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
 Structural typing defines the object structure of a type. They can have value assertion to check whether the value associated with the type meets certain conditions.
 
 ```julia
-datatype AbstractCtor = {
+type AbstractCtor = {
     propertyA :: Type,
     methodB   :: Type
 }
 
 # with value assertions
-datatype AbstractCtor = {
+type AbstractCtor = {
     value -> boolean_expression,
     propertyA :: Type,
     methodB   :: Type
 }
 
 # with lone value assertion
-datatype AbstractCtor where value -> boolean_expression
+type AbstractCtor where value -> boolean_expression
 
 # in concrete types
-datatype InterfaceType = {
+type InterfaceType = {
     propertyA :: Type,
     methodB :: Type
 }
 
-datatype ConcreteCtor :: InterfaceType = DataCtorA | DataCtorB(a, b) where (a :: Type, b :: Type)
+type ConcreteCtor :: InterfaceType =
+    | DataCtorA
+    | DataCtorB(a, b)
+where (a :: Type, b :: Type)
 ```
 
 ```julia
 
-datatype Maybe(a) = Just(a) | None
+type Maybe(a) =
+    | Just(a)
+    | None
 
-datatype Iterable(a) = {
-  map :: (a -> b) -> Iterable(b)
+type Iterable(m) = {
+  map :: (a -> b) -> m(b)
 }
 
-impl self :: Maybe(a)
+instance self :: Maybe(a)
     fun unwrap(): match self
         case Just(x): x
         case None: throw Error("Failed to unwrap Maybe value as it is 'None'")
 end
 
-impl self :: Iterable(a) for a :: Maybe(b)
-    fun map(f): match a
+instance self :: Maybe(a) impl Iterable(self)
+    fun map(f): match self
         case Just(x): Just(f(x))
         case None: None
 end
@@ -341,8 +360,8 @@ Cliver doesn't support inheritance in it's OO design.
 
 ```julia
 
-type AType(S) = Constructor() -> S({ aProp :: Type })
-type BType(S) = Constructor() -> Rt(AType(S)) + S({ bProp :: Type })
+type AType(S) = () -> S({ aProp :: Type })
+type BType(S) = () -> ReturnType(AType(S)) + S({ bProp :: Type })
 
 fun :: AType(S)
 A<self S>()
@@ -652,7 +671,9 @@ This type is inspired by haskell. It is handy when dealing with potential empty 
 Maybe is a type constructor containing two data constructors.
 
 ```julia
-datatype Maybe(a) = Just(a) | None
+type Maybe(a) =
+    | Just(a)
+    | None
 ```
 
 ```julia
@@ -703,7 +724,9 @@ print(isEven(10)) # True
 This type constructor only contains 2 values, True and False
 
 ```julia
-datatype Boolean() = True | False
+type Boolean() =
+    | True
+    | False
 ```
 
 ##### Number
@@ -716,7 +739,7 @@ Eg: `-1, -2, 0, 1, 2, 3, ...`
 There's also a Uint counterpart.<br/>
 
 ```julia
-datatype Int
+type Int
 type.sub(type :: Int)
 # Union(Int8, Int16, Int32, Int128)
 ```
@@ -728,7 +751,7 @@ Eg: `-2.0, -0.5, 1.0, 1.5, 10.99, ...`<br/>
 There's also a Ufloat counterpart.
 
 ```julia
-datatype Float
+type Float
 type.sub(type :: Float)
 # Union(Float16, Float32, Float128)
 ```
@@ -741,7 +764,7 @@ Eg: BigInt - `1!n, 2!n, -10000!n ...`<br/>
 Eg: BigFloat - `1.2!n, -0.2!n, 11.5000!n ...`<br/>
 
 ```julia
-type BigNumber :: DataType
+type BigNumber
 type.sub(type :: BigNumber)
 # Union(BigInt, BigFloat)
 ```
@@ -774,7 +797,10 @@ print(fr.numer, fr.denom) # Numerator(1) Denominator(6)
 There are 3 values for this type NaN, Infinites and Infinity.
 
 ```julia
-datatype Irrational() :: Real = NaN | Infinites | Infinity
+type Irrational() :: Real =
+    | NaN
+    | Infinites
+    | Infinity
 ```
 
 **Complex Numbers**<br/>
@@ -822,7 +848,7 @@ Eg: ASCIIChar - `'A', '7', '!', ...`<br/>
 Eg: UnicodeChar - `'🎉', 'Â', 'α', ...`<br/>
 
 ```julia
-datatype Char
+type Char
 type.sub(type :: Char)
 # Union(ASCIIChar, UnicodeChar)
 ```
@@ -836,7 +862,7 @@ Eg: UnicodeString - `'🎉zzʑ', 'Âlp', 'α🕶ɜ', ...`<br/>
 Eg: IdString - `\abC, \Bcd, \🎉ʑ01, ...`<br/>
 
 ```julia
-datatype String :: Array
+type String :: Array
 type.sub(type :: String)
 # Union(ASCIIString, UnicodeString, IdString)
 ```
@@ -904,7 +930,7 @@ print\hello # hello
 
 They can be finite or infinite.
 ```julia
-datatype Range :: DataType
+type Range :: DataType
 
 type.sub(type :: Range)
 # Union(NumericRange, UnicodeRange, DateTimeRange)
