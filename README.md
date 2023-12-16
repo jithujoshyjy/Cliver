@@ -372,10 +372,10 @@ end
 fun :: BType(S)
 B<self S>()
     # ...
-    val { ...AType } = A()
 
-    @@where ...AType
-    
+    @@where
+
+    val { ... } = A()
     val bProp = value
 end
 ```
