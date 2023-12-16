@@ -374,8 +374,8 @@ B<self S>()
     # ...
 
     @@where
-
-    val { ... } = A()
+    import ... from A()
+    
     val bProp = value
 end
 ```
