@@ -423,6 +423,7 @@ objB()
 #### Conditionals
 
 There are two types of conditionals in Cliver; if conditional and match expression.
+The `pass` keyword skips the current conditional block.
 
 ##### If Conditional
 There exists 3 syntatic variants of this construct.
@@ -492,6 +493,22 @@ The third variant is the if...else expression
 print(if condition: expression else: expression)
 ```
 
+Usage of `pass` keyword in an if statement
+```julia
+if condition
+    # ...
+elseif condition
+    # ...
+    pass
+    # skip the current elseif block and execute the next conditional block, i.e the next elseif block
+    # ...
+elseif condition
+    # ...
+else
+    # ...
+end
+```
+
 ##### Match Expression
 
 Match expression is the pattern matching construct in Cliver. It has 2 syntatic variants.
@@ -526,14 +543,25 @@ val value = match expression
         expression
 ```
 
+Usage of `pass` keyword in a match expression
+```julia
+val value = match expression
+    case pattern:
+        pass
+    case pattern:
+        expression
+    case _:
+        expression
+```
+
 #### Loops - the for loop
 
 There exists only one looping construct in Cliver. It has atleast 6 variants.<br/>
-The statement form of the for loop comes with a done block. It will execute when the loop ends.<br/>
-The status of loop after execution can be on of:<br/>
-1. `"broke"` - the loop was terminated with a break clause,
-2. `"completed"` - the looping was completed successfully and it ran atleast once,
-3. `"never"` - the loop never ran.
+The statement form of the for loop can have 3 block macros inside of it.<br/>
+The block macros can be one of:<br/>
+1. `@@broken` - the loop was terminated with a break clause
+2. `@@completed` - the looping was completed successfully without breaking and it ran atleast once
+3. `@@never` - the loop never ran.
 
 ```julia
 # for statements
@@ -544,14 +572,13 @@ end
 
 for item in iterable
     # ...
-done status
+@@broken
+    # ...
+@@completed
+    # ...
+@@never
     # ...
 end
-
-for item in iterable
-    # ...
-done status:
-    expression
 
 # traditional C-style syntax
 for(i = 1; i < x; i += 1)
@@ -565,9 +592,10 @@ end
 ```
 
 There exists a **for** expression which returns an iterator and can be used in arrays and other data structures.
+It is lazy evaluated and needs to be spread using `...` operator in order to be evaluated.
 
 ```julia
-val arr = [for item in iterable: item]
+val arr = [...for item in iterable: item]
 ```
 
 **break** and **continue** are used to alter the execution of the loop and are only available within the for statement.
@@ -579,11 +607,11 @@ There are two main error handling constructs in Cliver and it is the **do...catc
 ##### Do-Catch construct
 It is used for block level error handling.<br/>
 do...catch construct comes with an optional done block.<br/>
-It will execute after the execution of all do and catch blocks, regardless of the error.<br/>
-The status of error handling can be one of three:<br/>
-1. `"caught"` - there was an error and it was caught by a catch block,
-2. `"uncaught"` - the error was not caught or an uncaught error was thrown,
-3. `"success"` - the code ran without producing an error.
+It will execute after the execution of all do and catch blocks, regardless of the error and can have 3 block macros inside of it.<br/>
+The block macros can be one of:<br/>
+1. `@@caught` - there was an error and it was caught by a catch block,
+2. `@@uncaught` - the error was not caught or an uncaught error was thrown,
+3. `@@success` - the code ran without producing an error.
 ```julia
 do
     # ...
@@ -600,16 +628,14 @@ do
     # ...
 catch e :: Type
     # ...
-done status
+done
+@@caught
+    # ...
+@@uncaught
+    # ...
+@@success
     # ...
 end
-
-do
-    # ...
-catch e :: Type
-    # ...
-done status:
-    expression
 ```
 
 There's no expression variant of this construct.
@@ -625,7 +651,7 @@ val someVal = expression ?? callback
 If an expression throws an error and the expression is enclosed withn a function then it can be used to return the error as an object from the function.
 ```julia
 fun funName()
-    val someVal = expression ?? x -> return x
+    val someVal = expression ?? x -> return x # exits the function named 'funName' with value x
 end
 ```
 
@@ -740,7 +766,7 @@ There's also a Uint counterpart.<br/>
 
 ```julia
 type Int
-type.sub(type :: Int)
+type.sub(_ :: Int)
 # Union(Int8, Int16, Int32, Int128)
 ```
 <br/>
@@ -752,7 +778,7 @@ There's also a Ufloat counterpart.
 
 ```julia
 type Float
-type.sub(type :: Float)
+type.sub(_ :: Float)
 # Union(Float16, Float32, Float128)
 ```
 <br/>
@@ -765,7 +791,7 @@ Eg: BigFloat - `1.2!n, -0.2!n, 11.5000!n ...`<br/>
 
 ```julia
 type BigNumber
-type.sub(type :: BigNumber)
+type.sub(_ :: BigNumber)
 # Union(BigInt, BigFloat)
 ```
 
@@ -849,7 +875,7 @@ Eg: UnicodeChar - `'🎉', 'Â', 'α', ...`<br/>
 
 ```julia
 type Char
-type.sub(type :: Char)
+type.sub(_ :: Char)
 # Union(ASCIIChar, UnicodeChar)
 ```
 
@@ -863,7 +889,7 @@ Eg: IdString - `\abC, \Bcd, \🎉ʑ01, ...`<br/>
 
 ```julia
 type String :: Array
-type.sub(type :: String)
+type.sub(_ :: String)
 # Union(ASCIIString, UnicodeString, IdString)
 ```
 
@@ -913,16 +939,21 @@ string
 
 ###### Tagged Strings
 
-Strings can be tagged to enable interpolation and form special constructs.
+Strings can be tagged to enable interpolation using the 'f' tag.
+They can be turned into raw Strings using 'r' tag.
+The 're' tag turns a String into a Regular Expression.
 
 ```julia
 val world = "earth", punch = '!'
 val greet = f"hello {world}$punch"
-
 print(greet) # hello earth!
 
-# with IdString
-print\hello # hello
+val regex = re"w+@w+\.com"
+val email = "hello@word.com"
+print(email.match(regex).isMatch) # True
+
+val rawText = r"newline (\n)"
+print(rawText) # newline (\\n)
 ```
 > tagging can also be done with multiline strings
 
@@ -932,7 +963,7 @@ They can be finite or infinite.
 ```julia
 type Range :: DataType
 
-type.sub(type :: Range)
+type.sub(_ :: Range)
 # Union(NumericRange, UnicodeRange, DateTimeRange)
 ```
 
@@ -957,9 +988,11 @@ print((\a, 1) to \d) # a b c d
 
 > if the last element is the irrational value Infinity, the Range tends to positive infinity or if its Infinites it tends to negative infinity.
 
+> The `to` operator is also used for performing type convertions. `'10' to _ :: Int # 10`
+
 #### Collections
 
-Most collections in Cliver are immutable and some even have mutable counterpart prefixed with exclamation mark.
+Most collections in Cliver are immutable and some even have mutable counterparts prefixed with an exclamation mark.
 
 ##### Array
 Arrays are the most basic collection type in Cliver.<br/>
@@ -988,11 +1021,11 @@ items.add(value; index: i)
 # update an existing index
 items[i] = value
 
-# remove an item at an index
-items.drop(i)
-
 # remove the first occurance of a value
-items.drop(item: value)
+items.drop(value)
+
+# remove a value at an index
+items.drop(index: i)
 ```
 
 The `in` operator can check for the presence of a value in an array.
@@ -1007,7 +1040,7 @@ end
 
 Array comprehension is done using for expressions
 ```julia
-[for item in items: if isValid(item): item]
+[...for item in items: if isValid(item): item]
 ```
 
 ##### Tuple
@@ -1015,7 +1048,7 @@ Array comprehension is done using for expressions
 Tuples are immutable, fixed sized collections. They can contain multiple types and can have named arguments. Tuples are not iterable.
 ```julia
 val :: Tuple(TypeA, TypeB; TypeC, TypeD)
-items = (itemA, itemB; itemC, itemD: 0)
+items = (itemA, itemB; itemC, itemD: ValueD)
 ```
 
 Values in a tuple are accessed using indexing just like Array. Also the indexing starts at 1.
@@ -1093,7 +1126,7 @@ end
 
 Map comprehension can be done using for expressions
 ```julia
-{for (key: value) in (pairs.keys, pairs.values): if isValid(key): (key: value)}
+{...for (key: value) in (pairs.keys, pairs.values): if isValid(key): (key: value)}
 ```
 
 ##### Set
@@ -1115,7 +1148,7 @@ items.add(3) # false - not added
 
 Like Arrays, Sets also support comprehension notation.
 ```julia
-{for item in items: if isValid(item): item}
+{...for item in items: if isValid(item): item}
 ```
 
 ##### Matrix
