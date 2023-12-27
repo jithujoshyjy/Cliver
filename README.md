@@ -707,7 +707,7 @@ type Maybe(a) =
 val :: Maybe(Char)
 item = ['A', 'B', 'C'].find(x -> x == 'D')
 
-print(item || 'not found')
+print(item || 'N')
 ```
 
 ```julia
