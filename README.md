@@ -950,7 +950,7 @@ print(greet) # hello earth!
 
 val regex = re"w+@w+\.com"
 val email = "hello@word.com"
-print(email.match(regex).isMatch) # True
+print(email.match(regex)) # Just(RegexMatch)
 
 val rawText = r"newline (\n)"
 print(rawText) # newline (\\n)
